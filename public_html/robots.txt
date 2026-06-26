@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Disallow: /uploads/
+Disallow: /lib/
+Disallow: /scripts/
+Allow: /
+
+Sitemap: https://cubespaces.in/sitemap.xml

@@ -1,0 +1,2506 @@
+<?php
+require_once __DIR__ . '/includes/bootstrap.php';
+mysqli_report(MYSQLI_REPORT_OFF);
+$action = $_GET['action'] ?? '';
+if ($action === 'forgot_password' || $action === 'reset_password') {
+    header('Content-Type: application/json');
+    ob_start();
+    if ($action === 'forgot_password') {
+        $username = trim($_POST['username'] ?? '');
+        if (!$username) { http_response_code(400); die(json_encode(['success'=>false,'error'=>'Username required'])); }
+        cubespace_load_db_config();
+        if (!$conn) { http_response_code(500); die(json_encode(['success'=>false,'error'=>'DB unavailable'])); }
+        $stmt = mysqli_prepare($conn, "SELECT id FROM admins WHERE username = ?");
+        if (!$stmt) { http_response_code(500); die(json_encode(['success'=>false,'error'=>mysqli_error($conn)])); }
+        mysqli_stmt_bind_param($stmt, 's', $username);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $admin = mysqli_fetch_assoc($result);
+        if (!$admin) { http_response_code(404); die(json_encode(['success'=>false,'error'=>'Admin not found'])); }
+        $token = bin2hex(random_bytes(16));
+        $expiry = date('Y-m-d H:i:s', strtotime('+1 hour'));
+        $stmt = mysqli_prepare($conn, "UPDATE admins SET reset_token = ?, reset_token_expiry = ? WHERE id = ?");
+        if (!$stmt) { http_response_code(500); die(json_encode(['success'=>false,'error'=>mysqli_error($conn)])); }
+        mysqli_stmt_bind_param($stmt, 'ssi', $token, $expiry, $admin['id']);
+        if (!mysqli_stmt_execute($stmt)) { http_response_code(500); die(json_encode(['success'=>false,'error'=>mysqli_error($conn)])); }
+        die(json_encode(['success'=>true,'message'=>'Use this token. Expires in 1 hour.','reset_token'=>$token]));
+    }
+    if ($action === 'reset_password') {
+        $token = trim($_POST['token'] ?? ''); $password = trim($_POST['password'] ?? '');
+        if (!$token||!$password) { http_response_code(400); die(json_encode(['success'=>false,'error'=>'Token and password required'])); }
+        if (strlen($password)<6) { http_response_code(400); die(json_encode(['success'=>false,'error'=>'Password min 6 chars'])); }
+        cubespace_load_db_config();
+        if (!$conn) { http_response_code(500); die(json_encode(['success'=>false,'error'=>'DB unavailable'])); }
+        $stmt = mysqli_prepare($conn, "SELECT id FROM admins WHERE reset_token = ? AND reset_token_expiry > NOW()");
+        if (!$stmt) { http_response_code(500); die(json_encode(['success'=>false,'error'=>mysqli_error($conn)])); }
+        mysqli_stmt_bind_param($stmt, 's', $token);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $admin = mysqli_fetch_assoc($result);
+        if (!$admin) { http_response_code(400); die(json_encode(['success'=>false,'error'=>'Invalid or expired token'])); }
+        $hash = password_hash($password, PASSWORD_BCRYPT);
+        $stmt = mysqli_prepare($conn, "UPDATE admins SET password = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?");
+        if (!$stmt) { http_response_code(500); die(json_encode(['success'=>false,'error'=>mysqli_error($conn)])); }
+        mysqli_stmt_bind_param($stmt, 'si', $hash, $admin['id']);
+        if (!mysqli_stmt_execute($stmt)) { http_response_code(500); die(json_encode(['success'=>false,'error'=>mysqli_error($conn)])); }
+        die(json_encode(['success'=>true,'message'=>'Password reset successfully.']));
+    }
+}
+?>
+<?php
+error_reporting(0);
+ini_set('display_errors', 0);
+ob_start();
+
+require_once __DIR__ . '/includes/bootstrap.php';
+cubespace_load_db_config();
+cubespace_require_project('lib/config.php');
+
+$pageTitle = 'Office Spaces - CubeSpace';
+$metaDesc = 'Browse furnished and unfurnished office spaces in Chennai. Fully equipped offices and shell spaces for custom fit-outs across prime business locations.';
+$breadcrumbLabel = 'Office Spaces';
+$heading = 'Office Spaces in';
+$subheading = 'Furnished and unfurnished office spaces across prime locations. Fully equipped plug-and-play offices and shell spaces for custom fit-outs.';
+
+$totalCount = 0;
+$areas = [];
+
+if (isset($conn) && $conn) {
+    $countRes = mysqli_query($conn, "SELECT SUM(cnt) as total FROM ((SELECT COUNT(*) as cnt FROM furnished_offices WHERE status='published') UNION ALL (SELECT COUNT(*) as cnt FROM unfurnished_offices WHERE status='published')) t");
+    if ($countRes) $totalCount = (int)mysqli_fetch_assoc($countRes)['total'];
+
+    $aRes = mysqli_query($conn, "(SELECT DISTINCT area FROM furnished_offices WHERE status='published' AND area IS NOT NULL AND area != '') UNION (SELECT DISTINCT area FROM unfurnished_offices WHERE status='published' AND area IS NOT NULL AND area != '') ORDER BY area");
+    if ($aRes) while ($r = mysqli_fetch_assoc($aRes)) { $areas[] = $r['area']; }
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <?php include __DIR__ . '/includes/head-meta.php'; ?>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title><?= $pageTitle ?></title>
+    <meta name="description" content="<?= $metaDesc ?>">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" href="assets/images/favicon-32x32.png">
+    <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
+    <link rel="stylesheet" href="assets/css/style.css?v=6">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="access-token" content="">
+
+    <style>
+        /* ===== PAGE-SPECIFIC FIXES ===== */
+        :root {
+            --primary: #0d4ab4;
+            --primary-dark: #0a3a8f;
+            --primary-light: #eef4ff;
+            --gray-light: #f8f9fc;
+            --shadow-sm: 0 2px 8px rgba(13, 74, 180, 0.08);
+            --shadow-md: 0 4px 20px rgba(13, 74, 180, 0.12);
+            --radius: 0;
+            --transition: all 0.25s ease;
+        }
+        * { border-radius: 0 !important; }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #fafbff;
+            color: #1a1a2e;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Ensure page content has proper padding for fixed navbar */
+        .container.py-4 {
+            padding-top: 15px !important;
+            padding-left: 4px !important;
+            padding-right: 4px !important;
+        }
+
+        /* ----- Filter Bar ----- */
+        .filter-bar {
+            background: #ffffff;
+            border-radius: var(--radius);
+            padding: 14px 18px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(13, 74, 180, 0.06);
+            gap: 10px;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 70px;
+            z-index: 99;
+        }
+        .filter-bar .filter-select {
+            border-radius: 0;
+            border-color: #0d4ab4;
+            font-size: 0.85rem;
+            padding: 8px 34px 8px 14px;
+            background-color: #fafbff;
+            min-height: 38px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 16px 12px;
+        }
+        .filter-bar .filter-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(13, 74, 180, 0.12);
+        }
+        .filter-bar .form-control {
+            border-radius: 8px;
+            border-color: #e5e7eb;
+            font-size: 0.85rem;
+            padding: 6px 12px;
+            background-color: #fafbff;
+            min-height: 38px;
+        }
+        .filter-bar .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(13, 74, 180, 0.12);
+        }
+        .filter-bar .position-relative {
+            position: relative;
+        }
+        .filter-product-select {
+            width: auto;
+            min-width: 140px;
+            max-width: 180px;
+        }
+        .filter-city-select {
+            width: auto;
+            min-width: 140px;
+            max-width: 180px;
+        }
+        .filter-locality-select {
+            width: auto;
+            min-width: 150px;
+            max-width: 200px;
+        }
+        .filter-sqft-select {
+            width: auto;
+            min-width: 120px;
+            max-width: 160px;
+        }
+        /* ----- Localities ----- */
+        .localities-section {
+            background: #ffffff;
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(13, 74, 180, 0.06);
+        }
+        .localities-section .d-flex.align-items-center {
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .localities-section .d-flex.flex-wrap {
+            gap: 8px;
+        }
+        .localities-scroll-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+        .localities-scroll-container {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            flex: 1;
+            padding: 2px 0;
+            scrollbar-width: none;
+        }
+        .localities-scroll-container::-webkit-scrollbar {
+            display: none;
+        }
+        .localities-scroll-container > .locality-chip {
+            flex-shrink: 0;
+        }
+        .scroll-btn {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid #dee2e6;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #6c757d;
+            transition: all 0.2s ease;
+            padding: 0;
+            font-size: 0.7rem;
+            z-index: 1;
+        }
+        .scroll-btn:hover {
+            background: #f0f4ff;
+            color: #0d4ab4;
+            border-color: #0d4ab4;
+        }
+        .scroll-btn:disabled {
+            opacity: 0.3;
+            cursor: default;
+            pointer-events: none;
+        }
+        .locality-chip {
+            border-radius: 20px;
+            padding: 5px 16px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            background: #f3f4f6;
+            border: 1px solid transparent;
+            color: #4b5563;
+            transition: var(--transition);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .locality-chip:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: rgba(13, 74, 180, 0.15);
+        }
+        .locality-chip.active {
+            background: var(--primary);
+            color: #ffffff;
+            border-color: var(--primary);
+        }
+        .locality-chip.active:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        /* ----- Results Counter ----- */
+        .results-counter {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+            color: #4b5563;
+        }
+        .results-counter strong {
+            color: #1a1a2e;
+        }
+        .results-counter #btnClearAll {
+            font-size: 0.8rem;
+            border-radius: 8px;
+            padding: 5px 16px;
+            border-color: #e5e7eb;
+            color: #6b7280;
+            white-space: nowrap;
+        }
+        .results-counter #btnClearAll:hover {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #dc2626;
+        }
+
+        /* ----- Active Filters ----- */
+        .active-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+            min-height: 32px;
+        }
+        .active-filters.has-filters {
+            padding: 4px 0;
+        }
+        .filter-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 0.8rem;
+            font-weight: 500;
+            padding: 4px 10px 4px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(13, 74, 180, 0.12);
+        }
+        .filter-tag button {
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+            padding: 0 2px;
+            transition: var(--transition);
+        }
+        .filter-tag button:hover {
+            color: #dc2626;
+        }
+
+        /* ----- Office Cards ----- */
+        .listing-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .office-card {
+            cursor: pointer;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .office-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            border-color: #d0d4da;
+        }
+        .card.office-card {
+            border-radius: 10px;
+            border: 1px solid #e8eaed;
+            overflow: hidden;
+            background: #ffffff;
+        }
+        @media (min-width: 992px) {
+            .office-card.flex-lg-row .office-card-img {
+                width: 45%;
+                flex-shrink: 0;
+                min-height: 50px;
+                aspect-ratio: 21 / 9;
+                border-radius: 10px 0 0 10px !important;
+            }
+            .office-card.flex-lg-row .card-body {
+                flex: 1;
+                padding: 16px 20px;
+            }
+        }
+        @media (min-width: 768px) and (max-width: 991px) {
+            .office-card .office-card-img {
+                aspect-ratio: 21 / 9;
+                min-height: 35px;
+                max-height: 70px;
+            }
+        }
+        @media (max-width: 767px) {
+            .office-card .office-card-img {
+                aspect-ratio: 21 / 9;
+                min-height: 30px;
+                max-height: 60px;
+            }
+        }
+        .office-card .office-card-img {
+            position: relative;
+            overflow: hidden;
+            background: #f0f2f5;
+            display: flex;
+            align-items: stretch;
+            width: 100%;
+        }
+        .office-card .office-card-img .placeholder-img {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            min-height: 120px;
+            background: #eef2f7;
+            color: #b0b7c3;
+            font-size: 2.5rem;
+            flex: 1;
+        }
+        .office-card .office-card-img .card-carousel {
+            display: flex;
+            overflow-x: hidden;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            width: 100%;
+            height: 100%;
+            flex: 1;
+        }
+        .office-card .office-card-img .card-carousel .carousel-slide {
+            flex: 0 0 100%;
+            scroll-snap-align: start;
+            overflow: hidden;
+            display: flex;
+            align-items: stretch;
+        }
+        .office-card .office-card-img .card-carousel .carousel-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            flex-shrink: 0;
+        }
+        .office-card .office-card-img .img-count {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.55);
+            color: #fff;
+            font-size: 0.65rem;
+            padding: 2px 10px;
+            border-radius: 4px;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .office-card .office-card-img .img-count i {
+            font-size: 0.6rem;
+        }
+
+        /* Carousel buttons */
+        .office-card .office-card-img .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: #333;
+            cursor: pointer;
+            z-index: 6;
+            transition: opacity 0.2s;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            opacity: 0;
+        }
+        .office-card:hover .office-card-img .carousel-btn {
+            opacity: 1;
+        }
+        .office-card .office-card-img .carousel-prev {
+            left: 8px;
+        }
+        .office-card .office-card-img .carousel-next {
+            right: 8px;
+        }
+
+        /* Carousel dots */
+        .office-card .office-card-img .carousel-dots {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 5px;
+            z-index: 6;
+        }
+        .office-card .office-card-img .carousel-dots button {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.5);
+            padding: 0;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .office-card .office-card-img .carousel-dots button.active {
+            background: #fff;
+            width: 18px;
+            border-radius: 3px;
+        }
+
+        /* Card Body */
+        .office-card .card-body {
+            padding: 14px 16px 16px;
+        }
+        .office-card .card-body .property-name {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0 0 2px 0;
+            color: #1a1a2e;
+            line-height: 1.3;
+        }
+        .office-card .card-body .property-address {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin: 0 0 10px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 5px;
+        }
+        .office-card .card-body .property-address i {
+            margin-top: 3px;
+            color: var(--primary);
+            font-size: 0.75rem;
+        }
+        .office-card .card-body .stats-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 10px;
+            margin-bottom: 10px;
+        }
+        .office-card .card-body .stats-row .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.78rem;
+            color: #4b5563;
+        }
+        .office-card .card-body .stats-row .stat-item i {
+            color: var(--primary);
+            font-size: 0.7rem;
+            width: 14px;
+            text-align: center;
+        }
+        .office-card .card-body .stats-row .stat-item .stat-value {
+            font-weight: 600;
+            color: #1a1a2e;
+            white-space: nowrap;
+        }
+        .office-card .card-body .stats-row .stat-item.inv-badge .stat-value {
+            padding: 1px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .office-card .card-body .stats-row .stat-item.inv-ready i {
+            color: #166534;
+        }
+        .office-card .card-body .stats-row .stat-item.inv-ready .stat-value {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .office-card .card-body .stats-row .stat-item.inv-processing i {
+            color: #92400e;
+        }
+        .office-card .card-body .stats-row .stat-item.inv-processing .stat-value {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .office-card .card-body .description-wrapper {
+            margin-bottom: 8px;
+        }
+        .office-card .card-body .description-text {
+            font-size: 0.78rem;
+            color: #4b5563;
+            line-height: 1.5;
+            text-align: justify;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin: 0;
+        }
+        .office-card .card-body .description-text.expanded {
+            -webkit-line-clamp: unset;
+        }
+        .office-card .card-body .description-toggle {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 0.7rem;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 2px 0;
+            margin-top: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .office-card .card-body .description-toggle:hover {
+            opacity: 0.8;
+        }
+        .office-card .card-body .description-toggle i {
+            font-size: 0.6rem;
+            transition: transform 0.2s;
+        }
+        .office-card .card-body .description-toggle.expanded i {
+            transform: rotate(180deg);
+        }
+        .office-card .card-body .card-footer-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding-top: 12px;
+            border-top: 1px solid #f0f2f5;
+        }
+        .office-card .card-body .card-price {
+            display: flex;
+            flex-direction: column;
+        }
+        .office-card .card-body .card-price .price-label {
+            font-size: 0.6rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .office-card .card-body .card-price .amount {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1.2;
+        }
+        .office-card .card-body .card-price .period {
+            font-size: 0.7rem;
+            color: #6b7280;
+            font-weight: 400;
+        }
+        .office-card .card-body .card-price .contact-price {
+            font-weight: 600;
+            color: #6b7280;
+            font-size: 0.85rem;
+        }
+        .office-card .card-body .card-actions .btn {
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.78rem;
+            padding: 6px 18px;
+            background: var(--primary);
+            border: none;
+            color: #fff;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .office-card .card-body .card-actions .btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* ----- Pagination ----- */
+        .pagination-wrapper {
+            margin-top: 24px;
+            display: flex;
+            justify-content: center;
+        }
+        .pagination-wrapper .pagination {
+            gap: 4px;
+        }
+        .pagination-wrapper .page-link {
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            color: #1a1a2e;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            background: #ffffff;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .pagination-wrapper .page-link:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .pagination-wrapper .page-item.active .page-link {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #ffffff;
+        }
+        .pagination-wrapper .page-item.disabled .page-link {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* ----- Nearest Section ----- */
+        .nearest-section {
+            margin-top: 40px;
+            padding-top: 24px;
+            border-top: 2px solid rgba(13, 74, 180, 0.06);
+        }
+        .nearest-section h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+        .nearest-section h3 i {
+            color: var(--primary);
+        }
+        .nearest-section .nearest-subtitle {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 16px;
+        }
+        .nearest-section .nearest-subtitle i {
+            color: var(--primary);
+            margin-right: 4px;
+        }
+        .nearest-section .nearest-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+        @media (min-width: 768px) {
+            .nearest-section .nearest-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .nearest-section .nearest-dist-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 12px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+        }
+        .badge-nearby {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: linear-gradient(135deg, #0d4ab4, #1a6bd4);
+            color: #ffffff;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 4px 14px;
+            border-radius: 20px;
+            z-index: 5;
+            box-shadow: 0 2px 8px rgba(13, 74, 180, 0.25);
+        }
+
+        /* ----- Sidebar ----- */
+        .aside-card {
+            border-radius: var(--radius);
+            border: 1px solid rgba(13, 74, 180, 0.06);
+            box-shadow: var(--shadow-sm);
+            background: #ffffff;
+            transition: var(--transition);
+        }
+        .aside-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+        .aside-card .card-body {
+            padding: 20px;
+        }
+
+        /* Desktop: sidebar sticky, left column scrollable */
+        @media (min-width: 992px) {
+            .content-area {
+                position: relative;
+            }
+            .content-area aside.col-lg-4 {
+                position: -webkit-sticky;
+                position: sticky;
+                top: 150px;
+                align-self: flex-start;
+            }
+        }
+        .aside-card .card-body h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+        .aside-card .card-body .consultant-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 1.4rem;
+        }
+        .aside-card .card-body .btn-primary {
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 10px;
+            background: var(--primary);
+            border: none;
+            transition: var(--transition);
+        }
+        .aside-card .card-body .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: scale(1.01);
+        }
+        .aside-card .card-body ul.list-unstyled li {
+            font-size: 0.85rem;
+            color: #4b5563;
+        }
+        .aside-card .card-body ul.list-unstyled li i {
+            width: 18px;
+            text-align: center;
+        }
+
+        /* ----- Modals ----- */
+        .modal-content {
+            border-radius: 16px !important;
+            border: none;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+        .modal-header {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .modal-header .btn-close {
+            outline: none;
+            box-shadow: none;
+        }
+        .modal-body .form-control {
+            border-radius: 8px;
+            border-color: #e5e7eb;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+        }
+        .modal-body .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(13, 74, 180, 0.12);
+        }
+        .modal-body .btn-primary {
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 10px;
+            background: var(--primary);
+            border: none;
+            transition: var(--transition);
+        }
+        .modal-body .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        .modal-dialog-centered .modal-content {
+            border-radius: 16px;
+        }
+        .gp-modal-row {
+            min-height: 440px;
+            overflow: hidden;
+        }
+        .gp-modal-left {
+            background: var(--primary-light);
+            border-radius: 16px 0 0 16px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .gp-modal-left::before {
+            content: '\f19d';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            right: -20px;
+            bottom: -30px;
+            font-size: 10rem;
+            color: rgba(13, 74, 180, 0.06);
+            line-height: 1;
+        }
+        .gp-modal-left::after {
+            content: '\f0b1';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            left: -15px;
+            top: -20px;
+            font-size: 6rem;
+            color: rgba(13, 74, 180, 0.04);
+            line-height: 1;
+            transform: rotate(-15deg);
+        }
+        .gp-modal-left-inner {
+            padding: 36px 30px;
+            position: relative;
+            z-index: 1;
+        }
+        .gp-modal-logo {
+            margin-bottom: 24px;
+        }
+        .gp-modal-logo img {
+            height: 80px;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+        }
+        .gp-left-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(13, 74, 180, 0.1);
+            color: var(--primary);
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 4px 14px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        .gp-left-heading {
+            font-size: 1.3rem;
+            font-weight: 800;
+            line-height: 1.35;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .gp-left-sub {
+            font-size: 0.92rem;
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .gp-left-sub i {
+            font-size: 1.1rem;
+        }
+        .gp-left-features {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .gp-left-features span {
+            font-size: 0.82rem;
+            color: #4b5563;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .gp-left-features span .feat-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #dcfce7;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .gp-left-features span .feat-icon i {
+            font-size: 0.6rem;
+            color: #166534;
+        }
+        .gp-modal-right {
+            padding: 28px 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .gp-modal-right .form-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 4px;
+        }
+        .gp-modal-right .form-control {
+            font-size: 0.85rem;
+            padding: 9px 14px;
+            border-radius: 8px;
+            border: 1.5px solid #e5e7eb;
+            background: #fafbff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .gp-modal-right .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(13, 74, 180, 0.1);
+            background: #fff;
+        }
+        .gp-modal-right .btn-primary {
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            padding: 11px;
+            background: var(--primary);
+            border: none;
+            transition: all 0.2s;
+            margin-top: 4px;
+        }
+        .gp-modal-right .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(13, 74, 180, 0.25);
+        }
+        @media (max-width: 767px) {
+            .gp-modal-left {
+                border-radius: 16px 16px 0 0;
+            }
+            .gp-modal-left::before,
+            .gp-modal-left::after {
+                display: none;
+            }
+            .gp-modal-left-inner {
+                padding: 24px 22px;
+            }
+            .gp-left-heading {
+                font-size: 1.08rem;
+            }
+            .gp-modal-right {
+                padding: 20px 22px;
+            }
+            .gp-modal-row {
+                min-height: auto;
+            }
+        }
+
+        /* ----- Toast ----- */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 9999;
+            max-width: 360px;
+            width: 100%;
+        }
+        .toast {
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #ffffff;
+            box-shadow: var(--shadow-md);
+            animation: slideUp 0.3s ease;
+            background: #1a1a2e;
+        }
+        .toast-success {
+            background: #0d9488;
+        }
+        .toast-error {
+            background: #dc2626;
+        }
+        .toast-info {
+            background: var(--primary);
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ----- Empty State ----- */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: #ffffff;
+            border-radius: var(--radius);
+            border: 1px solid rgba(13, 74, 180, 0.06);
+        }
+        .empty-state i {
+            font-size: 3rem;
+            color: #d1d5db;
+            margin-bottom: 16px;
+        }
+        .empty-state h3 {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1a1a2e;
+        }
+        .empty-state p {
+            color: #6b7280;
+            margin-bottom: 0;
+        }
+        .empty-state .btn-callback {
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 28px;
+            font-weight: 600;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .empty-state .btn-callback:hover {
+            background: var(--primary-dark);
+        }
+
+        /* ----- Skeleton ----- */
+        .skeleton-card {
+            background: #ffffff;
+            border-radius: var(--radius);
+            border: 1px solid rgba(13, 74, 180, 0.06);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+        .skeleton-card .skeleton {
+            background: linear-gradient(90deg, #f0f2f5 25%, #e5e7eb 50%, #f0f2f5 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+        }
+        .skeleton-card .skeleton-img {
+            height: 200px;
+            width: 100%;
+        }
+        .skeleton-card .skeleton-body {
+            padding: 18px 20px 20px;
+        }
+        .skeleton-card .skeleton-line {
+            height: 14px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+        }
+        .skeleton-card .skeleton-line.short {
+            width: 60%;
+        }
+        .skeleton-card .skeleton-line.stats {
+            height: 40px;
+            margin-bottom: 12px;
+        }
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* ----- Responsive ----- */
+        @media (max-width: 991px) {
+            .filter-bar {
+                padding: 12px 14px;
+                gap: 8px;
+            }
+            .filter-bar .filter-select {
+                min-width: 120px;
+                max-width: 160px;
+                font-size: 0.8rem;
+                padding: 4px 24px 4px 10px;
+                min-height: 34px;
+            }
+            .filter-bar .form-control {
+                font-size: 0.8rem;
+                padding: 4px 10px;
+                min-height: 34px;
+            }
+            .filter-bar .position-relative {
+                min-width: 150px;
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .container {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+            .filter-bar {
+                flex-direction: row;
+                align-items: center;
+                padding: 10px;
+                gap: 6px;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .filter-bar::-webkit-scrollbar {
+                display: none;
+            }
+            .filter-bar .filter-select {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: unset;
+            }
+            .filter-bar .position-relative {
+                min-width: unset;
+                max-width: 100%;
+                width: 100%;
+            }
+            .filter-bar .position-relative .form-control {
+                width: 100%;
+            }
+            .localities-section {
+                padding: 10px 12px;
+            }
+            .localities-section .d-flex.flex-wrap {
+                gap: 4px;
+            }
+            .locality-chip {
+                font-size: 0.7rem;
+                padding: 3px 12px;
+            }
+            .localities-scroll-container {
+                gap: 4px;
+            }
+            .scroll-btn {
+                width: 22px;
+                height: 22px;
+                font-size: 0.55rem;
+            }
+            .results-counter {
+                font-size: 0.8rem;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .office-card .office-card-img {
+                aspect-ratio: 16 / 9;
+                min-height: 100px;
+                max-height: 200px;
+            }
+            .office-card .card-body {
+                padding: 10px 12px 12px;
+            }
+            .office-card .card-body .property-name {
+                font-size: 0.88rem;
+                margin-bottom: 1px;
+            }
+            .office-card .card-body .property-address {
+                font-size: 0.73rem;
+                margin-bottom: 8px;
+            }
+            .office-card .card-body .stats-row {
+                gap: 3px 6px;
+                margin-bottom: 8px;
+            }
+            .office-card .card-body .stats-row .stat-item {
+                font-size: 0.7rem;
+            }
+            .office-card .card-body .card-footer-row {
+                padding-top: 10px;
+                gap: 8px;
+            }
+            .office-card .card-body .card-price .amount {
+                font-size: 0.9rem;
+            }
+            .office-card .card-body .card-actions .btn {
+                font-size: 0.68rem;
+                padding: 5px 12px;
+            }
+            .office-card .office-card-img .carousel-btn {
+                width: 24px;
+                height: 24px;
+                font-size: 0.6rem;
+                opacity: 1;
+            }
+            .office-card .office-card-img .carousel-dots button {
+                width: 5px;
+                height: 5px;
+            }
+            .office-card .office-card-img .carousel-dots button.active {
+                width: 14px;
+            }
+            .listing-cards {
+                gap: 10px;
+            }
+            .aside-card .card-body {
+                padding: 16px;
+            }
+            .nearest-section .nearest-grid {
+                grid-template-columns: 1fr;
+            }
+            .toast-container {
+                bottom: 12px;
+                right: 12px;
+                left: 12px;
+                max-width: 100%;
+            }
+            .toast {
+                font-size: 0.8rem;
+                padding: 12px 16px;
+            }
+            .modal-dialog {
+                margin: 12px;
+            }
+            .modal-content {
+                border-radius: 12px !important;
+            }
+            .modal-body .form-control {
+                font-size: 0.85rem;
+                padding: 8px 12px;
+            }
+            .breadcrumb {
+                font-size: 0.75rem;
+            }
+            .pagination-wrapper .page-link {
+                padding: 4px 10px;
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 575px) {
+            .container {
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+            .office-card .office-card-img {
+                min-height: 80px;
+                max-height: 150px;
+            }
+            .office-card .card-body {
+                padding: 8px 10px 10px;
+            }
+            .office-card .card-body .property-name {
+                font-size: 0.82rem;
+            }
+            .office-card .card-body .property-address {
+                margin-bottom: 6px;
+            }
+            .office-card .card-body .stats-row {
+                gap: 2px 4px;
+                margin-bottom: 6px;
+            }
+            .office-card .card-body .stats-row .stat-item {
+                font-size: 0.66rem;
+            }
+            .office-card .card-body .card-footer-row {
+                padding-top: 8px;
+                flex-wrap: wrap;
+            }
+            .office-card .card-body .card-price .amount {
+                font-size: 0.82rem;
+            }
+            .office-card .card-body .card-price .price-label {
+                font-size: 0.55rem;
+            }
+            .office-card .card-body .card-actions .btn {
+                font-size: 0.63rem;
+                padding: 4px 10px;
+            }
+            .office-card .card-body .description-text {
+                font-size: 0.72rem;
+            }
+            .office-card .card-body .description-toggle {
+                font-size: 0.65rem;
+            }
+            .locality-chip {
+                font-size: 0.63rem;
+                padding: 2px 8px;
+            }
+            .localities-scroll-container {
+                gap: 3px;
+            }
+            .scroll-btn {
+                width: 20px;
+                height: 20px;
+                font-size: 0.5rem;
+            }
+            .filter-bar {
+                padding: 8px;
+                gap: 4px;
+            }
+            .filter-bar .filter-select {
+                font-size: 0.72rem;
+                padding: 2px 18px 2px 6px;
+                min-height: 28px;
+            }
+            .filter-bar .form-control {
+                font-size: 0.72rem;
+                padding: 2px 6px;
+                min-height: 28px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <?php include __DIR__ . '/includes/navbar.php'; ?>
+
+    <!-- ===== PAGE CONTENT ===== -->
+    <div class="container py-4">
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-transparent px-0 mb-3">
+                <li class="breadcrumb-item"><a href="index.php"><i class="fa-solid fa-house me-1"></i>Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page"><?= $breadcrumbLabel ?></li>
+            </ol>
+        </nav>
+
+        <!-- Header -->
+        <div class="mb-4">
+            <h1 class="fw-bold mb-2"><?= $heading ?> <span id="pageCity" class="text-primary">Chennai</span></h1>
+            <p class="text-muted mb-0"><?= $subheading ?></p>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="d-flex gap-2 mb-3 align-items-center filter-bar" id="filterBar" role="search" aria-label="Filter office spaces" style="flex-wrap: nowrap; overflow-x: auto;">
+            <select class="form-select form-select-sm filter-select filter-product-select" id="filterProduct" aria-label="Filter by Product">
+                <option value="">All Products</option>
+                <option value="managed">Managed Furnished Office</option>
+                <option value="commercial" selected>Furnished / Unfurnished Office</option>
+            </select>
+            <span class="text-muted" style="font-size: 1.1rem; line-height: 1; flex-shrink: 0;">|</span>
+            <select class="form-select form-select-sm filter-select filter-city-select" id="filterCity" aria-label="Filter by City">
+                <option value="">All Cities</option>
+                <option value="chennai" selected>Chennai</option>
+                <option value="bangalore">Bangalore</option>
+            </select>
+            <select class="form-select form-select-sm filter-select filter-locality-select" id="filterLocality" aria-label="Filter by Locality">
+                <option value="">All Locations</option>
+                <?php foreach ($areas as $a): ?>
+                    <option value="<?= htmlspecialchars($a) ?>"><?= htmlspecialchars(ucfirst($a)) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <select class="form-select form-select-sm filter-select filter-sqft-select" id="filterSqft" aria-label="Filter by Square Feet">
+                <option value="">All Sq.ft</option>
+                <option value="0-1000">0 - 1000</option>
+                <option value="1000-2000">1000 - 2000</option>
+                <option value="2000-5000">2000 - 5000</option>
+                <option value="5000-10000">5000 - 10000</option>
+                <option value="10000-">10000+</option>
+            </select>
+        </div>
+
+        <!-- Localities -->
+        <div class="localities-section mb-4">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-location-dot text-primary"></i>
+                <span class="fw-semibold small">Popular Localities</span>
+            </div>
+            <div class="localities-scroll-wrap">
+                <button class="scroll-btn scroll-left" type="button" aria-label="Scroll left" onclick="scrollLocalities(-1)" disabled><i class="fa-solid fa-chevron-left"></i></button>
+                <div class="localities-scroll-container" id="localityChips" role="tablist" aria-label="Filter by locality">
+                    <?php foreach (['Guindy', 'Pallavaram – Thoraipakkam Radial Road', 'OMR', 'Taramani', 'Perungudi', 'Thoraipakkam', 'Sholinganallur', 'Navalur','Velachery','Nungambakkam','T.Nagar'] as $loc): ?>
+                        <button class="btn btn-sm locality-chip" data-area="<?= htmlspecialchars($loc) ?>" role="tab" aria-selected="false"><?= htmlspecialchars($loc) ?></button>
+                    <?php endforeach; ?>
+                </div>
+                <button class="scroll-btn scroll-right" type="button" aria-label="Scroll right" onclick="scrollLocalities(1)"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="row g-4 content-area">
+            <!-- Listing Area -->
+            <div class="col-lg-8">
+                <div class="results-counter" id="resultsCounter">
+                    <span>Showing <strong id="resultRange">1–<?= (int)min(20, $totalCount) ?></strong> of <strong id="resultCount"><?= (int)$totalCount ?></strong> <?= $breadcrumbLabel ?></span>
+                    <button class="btn btn-sm btn-outline-secondary" id="btnClearAll" onclick="clearFilters()" style="display:none;">Clear All Filters</button>
+                </div>
+                <div class="active-filters" id="activeFilters"></div>
+                <div id="listingsContainer">
+                    <div class="text-center py-5"><i class="fa-solid fa-circle-notch fa-spin fa-2x text-primary"></i><p class="mt-2 text-muted">Loading listings...</p></div>
+                </div>
+                <div id="pagination" class="pagination-wrapper"></div>
+                <div id="nearestSection"></div>
+            </div>
+
+            <!-- Sidebar -->
+            <aside class="col-lg-4">
+                <div class="card aside-card mb-4">
+                    <div class="card-body">
+                        <h3 class="text-center">Connect with our expert</h3>
+                        <div class="d-flex flex-column align-items-center mb-3">
+                            <div class="consultant-avatar mb-2"><i class="fa-solid fa-user-tie"></i></div>
+                            <div class="text-center">
+                                <h4 class="h6 mb-0">Hafiz</h4>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column align-items-center mb-3 small">
+                            <span class="mb-1"><i class="fa-solid fa-phone text-primary me-1"></i> <a href="tel:+919962200015" class="text-decoration-none">+91-9962200015</a></span>
+                            <span class="mb-1"><i class="fa-solid fa-envelope text-primary me-1"></i> <a href="mailto:hafiz@falconlease.com" class="text-decoration-none">hafiz@falconlease.com</a></span>
+                            <span><i class="fa-solid fa-envelope text-primary me-1"></i> <a href="mailto:sales@falconlease.com" class="text-decoration-none">sales@falconlease.com</a></span>
+                        </div>
+                        <hr>
+                        <p class="small fw-semibold text-center">Move into your ideal workspace — stress-free</p>
+                        <div class="text-center">
+                            <ul class="list-unstyled small mb-0 d-inline-block text-start">
+                                <li class="mb-2 d-flex align-items-center"><i class="fa-solid fa-file-contract text-primary me-2" style="width: 20px; text-align: center;"></i><span>Flexible Leasing Solutions</span></li>
+                                <li class="mb-2 d-flex align-items-center"><i class="fa-solid fa-building text-primary me-2" style="width: 20px; text-align: center;"></i><span>Premium Office Locations</span></li>
+                                <li class="mb-2 d-flex align-items-center"><i class="fa-solid fa-user-tie text-primary me-2" style="width: 20px; text-align: center;"></i><span>Dedicated Workspace Experts</span></li>
+                                <li class="mb-2 d-flex align-items-center"><i class="fa-solid fa-city text-primary me-2" style="width: 20px; text-align: center;"></i><span>Enterprise Ready Offices</span></li>
+                            </ul>
+                        </div>
+                        <button class="btn btn-primary w-100" id="btnRequestCallback"><i class="fa-solid fa-phone"></i> Request Callback</button>
+                    </div>
+                </div>
+                <!-- <div class="card aside-card">
+                    <div class="card-body">
+                        <h3>Why Choose Us</h3>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Verified Listings</li>
+                            <li class="mb-2"><i class="fa-solid fa-star text-warning me-2"></i> Zero Brokerage</li>
+                            <li class="mb-2"><i class="fa-solid fa-headset text-info me-2"></i> Expert Support</li>
+                            <li class="mb-2"><i class="fa-solid fa-bolt text-danger me-2"></i> Fast Turnaround</li>
+                        </ul>
+                    </div>
+                </div> -->
+            </aside>
+        </div>
+
+    </div>
+
+    <?php include __DIR__ . '/includes/footer.php'; ?>
+
+
+    <!-- ===== CALLBACK MODAL ===== -->
+    <div class="modal fade" id="callbackModal" tabindex="-1" aria-labelledby="callbackModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <h3 class="modal-title fw-bold fs-5" id="callbackModalLabel">Request a Callback</h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">Our workspace expert will call you back shortly.</p>
+                    <form id="callbackForm" onsubmit="handleCallbackForm(event)">
+                        <div class="mb-3">
+                            <label for="cbName" class="form-label fw-semibold small">Full Name *</label>
+                            <input type="text" class="form-control" id="cbName" name="name" required data-rules="required|max:120" placeholder="Enter your name">
+                        </div>
+                        <div class="mb-3">
+                            <label for="cbPhone" class="form-label fw-semibold small">Phone Number *</label>
+                            <input type="tel" class="form-control" id="cbPhone" name="phone" required data-rules="required|phone" maxlength="10" placeholder="10-digit mobile number">
+                        </div>
+                        <div class="mb-3">
+                            <label for="cbMessage" class="form-label fw-semibold small">Message (optional)</label>
+                            <textarea class="form-control" id="cbMessage" name="message" data-rules="max:1000" rows="3" placeholder="Tell us about your requirement..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100" id="cbSubmitBtn">Request Callback</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== GET BEST PRICE MODAL ===== -->
+    <div class="modal fade" id="getPriceModal" tabindex="-1" aria-labelledby="getPriceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0 position-absolute top-0 end-0 z-3 bg-transparent" style="border: none !important;">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="row g-0 gp-modal-row">
+                        <div class="col-md-5 gp-modal-left">
+                            <div class="gp-modal-left-inner">
+                                <div class="gp-modal-logo">
+                                    <img src="assets/images/final-logo.png" alt="CubeSpace">
+                                </div>
+                                <!--<div class="gp-left-badge"><i class="fa-regular fa-building"></i> Workspace Expert</div>-->
+                                <h4 class="gp-left-heading" style="text-align: left;">
+    <i class="fa-regular fa-comment-dots"></i>
+    Connect with our workspace expert
+</h4>
+                                <!--<h4 class="gp-left-sub gp-left-heading"><i class="fa-regular fa-comment-dots gp-left-heading"></i> Connect With Our Workspace Experts</h4>-->
+                                <!-- <div class="gp-left-features">
+                                    <span><span class="feat-icon"><i class="fa-solid fa-check"></i></span> Zero brokerage fee</span>
+                                    <span><span class="feat-icon"><i class="fa-solid fa-check"></i></span> 100% verified spaces</span>
+                                    <span><span class="feat-icon"><i class="fa-solid fa-check"></i></span> Best price guaranteed</span>
+                                </div> -->
+                            </div>
+                        </div>
+                        <div class="col-md-7 gp-modal-right">
+                            <form id="getPriceForm" onsubmit="handleGetPriceForm(event)">
+                                <input type="hidden" name="office_id" id="gpOfficeId" value="">
+                                <input type="hidden" name="listing_code" id="gpListingCode" value="">
+                                <input type="hidden" name="source" value="listing_card">
+                                <div class="mb-3">
+                                    <label for="gpWorkspaceName" class="form-label fw-semibold small">Workspace Name</label>
+                                    <input type="text" class="form-control" id="gpWorkspaceName" name="workspace_name" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="gpName" class="form-label fw-semibold small">Full Name *</label>
+                                    <input type="text" class="form-control" id="gpName" name="name" required data-rules="required|max:120" placeholder="Enter your name">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="gpPhone" class="form-label fw-semibold small">Phone *</label>
+                                    <input type="tel" class="form-control" id="gpPhone" name="phone" required data-rules="required|phone" maxlength="10" placeholder="10-digit mobile number">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="gpEmail" class="form-label fw-semibold small">Email</label>
+                                    <input type="email" class="form-control" id="gpEmail" name="email" data-rules="email|max:180" placeholder="email@example.com">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="gpMessage" class="form-label fw-semibold small">Message</label>
+                                    <textarea class="form-control" id="gpMessage" name="message" data-rules="max:1000" rows="3" placeholder="Tell us about your requirements..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" id="gpSubmitBtn"><i class="fa-solid fa-paper-plane"></i> Get Best Price</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TOAST CONTAINER ===== -->
+    <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- ===== SCRIPTS ===== -->
+    <script src="assets/js/site-nav.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+    </script>
+    <script>
+        var pageType = 'offices';
+        var apiEndpoint = '/api/offices_api.php';
+    </script>
+    <script src="assets/js/api-client.js?v=2"></script>
+    <script>
+        // ============================================================
+        //  GLOBALS
+        // ============================================================
+        let currentPage = 1;
+
+
+        // ============================================================
+        //  UTILITY FUNCTIONS
+        // ============================================================
+        function escHtml(str) {
+            if (!str) return '';
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        function numberFormat(n) {
+            return Number(n).toLocaleString('en-IN');
+        }
+
+        function ucfirst(str) {
+            if (!str) return '';
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        function toggleDescription(id) {
+            const p = document.getElementById(id);
+            if (!p) return;
+            const btn = p.nextElementSibling;
+            const expanded = p.classList.toggle('expanded');
+            if (btn && btn.classList.contains('description-toggle')) {
+                btn.classList.toggle('expanded');
+                btn.innerHTML = expanded ? 'View less <i class="fa-solid fa-chevron-up"></i>' : 'View more <i class="fa-solid fa-chevron-down"></i>';
+            }
+        }
+
+        function navigateTo(url) {
+            if (window.cubeNavigate) {
+                cubeNavigate(url);
+            } else {
+                window.location.href = url;
+            }
+        }
+
+        function apiUrl(path) {
+            if (window.CubeBase && typeof CubeBase.url === 'function') {
+                return CubeBase.url(path);
+            }
+            var meta = document.querySelector('meta[name="app-base"]');
+            var base = meta ? (meta.getAttribute('content') || '').replace(/\/$/, '') : '';
+            if (path.charAt(0) === '/') {
+                return base + path;
+            }
+            return base + '/' + path;
+        }
+
+        function imgErrorToPlaceholder(img) {
+            const parent = img.parentElement;
+            if (parent) {
+                parent.innerHTML = '<div class="placeholder-img"><i class="fa-solid fa-building"></i></div>';
+            }
+        }
+
+        // ============================================================
+        //  TOAST
+        // ============================================================
+        function showToast(msg, type) {
+            const container = document.getElementById('toastContainer');
+            const t = document.createElement('div');
+            t.className = 'toast toast-' + (type || 'error');
+            t.textContent = msg;
+            container.appendChild(t);
+            setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 4000);
+        }
+
+        // ============================================================
+        //  ADMIN LOGIN
+        // ============================================================
+        // ============================================================
+        //  FILTERS
+        // ============================================================
+        function getFilters() {
+            return {
+                city: document.getElementById('filterCity').value,
+                locality: document.getElementById('filterLocality').value,
+                product: document.getElementById('filterProduct').value,
+                page: currentPage
+            };
+        }
+
+        function getSqftFilter() {
+            const val = document.getElementById('filterSqft').value;
+            if (!val) return {};
+            const parts = val.split('-');
+            if (parts.length === 2) {
+                if (parts[1] === '') return { min_sqft: parseInt(parts[0]) };
+                return { min_sqft: parseInt(parts[0]), max_sqft: parseInt(parts[1]) };
+            }
+            return {};
+        }
+
+        function buildQueryParams() {
+            const f = getFilters();
+            const sqft = getSqftFilter();
+            const params = {
+                action: 'list',
+                page: f.page,
+                limit: '20'
+            };
+            if (f.city) params.city = f.city;
+            if (f.locality) params.area = f.locality;
+            if (f.product) params.listing_type = f.product;
+            if (sqft.min_sqft !== undefined) params.min_sqft = sqft.min_sqft;
+            if (sqft.max_sqft !== undefined) params.max_sqft = sqft.max_sqft;
+            params._t = Date.now();
+            return params;
+        }
+
+        function buildQueryString() {
+            return new URLSearchParams(buildQueryParams()).toString();
+        }
+
+        // ============================================================
+        //  ACTIVE FILTERS UI
+        // ============================================================
+        function updateActiveFilters() {
+            const container = document.getElementById('activeFilters');
+            const clearBtn = document.getElementById('btnClearAll');
+            const f = getFilters();
+            const filters = [];
+
+            if (f.product) {
+                const prodEl = document.getElementById('filterProduct');
+                const text = prodEl.options[prodEl.selectedIndex]?.text || f.product;
+                filters.push({ key: 'product', label: text });
+            }
+            if (f.city) {
+                const cityEl = document.getElementById('filterCity');
+                const text = cityEl.options[cityEl.selectedIndex]?.text || f.city;
+                filters.push({ key: 'city', label: text });
+            }
+            if (f.locality) {
+                const locEl = document.getElementById('filterLocality');
+                const text = locEl.options[locEl.selectedIndex]?.text || f.locality;
+                filters.push({ key: 'locality', label: text });
+            }
+            const sqftVal = document.getElementById('filterSqft').value;
+            if (sqftVal) {
+                const sqftEl = document.getElementById('filterSqft');
+                const text = sqftEl.options[sqftEl.selectedIndex]?.text || sqftVal;
+                filters.push({ key: 'sqft', label: text + ' sq.ft' });
+            }
+
+            if (filters.length === 0) {
+                container.innerHTML = '';
+                container.classList.remove('has-filters');
+                clearBtn.style.display = 'none';
+                return;
+            }
+
+            container.classList.add('has-filters');
+            clearBtn.style.display = 'inline';
+            let html = '';
+            filters.forEach(fil => {
+                html += '<span class="filter-tag"><span>' + escHtml(fil.label) + '</span><button onclick="removeFilter(\'' + fil
+                    .key +
+                    '\')" aria-label="Remove ' + fil.key + ' filter">&times;</button></span>';
+            });
+            container.innerHTML = html;
+        }
+
+        function removeFilter(key) {
+            if (key === 'product') document.getElementById('filterProduct').value = 'commercial';
+            else if (key === 'city') document.getElementById('filterCity').value = '';
+            else if (key === 'locality') { document.getElementById('filterLocality').value = '';
+                updateChipsFromDropdown(); } else if (key === 'sqft') document.getElementById('filterSqft').value = '';
+            currentPage = 1;
+            loadListings();
+        }
+
+        function clearFilters() {
+            document.getElementById('filterProduct').value = 'commercial';
+            document.getElementById('filterCity').value = '';
+            document.getElementById('filterLocality').value = '';
+            document.getElementById('filterSqft').value = '';
+            document.querySelectorAll('.locality-chip').forEach(c => c.classList.remove('active'));
+            const allChip = document.querySelector('.locality-chip[data-area=""]');
+            if (allChip) allChip.classList.add('active');
+            currentPage = 1;
+            loadListings();
+        }
+
+        function updateChipsFromDropdown() {
+            const locVal = document.getElementById('filterLocality').value;
+            document.querySelectorAll('.locality-chip').forEach(c => {
+                c.classList.toggle('active', c.dataset.area === locVal);
+                c.setAttribute('aria-selected', c.dataset.area === locVal ? 'true' : 'false');
+            });
+            if (!locVal) {
+                const allChip = document.querySelector('.locality-chip[data-area=""]');
+                if (allChip) { allChip.classList.add('active');
+                    allChip.setAttribute('aria-selected', 'true'); }
+            }
+        }
+
+        // ============================================================
+        //  PAGINATION
+        // ============================================================
+        function goToPage(p) {
+            currentPage = p;
+            const topOffset = document.querySelector('.filter-bar')?.offsetTop - 140 || 0;
+            window.scrollTo({ top: topOffset, behavior: 'smooth' });
+            loadListings();
+        }
+
+        // ============================================================
+        //  CAROUSEL
+        // ============================================================
+        function scrollCarousel(event, id, dir) {
+            if (event) { event.preventDefault();
+                event.stopPropagation(); }
+            const el = document.getElementById(id);
+            if (!el) return;
+            const count = parseInt(el.dataset.count);
+            const w = el.clientWidth;
+            if (w === 0) return;
+            const current = Math.round(el.scrollLeft / w);
+            let next = current + dir;
+            if (next < 0) { el.scrollTo({ left: w * count, behavior: 'smooth' });
+                updateCarouselDots(el, count); return; }
+            if (next > count) { el.scrollTo({ left: w * 1, behavior: 'smooth' });
+                updateCarouselDots(el, 1); return; }
+            el.scrollTo({ left: w * next, behavior: 'smooth' });
+            updateCarouselDots(el, next);
+        }
+
+        function goCarouselSlide(event, id, index) {
+            if (event) { event.preventDefault();
+                event.stopPropagation(); }
+            const el = document.getElementById(id);
+            if (!el) return;
+            const w = el.clientWidth;
+            if (w === 0) return;
+            el.scrollTo({ left: w * (index + 1), behavior: 'smooth' });
+            updateCarouselDots(el, index + 1);
+        }
+
+        function updateCarouselDots(el, idx) {
+            const dotsId = 'dots-' + el.id;
+            const dots = document.getElementById(dotsId);
+            if (!dots) return;
+            const count = parseInt(el.dataset.count);
+            let realIdx = Math.max(0, Math.min(count - 1, idx - 1));
+            dots.querySelectorAll('button').forEach((s, i) => {
+                s.classList.toggle('active', i === realIdx);
+                s.setAttribute('aria-selected', i === realIdx ? 'true' : 'false');
+            });
+        }
+
+        // Init carousels on load and resize
+        function initCarousels(container) {
+            const els = (container || document).querySelectorAll('.card-carousel');
+            els.forEach(el => {
+                if (parseInt(el.dataset.count) > 1) {
+                    el.scrollLeft = el.clientWidth || 0;
+                    // Update dots after a tick
+                    setTimeout(() => {
+                        updateCarouselDots(el, 1);
+                    }, 50);
+                }
+                // Attach scroll listener for dot updates
+                el.removeEventListener('scroll', carouselScrollHandler);
+                el.addEventListener('scroll', carouselScrollHandler);
+            });
+        }
+
+        function carouselScrollHandler(e) {
+            const el = e.target;
+            if (!el || !el.id) return;
+            const dotsId = 'dots-' + el.id;
+            const dots = document.getElementById(dotsId);
+            if (!dots) return;
+            const w = el.clientWidth;
+            if (w === 0) return;
+            const count = parseInt(el.dataset.count);
+            const idx = Math.round(el.scrollLeft / w) - 1;
+            const realIdx = Math.max(0, Math.min(count - 1, idx));
+            dots.querySelectorAll('button').forEach((s, i) => {
+                s.classList.toggle('active', i === realIdx);
+                s.setAttribute('aria-selected', i === realIdx ? 'true' : 'false');
+            });
+        }
+
+        // ============================================================
+        //  RENDER FUNCTIONS
+        // ============================================================
+        function renderCards(offices, container) {
+            let html = '<div class="listing-cards">';
+            offices.forEach((o) => {
+                const carouselId = 'carousel-' + o.id;
+
+                let carouselHtml = '';
+                if (o.images_arr && o.images_arr.length) {
+                    const lastIdx = o.images_arr.length - 1;
+                    carouselHtml = '<div class="card-carousel" id="' + carouselId + '" data-count="' + o.images_arr
+                        .length + '" role="region" aria-label="Image carousel for ' + escHtml(o.title) + '">';
+                    carouselHtml += '<div class="carousel-slide"><img src="' + escHtml(o.images_arr[lastIdx]) +
+                        '" alt="' + escHtml(o.title) + '" loading="lazy" onerror="imgErrorToPlaceholder(this)"></div>';
+                    o.images_arr.forEach((url, imgIdx) => {
+                        carouselHtml += '<div class="carousel-slide"><img src="' + escHtml(url) +
+                            '" alt="' + escHtml(o.title) + '" loading="lazy" onerror="imgErrorToPlaceholder(this)"></div>';
+                    });
+                    carouselHtml += '<div class="carousel-slide"><img src="' + escHtml(o.images_arr[0]) +
+                        '" alt="' + escHtml(o.title) + '" loading="lazy" onerror="imgErrorToPlaceholder(this)"></div>';
+                    carouselHtml += '</div>';
+
+                    if (o.images_arr.length > 1) {
+                        carouselHtml +=
+                            '<button class="carousel-btn carousel-prev" aria-label="Previous image" onclick="scrollCarousel(event, \'' +
+                            carouselId + '\', -1)"><i class="fa-solid fa-chevron-left"></i></button>';
+                        carouselHtml +=
+                            '<button class="carousel-btn carousel-next" aria-label="Next image" onclick="scrollCarousel(event, \'' +
+                            carouselId + '\', 1)"><i class="fa-solid fa-chevron-right"></i></button>';
+                        carouselHtml += '<div class="carousel-dots" id="dots-' + carouselId +
+                            '" role="tablist" aria-label="Image navigation">';
+                        for (let d = 0; d < o.images_arr.length; d++) {
+                            carouselHtml +=
+                                '<button class="' + (d === 0 ? 'active' : '') +
+                                '" role="tab" aria-selected="' + (d === 0 ? 'true' : 'false') +
+                                '" aria-label="Go to image ' + (d + 1) +
+                                '" onclick="event.stopPropagation();goCarouselSlide(event, \'' + carouselId +
+                                '\', ' + d + ')"></button>';
+                        }
+                        carouselHtml += '</div>';
+                    }
+                } else {
+                    carouselHtml = '<div class="placeholder-img"><i class="fa-solid fa-building"></i></div>';
+                }
+
+                const typeBadge = o.listing_type_db ?
+                    `<span class="badge-type position-absolute top-0 end-0 m-2" style="background: ${o.listing_type_db === 'furnished' ? '#0d4ab4' : '#6b7280'}; color: #fff; font-size: 0.65rem; font-weight: 600; padding: 2px 10px; border-radius: 4px; z-index: 5;">${o.listing_type_db === 'furnished' ? 'Furnished' : 'Unfurnished'}</span>` :
+                    '';
+                const imgCount = o.images_arr && o.images_arr.length > 1 ?
+                    `<div class="img-count"><i class="fa-solid fa-image"></i> ${o.images_arr.length}</div>` :
+                    '';
+
+                const address = o.address || o.area || o.city || '';
+
+                let statsHtml = '';
+                const statItems = [
+                    { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Available ' + o.available_sqft + ' sqft' : null },
+                    { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + o.min_inventory : null },
+                ];
+                statItems.forEach(s => {
+                    if (s.value) {
+                        statsHtml +=
+                            `<span class="stat-item"><i class="fa-solid ${s.icon}"></i> <span class="stat-value">${s.value}</span></span>`;
+                    }
+                });
+                if (o.inventory_type) {
+                    const isReady = o.inventory_type === 'Ready to move in';
+                    statsHtml += `<span class="stat-item inv-badge ${isReady ? 'inv-ready' : 'inv-processing'}"><i class="fa-solid ${isReady ? 'fa-circle-check' : 'fa-clock'}"></i> <span class="stat-value">${isReady ? 'Ready to move in' : 'Processing'}</span></span>`;
+                }
+
+                const period = o.office_space_type === 'lease' ? 'seat / year' : 'seat / month';
+                const price = o.price != null ?
+                    `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span> <span class="period">${period}</span>` :
+                    `<span class="contact-price">Contact for Price</span>`;
+
+                const descId = 'desc-' + o.id;
+                const descHtml = o.description ? `
+                    <div class="description-wrapper">
+                        <p class="description-text" id="${descId}">${escHtml(o.description)}</p>
+                        <button class="description-toggle" onclick="toggleDescription('${descId}')">View more <i class="fa-solid fa-chevron-down"></i></button>
+                    </div>` : '';
+
+                html += `
+                        <div class="card office-card flex-lg-row" data-slug="${escHtml(o.slug)}" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
+                            <div class="card-img-top office-card-img">
+                                ${carouselHtml}
+                                ${typeBadge}
+                                ${imgCount}
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="property-name">${escHtml(o.title)}</h5>
+                                <p class="property-address"><i class="fa-solid fa-location-dot"></i> <span>${escHtml(address)}</span></p>
+                                ${descHtml}
+                                ${statsHtml ? '<div class="stats-row">' + statsHtml + '</div>' : ''}
+                                <div class="card-footer-row mt-auto">
+                                    <div class="card-price">
+                                        <span class="price-label" style="font-weight:bold; color:#212529;">
+    Quoted Price 
+    <span style="font-weight:normal; text-transform:none;">(Negotiable)</span>
+</span>
+                                        ${price}
+                                    </div>
+                                    <div class="card-actions">
+                                        <span class="btn btn-get-price" role="button" tabindex="0" data-office-id="${o.id}" data-listing-code="${escHtml(o.listing_code)}" onclick="event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')" onkeydown="if(event.key==='Enter'){event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')}">Get Best Price</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+
+            initCarousels(container);
+
+            container.querySelectorAll('.office-card').forEach(card => {
+                card.addEventListener('click', function(e) {
+                    if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
+                        .target.closest('.btn-get-price') || e.target.closest('.description-toggle')) return;
+                    navigateTo('office_detail.php?slug=' + this.dataset.slug);
+                });
+                card.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
+                            .target.closest('.btn-get-price')) return;
+                        navigateTo('office_detail.php?slug=' + this.dataset.slug);
+                    }
+                });
+            });
+        }
+
+        function renderPagination(total, page, limit) {
+            const el = document.getElementById('pagination');
+            const totalPages = Math.ceil(total / limit);
+            if (totalPages <= 1) { el.innerHTML = ''; return; }
+            let html = '<nav aria-label="Pagination"><ul class="pagination pagination-sm justify-content-center mb-0">';
+            html +=
+                `<li class="page-item ${page <= 1 ? 'disabled' : ''}"><button class="page-link" onclick="goToPage(${page - 1})" aria-label="Previous"><i class="fa-solid fa-chevron-left"></i></button></li>`;
+            const range = 2;
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= page - range && i <= page + range)) {
+                    html +=
+                        `<li class="page-item ${i === page ? 'active' : ''}"><button class="page-link" onclick="goToPage(${i})" aria-label="Page ${i}" ${i === page ? 'aria-current="page"' : ''}>${i}</button></li>`;
+                } else if (i === page - range - 1 || i === page + range + 1) {
+                    html += `<li class="page-item disabled"><span class="page-link">…</span></li>`;
+                }
+            }
+            html +=
+                `<li class="page-item ${page >= totalPages ? 'disabled' : ''}"><button class="page-link" onclick="goToPage(${page + 1})" aria-label="Next"><i class="fa-solid fa-chevron-right"></i></button></li>`;
+            html += '</ul></nav>';
+            el.innerHTML = html;
+        }
+
+        function renderNearest(nearest) {
+            const el = document.getElementById('nearestSection');
+            if (!nearest || !nearest.length) {
+                el.innerHTML = '';
+                return;
+            }
+
+            let html = `
+                        <div class="nearest-section">
+                            <h3><i class="fa-solid fa-location-dot"></i> Nearest Workspaces</h3>
+                            <p class="nearest-subtitle"><i class="fa-regular fa-compass"></i> Spaces closest to your selected location</p>
+                            <div class="nearest-grid">
+                    `;
+
+            nearest.forEach(o => {
+                const carouselId = 'ncar-' + o.id;
+                let carouselHtml = '';
+                let nTypeBadge = '';
+                let imgCountHtml = '';
+
+                if (o.images_arr && o.images_arr.length) {
+                    const lastIdx = o.images_arr.length - 1;
+                    carouselHtml =
+                        `<div class="card-carousel" id="${carouselId}" data-count="${o.images_arr.length}" role="region" aria-label="Image carousel for ${escHtml(o.title)}">`;
+                    carouselHtml +=
+                        `<div class="carousel-slide"><img src="${escHtml(o.images_arr[lastIdx])}" alt="${escHtml(o.title)}" loading="lazy" onerror="imgErrorToPlaceholder(this)"></div>`;
+                    o.images_arr.forEach((url, idx) => {
+                        carouselHtml +=
+                            `<div class="carousel-slide"><img src="${escHtml(url)}" alt="${escHtml(o.title)}" loading="lazy" onerror="imgErrorToPlaceholder(this)"></div>`;
+                    });
+                    carouselHtml +=
+                        `<div class="carousel-slide"><img src="${escHtml(o.images_arr[0])}" alt="${escHtml(o.title)}" loading="lazy" onerror="imgErrorToPlaceholder(this)"></div>`;
+                    carouselHtml += '</div>';
+
+                    if (o.images_arr.length > 1) {
+                        carouselHtml +=
+                            `<button class="carousel-btn carousel-prev" aria-label="Previous image" onclick="scrollCarousel(event, '${carouselId}', -1)"><i class="fa-solid fa-chevron-left"></i></button>`;
+                        carouselHtml +=
+                            `<button class="carousel-btn carousel-next" aria-label="Next image" onclick="scrollCarousel(event, '${carouselId}', 1)"><i class="fa-solid fa-chevron-right"></i></button>`;
+                        carouselHtml +=
+                            `<div class="carousel-dots" id="dots-${carouselId}" role="tablist" aria-label="Image navigation">`;
+                        for (let d = 0; d < o.images_arr.length; d++) {
+                            carouselHtml +=
+                                `<button class="${d === 0 ? 'active' : ''}" role="tab" aria-selected="${d === 0 ? 'true' : 'false'}" aria-label="Go to image ${d + 1}" onclick="event.stopPropagation();goCarouselSlide(event, '${carouselId}', ${d})"></button>`;
+                        }
+                        carouselHtml += '</div>';
+                    }
+                    nTypeBadge = o.listing_type_db ?
+                        `<span class="badge-type position-absolute top-0 end-0 m-2" style="background: ${o.listing_type_db === 'furnished' ? '#0d4ab4' : '#6b7280'}; color: #fff; font-size: 0.65rem; font-weight: 600; padding: 2px 10px; border-radius: 4px; z-index: 5;">${o.listing_type_db === 'furnished' ? 'Furnished' : 'Unfurnished'}</span>` :
+                        '';
+                    imgCountHtml = o.images_arr.length > 1 ?
+                        `<div class="img-count"><i class="fa-solid fa-image"></i> ${o.images_arr.length}</div>` :
+                        '';
+                } else {
+                    carouselHtml = '<div class="placeholder-img"><i class="fa-solid fa-building"></i></div>';
+                }
+
+                const distanceHtml = o.distance_km ?
+                    `<span class="nearest-dist-badge"><i class="fa-solid fa-location-arrow"></i> ${parseFloat(o.distance_km).toFixed(1)} km away</span>` :
+                    '';
+
+                const address = o.address || o.area || o.city || '';
+                let statsHtml = '';
+                const statItems = [
+                    { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Available ' + o.available_sqft + ' sqft' : null },
+                    { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + o.min_inventory : null },
+                ];
+                statItems.forEach(s => {
+                    if (s.value) {
+                        statsHtml +=
+                            `<span class="stat-item"><i class="fa-solid ${s.icon}"></i> <span class="stat-value">${s.value}</span></span>`;
+                    }
+                });
+                if (o.inventory_type) {
+                    const isReady = o.inventory_type === 'Ready to move in';
+                    statsHtml += `<span class="stat-item inv-badge ${isReady ? 'inv-ready' : 'inv-processing'}"><i class="fa-solid ${isReady ? 'fa-circle-check' : 'fa-clock'}"></i> <span class="stat-value">${isReady ? 'Ready to move in' : 'Processing'}</span></span>`;
+                }
+
+                const period = o.office_space_type === 'lease' ? ' seat / year' : 'seat / month';
+                const price = o.price != null ?
+                    `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span> <span class="period">${period}</span>` :
+                    `<span class="contact-price">Contact for Price</span>`;
+
+                const descId = 'ndesc-' + o.id;
+                const descHtml = o.description ? `
+                    <div class="description-wrapper">
+                        <p class="description-text" id="${descId}">${escHtml(o.description)}</p>
+                        <button class="description-toggle" onclick="toggleDescription('${descId}')">View more <i class="fa-solid fa-chevron-down"></i></button>
+                    </div>` : '';
+
+                html += `
+                                <div class="card office-card" data-slug="${escHtml(o.slug)}" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
+                                    <div class="card-img-top office-card-img position-relative overflow-hidden">
+                                        <span class="badge-nearby"><i class="fa-regular fa-compass"></i> Nearby</span>
+                                        ${carouselHtml}
+                                        ${nTypeBadge}
+                                        ${imgCountHtml}
+                                    </div>
+                                    <div class="card-body d-flex flex-column">
+                                        ${distanceHtml}
+                                        <h5 class="property-name">${escHtml(o.title)}</h5>
+                                        <p class="property-address"><i class="fa-solid fa-location-dot"></i> <span>${escHtml(address)}</span></p>
+                                        ${descHtml}
+                                        ${statsHtml ? '<div class="stats-row">' + statsHtml + '</div>' : ''}
+                                        <div class="card-footer-row mt-auto">
+                                            <div class="card-price">
+                                                <span class="price-label">Quoted price</span>
+                                                ${price}
+                                            </div>
+                                            <div class="card-actions">
+                                                <span class="btn btn-get-price" role="button" tabindex="0" data-office-id="${o.id}" data-listing-code="${escHtml(o.listing_code)}" onclick="event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')" onkeydown="if(event.key==='Enter'){event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')}">Get Best Price</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+            });
+
+            html += '</div></div>';
+            el.innerHTML = html;
+
+            // Init nearest carousels
+            initCarousels(el);
+
+            // Click handlers for nearest cards
+            el.querySelectorAll('.office-card').forEach(card => {
+                card.addEventListener('click', function(e) {
+                    if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
+                        .target.closest('.btn-get-price') || e.target.closest('.description-toggle')) return;
+                    navigateTo('office_detail.php?slug=' + this.dataset.slug);
+                });
+                card.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
+                            .target.closest('.btn-get-price')) return;
+                        navigateTo('office_detail.php?slug=' + this.dataset.slug);
+                    }
+                });
+            });
+        }
+
+        // ============================================================
+        //  LOAD LISTINGS
+        // ============================================================
+        function loadListings() {
+            const container = document.getElementById('listingsContainer');
+            const pagination = document.getElementById('pagination');
+            const skeletonHtml = Array(4).fill(
+                    '<div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton-body"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-line stats"></div></div></div>'
+                    )
+                .join('');
+            container.innerHTML = '<div class="listing-cards">' + skeletonHtml + '</div>';
+            pagination.innerHTML = '';
+
+            const params = buildQueryParams();
+            const qs = buildQueryString();
+            const request = fetch(apiUrl(apiEndpoint + '?' + qs), { cache: 'no-store', credentials: 'same-origin', headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' } }).then(r => r.json());
+
+            request.then(data => {
+                    const cityEl = document.getElementById('filterCity');
+                    document.getElementById('pageCity').textContent = cityEl.value ? ucfirst(cityEl.value) :
+                        'Chennai';
+
+                    const start = data.total === 0 ? 0 : (data.page - 1) * data.limit + 1;
+                    const end = Math.min(data.page * data.limit, data.total);
+                    document.getElementById('resultRange').textContent = data.total > 0 ? start + '\u2013' + end :
+                        '0';
+                    document.getElementById('resultCount').textContent = data.total;
+
+                    updateActiveFilters();
+
+                    if (data.total === 0 || data.offices.length === 0) {
+                        container.innerHTML =
+                            '<div class="empty-state"><i class="fa-solid fa-building"></i><h3>No offices found</h3><p>Try adjusting your filters or search terms.</p><button class="btn-callback" style="margin-top:16px;width:auto;padding:0 24px;" onclick="clearFilters()">Clear Filters</button></div>';
+                        return;
+                    }
+                    renderCards(data.offices, container);
+                    renderPagination(data.total, data.page, data.limit);
+                    renderNearest(data.nearest);
+                })
+                .catch(err => {
+                    console.error('offices load error:', err);
+                    container.innerHTML =
+                        '<div class="empty-state"><i class="fa-solid fa-circle-exclamation"></i><h3>Failed to load</h3><p>Please try again later.</p></div>';
+                    showToast('Failed to load listings. Please try again.', 'error');
+                });
+        }
+
+        // ============================================================
+        //  CALLBACK FORM
+        // ============================================================
+        const callbackModalEl = document.getElementById('callbackModal');
+        const btnCallback = document.getElementById('btnRequestCallback');
+        const callbackModal = callbackModalEl ? new bootstrap.Modal(callbackModalEl) : null;
+
+        if (btnCallback && callbackModal) {
+            btnCallback.addEventListener('click', function(e) {
+                e.preventDefault();
+                callbackModal.show();
+            });
+        }
+
+        function handleCallbackForm(event) {
+            event.preventDefault();
+            if (window.CSForms && !CSForms.validate(event.target)) {
+                return;
+            }
+            const form = event.target;
+            const btn = document.getElementById('cbSubmitBtn');
+            const formData = new FormData(form);
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sending...';
+
+            (window.CubeAPI ? CubeAPI.postForm('/api/contact.php', formData) : fetch(apiUrl('/api/contact.php'), { method: 'POST',
+                    body: formData, credentials: 'same-origin' }).then(res => res.json()))
+                .then(data => {
+                    if (data.success) {
+                        showAlertModal('We will call you back shortly!', 'success');
+                        form.reset();
+                        if (callbackModal) callbackModal.hide();
+                    } else {
+                        showToast('Failed to send. Please try again.', 'error');
+                    }
+                })
+                .catch((err) => {
+                    showToast(err && err.message ? err.message : 'Network error. Please try again.', 'error');
+                    console.error('Callback form error:', err);
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Request Callback';
+                });
+        }
+
+        // ============================================================
+        //  GET BEST PRICE MODAL
+        // ============================================================
+        const getPriceModalEl = document.getElementById('getPriceModal');
+        const getPriceModal = getPriceModalEl ? new bootstrap.Modal(getPriceModalEl) : null;
+
+        function openGetPriceModal(officeId, listingCode, workspaceName) {
+            document.getElementById('gpOfficeId').value = officeId;
+            document.getElementById('gpListingCode').value = listingCode || '';
+            document.getElementById('gpWorkspaceName').value = workspaceName ? (listingCode ? workspaceName + ' - ' + listingCode : workspaceName) : '';
+            if (getPriceModal) getPriceModal.show();
+        }
+
+        function handleGetPriceForm(event) {
+            event.preventDefault();
+            if (window.CSForms && !CSForms.validate(event.target)) {
+                return;
+            }
+            const form = event.target;
+            const btn = document.getElementById('gpSubmitBtn');
+            const formData = new FormData(form);
+
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sending...';
+            btn.disabled = true;
+
+            (window.CubeAPI ? CubeAPI.postForm('/api/contact.php', formData) : fetch(apiUrl('/api/contact.php'), { method: 'POST',
+                    body: formData, credentials: 'same-origin' }).then(res => res.json()))
+                .then(data => {
+                    if (data.success) {
+                        form.reset();
+                        if (getPriceModal) getPriceModal.hide();
+                        showAlertModal('Thank you! Your enquiry has been submitted successfully. Our workspace expert will get back to you with the best price shortly.', 'success');
+                    } else {
+                        btn.innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i> Failed - Try Again';
+                        showToast(data.message || 'Failed to send enquiry.', 'error');
+                        setTimeout(() => {
+                            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Get Best Price';
+                            btn.disabled = false;
+                        }, 3000);
+                    }
+                })
+                .catch((err) => {
+                    btn.innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i> Error - Try Again';
+                    showToast(err && err.message ? err.message : 'Network error. Please try again.', 'error');
+                    console.error('Get price form error:', err);
+                    setTimeout(() => {
+                        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Get Best Price';
+                        btn.disabled = false;
+                    }, 3000);
+                });
+        }
+
+        // ============================================================
+        //  EVENT BINDINGS
+        // ============================================================
+        document.querySelectorAll('.filter-select').forEach(el => {
+            el.addEventListener('change', () => {
+                if (el.id === 'filterProduct' && el.value === 'managed') {
+                    el.value = 'commercial';
+                    navigateTo('managed_offices.php');
+                    return;
+                }
+                currentPage = 1;
+                if (el.id === 'filterLocality') updateChipsFromDropdown();
+                loadListings();
+            });
+        });
+
+        // ============================================================
+        //  LOCALITIES SCROLL
+        // ============================================================
+        function scrollLocalities(dir) {
+            const container = document.getElementById('localityChips');
+            if (!container) return;
+            const scrollAmount = 200;
+            container.scrollBy({ left: dir * scrollAmount, behavior: 'smooth' });
+        }
+        const scrollContainer = document.getElementById('localityChips');
+        if (scrollContainer) {
+            scrollContainer.addEventListener('scroll', function() {
+                const leftBtn = this.parentElement.querySelector('.scroll-left');
+                const rightBtn = this.parentElement.querySelector('.scroll-right');
+                if (leftBtn) leftBtn.disabled = this.scrollLeft <= 2;
+                if (rightBtn) rightBtn.disabled = this.scrollLeft >= this.scrollWidth - this.clientWidth - 2;
+            });
+        }
+
+        document.querySelectorAll('.locality-chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                document.querySelectorAll('.locality-chip').forEach(c => {
+                    c.classList.remove('active');
+                    c.setAttribute('aria-selected', 'false');
+                });
+                this.classList.add('active');
+                this.setAttribute('aria-selected', 'true');
+                document.getElementById('filterLocality').value = this.dataset.area;
+                currentPage = 1;
+                loadListings();
+            });
+        });
+
+        // ============================================================
+        //  REALTIME
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const cityEl = document.getElementById('filterCity');
+            if (cityEl && !cityEl.value) {
+                cityEl.value = 'chennai';
+            }
+            if (typeof CubeRealtime !== 'undefined') {
+                CubeRealtime.init({ interval: 20000 });
+                CubeRealtime.on('listing_updated', function() {
+                    if (typeof loadListings === 'function') loadListings();
+                });
+                CubeRealtime.on('listing_created', function() {
+                    if (typeof loadListings === 'function') loadListings();
+                });
+                CubeRealtime.on('listing_deleted', function() {
+                    if (typeof loadListings === 'function') loadListings();
+                });
+            }
+            // Init carousels on load
+            setTimeout(() => initCarousels(document), 300);
+            // Re-init on resize
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => initCarousels(document), 200);
+            });
+        });
+
+        // ============================================================
+        //  INIT
+        // ============================================================
+        loadListings();
+    </script>
+
+    <script src="assets/js/toast.js"></script>
+    <script src="assets/js/realtime.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/forms.js"></script>
+    <script>
+        function toggleMenu() {
+            const nav = document.getElementById("mobileNav");
+            nav.classList.toggle("active");
+            const icon = document.querySelector(".mobile-menu i");
+            if (icon) {
+                icon.classList.toggle("fa-bars");
+                icon.classList.toggle("fa-times");
+            }
+        }
+
+        // Close mobile menu on link click
+        document.querySelectorAll('.mobile-nav a').forEach(function(link) {
+            link.addEventListener('click', function() {
+                document.getElementById("mobileNav").classList.remove("active");
+                const icon = document.querySelector(".mobile-menu i");
+                if (icon) {
+                    icon.classList.add("fa-bars");
+                    icon.classList.remove("fa-times");
+                }
+            });
+        });
+    </script>
+
+<div class="modal fade" id="alertModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <i class="fa-solid fa-circle-check text-success mb-3 d-none" id="alertIconSuccess" style="font-size: 2rem;"></i>
+                <i class="fa-solid fa-circle-exclamation text-danger mb-3 d-none" id="alertIconError" style="font-size: 2rem;"></i>
+                <i class="fa-solid fa-circle-info text-primary mb-3 d-none" id="alertIconInfo" style="font-size: 2rem;"></i>
+                <p class="mb-0 fw-medium" id="alertMessage">Message</p>
+            </div>
+            <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
+                <button type="button" class="btn btn-primary btn-sm px-3" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showAlertModal(message, type) {
+    type = type || 'info';
+    document.getElementById('alertMessage').textContent = message;
+    document.getElementById('alertIconSuccess').classList.add('d-none');
+    document.getElementById('alertIconError').classList.add('d-none');
+    document.getElementById('alertIconInfo').classList.add('d-none');
+    document.getElementById('alertIcon' + type.charAt(0).toUpperCase() + type.slice(1)).classList.remove('d-none');
+    var modalEl = document.getElementById('alertModal');
+    var modal = new bootstrap.Modal(modalEl);
+    modal.show();
+}
+</script>
+</body>
+
+</html>
