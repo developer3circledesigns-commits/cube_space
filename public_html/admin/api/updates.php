@@ -6,12 +6,6 @@ require_once __DIR__ . '/../jwt_helper.php';
 admin_require_lib('events.php');
 
 $auth = require_jwt_auth();
-if (!$auth) {
-    http_response_code(401);
-    header('Content-Type: application/json');
-    echo json_encode(['success' => false, 'message' => 'Unauthorized', 'data' => null, 'errors' => null]);
-    exit;
-}
 
 $since = isset($_GET['since']) ? max(0, (int)$_GET['since']) : 0;
 if (!$since) $since = (int)(microtime(true) * 1000);

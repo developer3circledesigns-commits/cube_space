@@ -2216,7 +2216,14 @@ if (isset($conn) && $conn) {
         // ============================================================
         //  LOAD LISTINGS
         // ============================================================
+        let loadListingsTimer;
         function loadListings() {
+            clearTimeout(loadListingsTimer);
+            loadListingsTimer = setTimeout(function() {
+                doLoadListings();
+            }, 250);
+        }
+        function doLoadListings() {
             const container = document.getElementById('listingsContainer');
             const pagination = document.getElementById('pagination');
             const skeletonHtml = Array(4).fill(
@@ -2231,6 +2238,11 @@ if (isset($conn) && $conn) {
             const request = fetch(apiUrl(apiEndpoint + '?' + qs), { cache: 'no-store', credentials: 'same-origin', headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' } }).then(r => r.json());
 
             request.then(data => {
+                    if (!data || data.error || !data.offices) {
+                        container.innerHTML =
+                            '<div class="empty-state"><i class="fa-solid fa-circle-exclamation"></i><h3>Failed to load</h3><p>' + (data && data.error ? data.error : 'Please try again later.') + '</p><button class="btn-callback" style="margin-top:16px;width:auto;padding:0 24px;" onclick="loadListings()">Retry</button></div>';
+                        return;
+                    }
                     const cityEl = document.getElementById('filterCity');
                     document.getElementById('pageCity').textContent = cityEl.value ? ucfirst(cityEl.value) :
                         'Chennai';

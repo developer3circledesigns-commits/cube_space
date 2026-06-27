@@ -186,21 +186,7 @@ $leasingOptions = [];
 while ($lr = mysqli_fetch_assoc($leasingResult)) { $leasingOptions[] = $lr; }
 mysqli_stmt_close($leasingStmt);
 
-// Fetch building details
-$bldgStmt = mysqli_prepare($conn, "SELECT * FROM office_building_details WHERE office_id = ? LIMIT 1");
-mysqli_stmt_bind_param($bldgStmt, 'i', $officeId);
-mysqli_stmt_execute($bldgStmt);
-$bldgResult = mysqli_stmt_get_result($bldgStmt);
-$buildingDetails = mysqli_fetch_assoc($bldgResult) ?: [];
-mysqli_stmt_close($bldgStmt);
-// Fetch active FAQ
-$faqStmt = mysqli_prepare($conn, "SELECT question, answer FROM office_faq WHERE office_id = ? AND is_active = 1 ORDER BY sort_order ASC");
-mysqli_stmt_bind_param($faqStmt, 'i', $officeId);
-mysqli_stmt_execute($faqStmt);
-$faqResult = mysqli_stmt_get_result($faqStmt);
-$faqs = [];
-while ($fr = mysqli_fetch_assoc($faqResult)) { $faqs[] = $fr; }
-mysqli_stmt_close($faqStmt);
+
 
 // Fetch nearest workspaces
 $nearestOffices = [];
@@ -447,35 +433,6 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
         .best-price-banner i { color: #08753f; font-size: 18px; }
         .best-price-banner .bp-text { font-size: 14px; font-weight: 600; color: #08753f; }
 
-        /* ===== LOCATION & TRANSIT ===== */
-        .transit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .transit-item {
-            display: flex; align-items: center; gap: 14px; padding: 18px;
-            background: #f8fafc; border-radius: 10px; border: 1px solid #f1f5f9;
-            transition: all 0.15s;
-        }
-        .transit-item:hover { border-color: #0d4ab4; background: #eef4ff; }
-        .transit-icon {
-            width: 44px; height: 44px; border-radius: 10px; background: #eef4ff;
-            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .transit-icon i { font-size: 20px; color: #0d4ab4; }
-        .transit-label { font-size: 12px; color: #757575; margin-bottom: 2px; }
-        .transit-value { font-size: 14px; font-weight: 600; color: #111827; }
-
-        /* ===== FAQ ===== */
-        .faq-item { border-bottom: 1px solid #e0e0e0; }
-        .faq-question {
-            width: 100%; padding: 18px 0; background: none; border: none; text-align: left;
-            font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
-            display: flex; justify-content: space-between; align-items: center;
-            font-family: inherit;
-        }
-        .faq-question i { color: #757575; font-size: 14px; transition: transform 0.2s; }
-        .faq-answer { padding: 0 0 18px; font-size: 14px; color: #475569; line-height: 1.7; display: none; }
-        .faq-item.open .faq-answer { display: block; }
-        .faq-item.open .faq-question i { transform: rotate(180deg); }
-
         /* ===== NEARBY SPACES ===== */
         .nearby-section { margin-bottom: 36px; }
         .nearby-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -584,7 +541,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
             .gallery-side { display: none; }
             .ws-name { font-size: 22px; }
             .amenities-grid { grid-template-columns: repeat(2, 1fr); }
-            .transit-grid { grid-template-columns: 1fr; }
+
             .pricing-card { flex-direction: column; }
             .pricing-card-img { width: 100%; height: 160px; }
             .bottom-sticky { display: none !important; }
@@ -811,59 +768,6 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
             </div>
             <?php endif; ?>
 
-            <!-- Location & Transit -->
-            <?php
-            $hasTransit = !empty($buildingDetails) && (
-                !empty($buildingDetails['nearest_metro']) ||
-                !empty($buildingDetails['nearest_railway']) ||
-                !empty($buildingDetails['airport']) ||
-                !empty($buildingDetails['bus_stop'])
-            );
-            ?>
-            <?php if ($hasTransit): ?>
-            <div class="section" id="location">
-                <div class="section-title"><i class="fa-solid fa-location-dot"></i> Location &amp; Transit</div>
-                <div class="transit-grid">
-                    <?php if (!empty($buildingDetails['nearest_metro'])): ?>
-                    <div class="transit-item">
-                        <div class="transit-icon"><i class="fa-solid fa-train-subway"></i></div>
-                        <div>
-                            <div class="transit-label">Nearest Metro</div>
-                            <div class="transit-value"><?php echo htmlspecialchars($buildingDetails['nearest_metro']); ?></div>
-                        </div>
-                    </div>
-                    <?php endif; ?>
-                    <?php if (!empty($buildingDetails['nearest_railway'])): ?>
-                    <div class="transit-item">
-                        <div class="transit-icon"><i class="fa-solid fa-train"></i></div>
-                        <div>
-                            <div class="transit-label">Nearest Railway Station</div>
-                            <div class="transit-value"><?php echo htmlspecialchars($buildingDetails['nearest_railway']); ?></div>
-                        </div>
-                    </div>
-                    <?php endif; ?>
-                    <?php if (!empty($buildingDetails['airport'])): ?>
-                    <div class="transit-item">
-                        <div class="transit-icon"><i class="fa-solid fa-plane"></i></div>
-                        <div>
-                            <div class="transit-label">Airport</div>
-                            <div class="transit-value"><?php echo htmlspecialchars($buildingDetails['airport']); ?></div>
-                        </div>
-                    </div>
-                    <?php endif; ?>
-                    <?php if (!empty($buildingDetails['bus_stop'])): ?>
-                    <div class="transit-item">
-                        <div class="transit-icon"><i class="fa-solid fa-bus"></i></div>
-                        <div>
-                            <div class="transit-label">Bus Stop</div>
-                            <div class="transit-value"><?php echo htmlspecialchars($buildingDetails['bus_stop']); ?></div>
-                        </div>
-                    </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <?php endif; ?>
-
             <!-- Pricing / Leasing Options -->
             <?php if (!empty($leasingOptions)): ?>
             <div class="section" id="pricing">
@@ -901,22 +805,6 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                     </div>
                     <?php endforeach; ?>
                 </div>
-            </div>
-            <?php endif; ?>
-
-            <!-- FAQ -->
-            <?php if (!empty($faqs)): ?>
-            <div class="section" id="faq">
-                <div class="section-title"><i class="fa-solid fa-circle-question"></i> Frequently Asked Questions</div>
-                <?php foreach ($faqs as $idx => $faq):
-                    $question = is_array($faq) ? ($faq['question'] ?? $faq['q'] ?? '') : '';
-                    $answer = is_array($faq) ? ($faq['answer'] ?? $faq['a'] ?? '') : '';
-                ?>
-                <div class="faq-item<?php echo $idx === 0 ? ' open' : ''; ?>">
-                    <button class="faq-question"><?php echo htmlspecialchars($question); ?> <i class="fa-solid fa-chevron-down"></i></button>
-                    <div class="faq-answer"><?php echo htmlspecialchars($answer); ?></div>
-                </div>
-                <?php endforeach; ?>
             </div>
             <?php endif; ?>
 

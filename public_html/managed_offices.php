@@ -1970,7 +1970,8 @@ if (isset($conn) && $conn) {
                     }
                 });
                 if (o.inventory_type) {
-                    statsHtml += `<span class="stat-item inv-badge inv-ready"><i class="fa-solid fa-circle-check"></i> <span class="stat-value">Ready to move in</span></span>`;
+                    const isReady = o.inventory_type === 'Ready to move in';
+                    statsHtml += `<span class="stat-item inv-badge ${isReady ? 'inv-ready' : 'inv-processing'}"><i class="fa-solid ${isReady ? 'fa-circle-check' : 'fa-clock'}"></i> <span class="stat-value">${isReady ? 'Ready to move in' : 'Processing'}</span></span>`;
                 }
 
                 const period = o.office_space_type === 'lease' ? 'seat / year' : 'seat / month';
@@ -2117,7 +2118,7 @@ if (isset($conn) && $conn) {
                 let statsHtml = '';
                 const statItems = [
                     { icon: 'fa-users', value: o.total_seats ? 'Available seating capacity ' + o.total_seats : null },
-                    { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min ' + o.min_inventory : null },
+                    { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + o.min_inventory : null },
                 ];
                 statItems.forEach(s => {
                     if (s.value) {
@@ -2126,7 +2127,8 @@ if (isset($conn) && $conn) {
                     }
                 });
                 if (o.inventory_type) {
-                    statsHtml += `<span class="stat-item inv-badge inv-ready"><i class="fa-solid fa-circle-check"></i> <span class="stat-value">Ready to move in</span></span>`;
+                    const isReady = o.inventory_type === 'Ready to move in';
+                    statsHtml += `<span class="stat-item inv-badge ${isReady ? 'inv-ready' : 'inv-processing'}"><i class="fa-solid ${isReady ? 'fa-circle-check' : 'fa-clock'}"></i> <span class="stat-value">${isReady ? 'Ready to move in' : 'Processing'}</span></span>`;
                 }
 
                 const period = o.office_space_type === 'lease' ? ' seat / year' : 'seat / month';
@@ -2195,7 +2197,14 @@ if (isset($conn) && $conn) {
         // ============================================================
         //  LOAD LISTINGS
         // ============================================================
+        let loadListingsTimer;
         function loadListings() {
+            clearTimeout(loadListingsTimer);
+            loadListingsTimer = setTimeout(function() {
+                doLoadListings();
+            }, 250);
+        }
+        function doLoadListings() {
             const container = document.getElementById('listingsContainer');
             const pagination = document.getElementById('pagination');
             const skeletonHtml = Array(4).fill(
@@ -2210,6 +2219,11 @@ if (isset($conn) && $conn) {
             const request = fetch(apiUrl('/api/managed_offices_api.php?' + qs), { cache: 'no-store', credentials: 'same-origin', headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' } }).then(r => r.json());
 
             request.then(data => {
+                    if (!data || data.error || !data.offices) {
+                        container.innerHTML =
+                            '<div class="empty-state"><i class="fa-solid fa-circle-exclamation"></i><h3>Failed to load</h3><p>' + (data && data.error ? data.error : 'Please try again later.') + '</p><button class="btn-callback" style="margin-top:16px;width:auto;padding:0 24px;" onclick="loadListings()">Retry</button></div>';
+                        return;
+                    }
                     const cityEl = document.getElementById('filterCity');
                     document.getElementById('pageCity').textContent = cityEl.value ? ucfirst(cityEl.value) :
                         'Chennai';

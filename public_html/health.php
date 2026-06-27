@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json');
 
-require_once __DIR__ . '/../api/db_config.php';
+require_once __DIR__ . '/api/db_config.php';
 
 // Simple health check
 $dbOk = false;

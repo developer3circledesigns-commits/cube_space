@@ -390,9 +390,11 @@ body {
     gap: 0;
     margin-bottom: 0;
     flex-wrap: wrap;
+    flex: 1;
 }
 .tab-btn {
     border: none;
+    width: 100%;
     padding: 14px 30px;
     border-radius: 0;
     background: #fff;

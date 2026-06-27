@@ -1,5 +1,5 @@
 <?php
-error_reporting(0);
+
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/init.php';
@@ -12,8 +12,8 @@ if (!$token || !$password) {
     exit;
 }
 
-if (strlen($password) < 6) {
-    echo json_encode(['success' => false, 'error' => 'Password must be at least 6 characters']);
+if (strlen($password) < 8) {
+    echo json_encode(['success' => false, 'error' => 'Password must be at least 8 characters']);
     exit;
 }
 

@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 if (!isset($conn)) {
-    foreach ([__DIR__ . '/../api/db_config.php', __DIR__ . '/../../api/db_config.php'] as $dbFile) {
+    foreach ([__DIR__ . '/../public_html/api/db_config.php'] as $dbFile) {
         if (is_file($dbFile)) {
             require_once $dbFile;
             break;
@@ -17,17 +17,13 @@ const ALLOWED_EVENT_TYPES = [
     'contact_created',
     'contact_updated',
     'contact_deleted',
-    'review_created',
-    'review_updated',
-    'review_deleted',
-    'faq_created',
-    'faq_updated',
-    'faq_deleted',
-    'building_updated',
     'leasing_created',
     'leasing_updated',
     'leasing_deleted',
     'bulk_operation',
+    'admin_created',
+    'admin_updated',
+    'admin_deleted',
 ];
 
 function publish_event(string $eventType, ?string $entityType = null, ?int $entityId = null, ?string $summary = null): bool {

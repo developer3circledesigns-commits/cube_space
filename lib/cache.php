@@ -36,7 +36,7 @@ class JsonCache {
         $store[md5($key)] = ['value' => $value, 'time' => time()];
         if (count($store) > $this->capacity) {
             uasort($store, fn($a, $b) => $a['time'] - $b['time']);
-            array_splice($store, 0, count($store) - $this->capacity);
+            $store = array_slice($store, count($store) - $this->capacity, null, true);
         }
         $this->write($store);
     }

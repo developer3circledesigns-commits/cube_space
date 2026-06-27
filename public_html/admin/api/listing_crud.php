@@ -28,16 +28,7 @@ function slugify($text) {
     return trim($text, '-');
 }
 
-function log_activity($conn, $action, $table, $recordId, $details = null) {
-    $uid = (int)$_SESSION['admin_id'];
-    $uname = $_SESSION['admin_user'];
-    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
-    $det = $details ? json_encode($details) : null;
-    $stmt = mysqli_prepare($conn, "INSERT INTO activity_log (admin_id, admin_username, action, table_name, record_id, details, ip_address) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, 'isssiss', $uid, $uname, $action, $table, $recordId, $det, $ip);
-    mysqli_stmt_execute($stmt);
-    mysqli_stmt_close($stmt);
-}
+
 
 $ALLOWED_IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
 
@@ -193,14 +184,16 @@ if ($action === 'create' || $action === 'update') {
 
     // Auto-generate listing code
     if ($action === 'create') {
-        $prefix = $listingType === 'managed' ? 'MFO' : ($table === 'furnished_offices' ? 'FUO' : 'UFU');
-        $maxRes = mysqli_query($conn, "SELECT MAX(listing_code) as max_code FROM $table WHERE listing_code LIKE '$prefix%'");
+        $prefix = match($listingType) {
+            'managed'     => 'MFO',
+            'commercial'  => 'OSP',
+            'furnished'   => 'FUO',
+            'unfurnished' => 'UFU',
+            default       => 'LST',
+        };
+        $maxRes = mysqli_query($conn, "SELECT MAX(CAST(SUBSTRING(listing_code, 4) AS UNSIGNED)) as max_num FROM $table WHERE listing_code LIKE '{$prefix}%'");
         $maxRow = mysqli_fetch_assoc($maxRes);
-        $nextNum = 1;
-        if ($maxRow && $maxRow['max_code']) {
-            $num = (int)substr($maxRow['max_code'], 3);
-            $nextNum = $num + 1;
-        }
+        $nextNum = (int)($maxRow['max_num'] ?? 0) + 1;
         $listingCode = $prefix . str_pad((string)$nextNum, 3, '0', STR_PAD_LEFT);
     } else {
         $listingCode = $_POST['listing_code'] ?? null;

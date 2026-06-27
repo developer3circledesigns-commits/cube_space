@@ -62,7 +62,11 @@ class EmailService {
             $headers[] = 'Reply-To: ' . $replyTo;
         }
 
-        return mail($to, $subject, $body, implode("\r\n", $headers));
+        $ok = @mail($to, $subject, $body, implode("\r\n", $headers));
+        if (!$ok) {
+            $this->logEmail("Failed to send to $to: $subject");
+        }
+        return $ok;
     }
 
     public function notifyAdminNewContact(array $contact): bool {

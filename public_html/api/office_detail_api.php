@@ -112,78 +112,6 @@ if (is_array($office['images'] ?? null)) {
 }
 
 // ============================================================
-// Fetch Approved Reviews
-// ============================================================
-$reviewsStmt = mysqli_prepare(
-    $conn,
-    "SELECT id, reviewer_name, rating, review_text, created_at
-     FROM office_reviews
-     WHERE office_id = ? AND status = 'approved'
-     ORDER BY created_at DESC"
-);
-mysqli_stmt_bind_param($reviewsStmt, 'i', $officeId);
-mysqli_stmt_execute($reviewsStmt);
-$reviewsResult = mysqli_stmt_get_result($reviewsStmt);
-
-$reviewItems = [];
-$totalRating = 0;
-$reviewCount = 0;
-$distribution = ['5' => 0, '4' => 0, '3' => 0, '2' => 0, '1' => 0];
-
-while ($row = mysqli_fetch_assoc($reviewsResult)) {
-    $rating = max(1, min(5, (int)$row['rating']));
-    $totalRating += $rating;
-    $reviewCount++;
-    $distribution[(string)$rating]++;
-    $reviewItems[] = $row;
-}
-mysqli_stmt_close($reviewsStmt);
-
-$reviewsData = [
-    'average_rating' => $reviewCount > 0 ? round($totalRating / $reviewCount, 1) : 0,
-    'total_reviews' => $reviewCount,
-    'distribution' => $distribution,
-    'items' => $reviewItems,
-];
-
-// ============================================================
-// Fetch Active FAQ
-// ============================================================
-$faqStmt = mysqli_prepare(
-    $conn,
-    "SELECT id, question, answer, sort_order
-     FROM office_faq
-     WHERE office_id = ? AND is_active = 1
-     ORDER BY sort_order ASC, id ASC"
-);
-mysqli_stmt_bind_param($faqStmt, 'i', $officeId);
-mysqli_stmt_execute($faqStmt);
-$faqResult = mysqli_stmt_get_result($faqStmt);
-
-$faqItems = [];
-while ($row = mysqli_fetch_assoc($faqResult)) {
-    $faqItems[] = $row;
-}
-mysqli_stmt_close($faqStmt);
-
-// ============================================================
-// Fetch Building Details
-// ============================================================
-$buildingStmt = mysqli_prepare(
-    $conn,
-    "SELECT building_name, year_built, total_floors, floor_plate_area,
-            elevators, parking, nearest_metro, nearest_railway, airport, bus_stop
-     FROM office_building_details
-     WHERE office_id = ?
-     LIMIT 1"
-);
-mysqli_stmt_bind_param($buildingStmt, 'i', $officeId);
-mysqli_stmt_execute($buildingStmt);
-$buildingResult = mysqli_stmt_get_result($buildingStmt);
-$building = mysqli_fetch_assoc($buildingResult);
-mysqli_stmt_close($buildingStmt);
-
-// ============================================================
 // Fetch Active Leasing Options
 // ============================================================
 $leasingStmt = mysqli_prepare(
@@ -208,9 +136,6 @@ mysqli_stmt_close($leasingStmt);
 // ============================================================
 $response = [
     'office' => $office,
-    'reviews' => $reviewsData,
-    'faq' => $faqItems,
-    'building' => $building,
     'leasing_options' => $leasingItems,
 ];
 

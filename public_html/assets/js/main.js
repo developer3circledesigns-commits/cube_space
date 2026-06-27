@@ -67,7 +67,7 @@
     }
 
     // Tab active state with scroll tracking
-    var sections = ['overview', 'amenities', 'pricing', 'location', 'reviews', 'faq'];
+    var sections = ['overview', 'amenities', 'pricing'];
     function updateActiveTab() {
         var current = sections[0];
         for (var i = 0; i < sections.length; i++) {

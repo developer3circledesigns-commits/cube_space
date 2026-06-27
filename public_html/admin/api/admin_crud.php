@@ -15,18 +15,7 @@ $_SESSION['admin_user'] = $jwtPayload['user'];
 
 $action = $_GET['action'] ?? '';
 
-function log_activity($conn, $action, $table, $recordId, $details = null) {
-    $uid = (int)$_SESSION['admin_id'];
-    $uname = $_SESSION['admin_user'];
-    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
-    $det = $details ? json_encode($details) : null;
-    $stmt = mysqli_prepare($conn, "INSERT INTO activity_log (admin_id, admin_username, action, table_name, record_id, details, ip_address) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    if ($stmt) {
-        mysqli_stmt_bind_param($stmt, 'isssiss', $uid, $uname, $action, $table, $recordId, $det, $ip);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
-    }
-}
+
 
 if ($action === 'get') {
     $id = (int)($_GET['id'] ?? 0);

@@ -58,18 +58,20 @@ function jwt_decode($token) {
     return $data;
 }
 
-function generate_access_token($adminId, $username) {
+function generate_access_token($adminId, $username, $role = 'admin') {
     return jwt_encode([
         'sub' => (int)$adminId,
         'user' => $username,
+        'role' => $role,
         'type' => 'access'
     ], ACCESS_TOKEN_TTL);
 }
 
-function generate_refresh_token($adminId, $username) {
+function generate_refresh_token($adminId, $username, $role = 'admin') {
     return jwt_encode([
         'sub' => (int)$adminId,
         'user' => $username,
+        'role' => $role,
         'type' => 'refresh'
     ], REFRESH_TOKEN_TTL);
 }

@@ -43,7 +43,7 @@ if ($loggedIn) {
     <meta name="csrf-token" content="">
     <meta name="access-token" content="">
     <?php include dirname(__DIR__) . '/includes/head-meta.php'; ?>
-    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="../favicon.ico" sizes="any">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -55,7 +55,7 @@ if ($loggedIn) {
     <div class="card shadow-sm border-0" style="max-width: 420px; width: 100%;">
         <div class="card-body p-4">
             <div class="text-center mb-4">
-                <img src="/assets/images/final-logo.png" alt="CubeSpace" style="height: 44px;" loading="lazy">
+                <img src="../assets/images/final-logo.png" alt="CubeSpace" style="height: 44px;" loading="lazy">
                 <h5 class="mt-3 mb-1 fw-bold">Admin Login</h5>
                 <p class="text-muted small">Sign in to your account</p>
             </div>

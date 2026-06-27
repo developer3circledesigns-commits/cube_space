@@ -38,8 +38,8 @@ if (!$admin['is_active']) {
     die(json_encode(['success' => false, 'error' => 'Account is deactivated']));
 }
 
-$accessToken  = generate_access_token($admin['id'], $admin['username']);
-$refreshToken = generate_refresh_token($admin['id'], $admin['username']);
+$accessToken  = generate_access_token($admin['id'], $admin['username'], $admin['role']);
+$refreshToken = generate_refresh_token($admin['id'], $admin['username'], $admin['role']);
 
 set_auth_cookies($accessToken, $refreshToken);
 

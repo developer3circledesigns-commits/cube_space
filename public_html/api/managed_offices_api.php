@@ -17,7 +17,7 @@ header('Content-Type: application/json');
 header('Cache-Control: no-cache, must-revalidate');
 header('Expires: 0');
 
-$rateLimiter = new RateLimiter(30, 60, 'mo_api_');
+$rateLimiter = new RateLimiter(30, 60, 'mgo_api_');
 $clientIp = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 if (!$rateLimiter->check($clientIp)) {
     http_response_code(429);
@@ -149,7 +149,7 @@ if ($action === 'autocomplete') {
     $query = $_GET['q'] ?? '';
     if (strlen($query) < 1) { echo json_encode([]); exit; }
 
-    $cacheKey = 'ac_v3_' . JsonCache::getGlobalVersion() . '_' . md5($query);
+    $cacheKey = 'ac_managed_v3_' . JsonCache::getGlobalVersion() . '_' . md5($query);
     $cached = $cache->get($cacheKey);
     if ($cached) { echo json_encode($cached); exit; }
 
@@ -199,7 +199,7 @@ if ($action === 'list') {
     $sort = trim($_GET['sort'] ?? 'newest');
     $featured = $_GET['featured'] ?? '';
 
-    $cacheKey = 'list_v4_' . JsonCache::getGlobalVersion() . '_' . md5(implode('|', [$page, $limit, $search, $listing_type, $city, $area, $minPrice, $maxPrice, $minSeats, $maxSeats, $sort, $featured]));
+    $cacheKey = 'list_managed_v4_' . JsonCache::getGlobalVersion() . '_' . md5(implode('|', [$page, $limit, $search, $listing_type, $city, $area, $minPrice, $maxPrice, $minSeats, $maxSeats, $sort, $featured]));
     $cached = $cache->get($cacheKey);
     if ($cached) { echo json_encode($cached); exit; }
 

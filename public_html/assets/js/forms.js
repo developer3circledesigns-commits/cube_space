@@ -42,10 +42,10 @@
         if (field.type === 'number' && rules.indexOf('number') === -1) rules.push('number');
         if (/email/.test(fieldName) && rules.indexOf('email') === -1) rules.push('email');
         if (/price|amount|rate/.test(fieldName) && rules.indexOf('number') === -1) rules.push('number');
-        if (/total_seats|min_seats|max_seats|total_floors|elevators|sort_order|total_area_sqft|year_built/.test(fieldName) && rules.indexOf('integer') === -1) rules.push('integer');
+        if (/total_seats|min_seats|max_seats|sort_order|total_area_sqft/.test(fieldName) && rules.indexOf('integer') === -1) rules.push('integer');
         if (/title|name|company|username/.test(fieldName) && !rules.some(function(rule) { return rule.indexOf('max:') === 0; })) rules.push('max:160');
         if (/question/.test(fieldName) && !rules.some(function(rule) { return rule.indexOf('max:') === 0; })) rules.push('max:255');
-        if (/message|description|address|answer|review_text|seo_text|feature_highlights/.test(fieldName) && !rules.some(function(rule) { return rule.indexOf('max:') === 0; })) rules.push('max:5000');
+        if (/message|description|address|seo_text|feature_highlights/.test(fieldName) && !rules.some(function(rule) { return rule.indexOf('max:') === 0; })) rules.push('max:5000');
         if (field.pattern && !rules.some(function(rule) { return rule.indexOf('pattern:') === 0; })) {
             rules.push('pattern:' + field.pattern);
         }

@@ -127,7 +127,7 @@ if ($mode === 'add' || $mode === 'edit'):
                 </div>
                 <div class="col-md-3">
                     <label for="price_label" class="form-label small fw-semibold">Price Label</label>
-                    <input type="text" name="price_label" id="price_label" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price_label']??'') ?>" placeholder="e.g. \u20B93 Lakhs/mo">
+                    <input type="text" name="price_label" id="price_label" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price_label']??'') ?>" placeholder="e.g. ₹3 Lakhs/mo">
                 </div>
                 <div class="col-md-3">
                     <label for="officeSpaceType2" class="form-label small fw-semibold">Office Space Type</label>
@@ -365,7 +365,7 @@ if ($mode === 'add' || $mode === 'edit'):
                         <td><?= htmlspecialchars($row['area'] ?? '—') ?></td>
                         <td><?= $row['total_area_sqft'] ? number_format($row['total_area_sqft']) : '—' ?></td>
                         <td><?= $row['total_seats'] ?? '—' ?></td>
-                        <td><?= $row['price'] ? '\u20B9' . number_format($row['price']) . '<small class="text-muted ms-1">' . ($row['office_space_type'] === 'lease' ? '/yr' : '/mo') . '</small>' : '—' ?></td>
+                        <td><?= $row['price'] ? '₹' . number_format($row['price']) . '<small class="text-muted ms-1">' . ($row['office_space_type'] === 'lease' ? '/yr' : '/mo') . '</small>' : '—' ?></td>
                         <td><span class="badge bg-<?= ($row['office_space_type'] ?? 'rent') === 'lease' ? 'info' : 'secondary' ?>"><?= htmlspecialchars(($row['office_space_type'] ?? 'rent')) ?></span></td>
                         <td><span class="badge bg-<?= $row['listing_type_db'] === 'furnished' ? 'primary' : 'secondary' ?>"><?= htmlspecialchars(ucfirst($row['listing_type_db'] ?? '')) ?></span></td>
                         <td><span class="badge bg-<?= $row['status'] === 'published' ? 'success' : ($row['status'] === 'draft' ? 'secondary' : 'warning text-dark') ?>"><?= $row['status'] ?></span></td>

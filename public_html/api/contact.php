@@ -1,16 +1,18 @@
 <?php
+ob_start();
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: ' . ($_SERVER['HTTP_ORIGIN'] ?? '*'));
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+
+require_once __DIR__ . '/db_config.php';
+cubespace_require_project('lib/cors.php');
+set_cors_headers('POST, OPTIONS');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 
-require_once __DIR__ . '/db_config.php';
 cubespace_require_project('lib/ratelimit.php');
 cubespace_require_project('lib/validator.php');
 cubespace_require_project('src/autoload.php');
 cubespace_require_project('lib/events.php');
+ob_end_clean();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -39,7 +41,7 @@ if (!$validator->validate([
     'email'        => 'email|max:255',
     'company'      => 'max:160',
     'message'      => 'max:1000',
-    'interest'     => 'in:managed,furnished',
+    'interest'     => 'in:managed,furnished,unfurnished',
     'seats'        => 'in:10-50,51-100,101-200,200+',
     'office_id'    => 'integer|min:0',
     'listing_code' => 'max:20',

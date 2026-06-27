@@ -408,7 +408,7 @@ ob_start();
             btn.textContent = 'Submitting...';
             try {
                 const d = window.CubeAPI
-                    ? await CubeAPI.postForm(apiUrl('/api/contact.php'), fd)
+                    ? await CubeAPI.postForm('/api/contact.php', fd)
                     : await fetch(apiUrl('/api/contact.php'), { method: 'POST', body: fd }).then(r => r.json());
                 msg.style.display = 'block';
                 if (d.success) {

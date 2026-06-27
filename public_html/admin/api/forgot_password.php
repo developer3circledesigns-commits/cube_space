@@ -1,8 +1,9 @@
 <?php
-error_reporting(0);
+
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/init.php';
+cubespace_require_project('src/autoload.php');
 
 $username = trim($_POST['username'] ?? '');
 
@@ -16,7 +17,7 @@ try {
         throw new Exception('Database connection not available');
     }
     
-    $stmt = mysqli_prepare($conn, "SELECT id FROM admins WHERE username = ?");
+    $stmt = mysqli_prepare($conn, "SELECT id, email FROM admins WHERE username = ?");
     if (!$stmt) {
         throw new Exception('Database error: ' . mysqli_error($conn));
     }
@@ -41,7 +42,17 @@ try {
     mysqli_stmt_bind_param($stmt, 'ssi', $resetToken, $expiry, $admin['id']);
     mysqli_stmt_execute($stmt);
     
-    echo json_encode(['success' => true, 'reset_token' => $resetToken]);
+    if (!empty($admin['email'])) {
+        $mail = new \CubeSpace\EmailService();
+        $sent = $mail->send($admin['email'], 'Password Reset', 'Your reset token: ' . $resetToken . ' (expires in 1 hour)');
+        if ($sent) {
+            echo json_encode(['success' => true, 'message' => 'Reset link sent to your email']);
+        } else {
+            echo json_encode(['success' => true, 'reset_token' => $resetToken, 'warning' => 'Email not configured']);
+        }
+    } else {
+        echo json_encode(['success' => false, 'error' => 'Admin has no email address configured']);
+    }
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }

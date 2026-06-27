@@ -43,8 +43,8 @@ class GeoHash {
         $neighbors = [];
         $latLng = self::decode($geohash);
         $prec = strlen($geohash);
-        $dlat = 180 / (1 << (int)($prec * 5 / 2));
-        $dlng = 360 / (1 << (int)($prec * 5 / 2));
+        $dlat = 180 / (1 << (int)floor($prec * 5 / 2));
+        $dlng = 360 / (1 << (int)ceil($prec * 5 / 2));
         $offsets = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
         foreach ($offsets as $offset) {
             $neighbors[] = self::encode(
@@ -88,8 +88,8 @@ class GeoHash {
     public static function boundingBox($geohash): array {
         $decoded = self::decode($geohash);
         $prec = strlen($geohash);
-        $dlat = 180 / (1 << (int)($prec * 5 / 2));
-        $dlng = 360 / (1 << (int)($prec * 5 / 2));
+        $dlat = 180 / (1 << (int)floor($prec * 5 / 2));
+        $dlng = 360 / (1 << (int)ceil($prec * 5 / 2));
         return [
             'minLat' => $decoded['lat'] - $dlat / 2,
             'maxLat' => $decoded['lat'] + $dlat / 2,
