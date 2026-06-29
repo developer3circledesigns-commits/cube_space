@@ -227,6 +227,7 @@
         document.addEventListener('submit', function(event) {
             var form = event.target;
             if (!form || form.tagName !== 'FORM') return;
+            if (form.closest('.admin-card, .admin-page, [data-admin]') || form.getAttribute('data-admin-form') === '1') return;
             if (!validateForm(form)) {
                 event.preventDefault();
                 event.stopImmediatePropagation();

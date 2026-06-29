@@ -133,8 +133,11 @@
             method: 'GET',
             credentials: 'same-origin',
             headers: h
-        }).then(jsonResponse).catch(function(err) {
-            if (err.message === 'Unauthorized' || err.message === 'Token expired') {
+        }).then(function(r) {
+            if (r.status === 401) throw { _status: 401, message: 'Unauthorized' };
+            return jsonResponse(r);
+        }).catch(function(err) {
+            if (err && (err._status === 401 || err.message === 'Unauthorized' || err.message === 'Token expired')) {
                 return tryRefresh().then(function(refreshed) {
                     if (refreshed) return CubeAPI.adminGet(path, params);
                     if (window.CubeBase && typeof CubeBase.open === 'function') {
@@ -159,8 +162,11 @@
             credentials: 'same-origin',
             headers: h,
             body: formData
-        }).then(jsonResponse).catch(function(err) {
-            if (err.message === 'Unauthorized' || err.message === 'Token expired') {
+        }).then(function(r) {
+            if (r.status === 401) throw { _status: 401, message: 'Unauthorized' };
+            return jsonResponse(r);
+        }).catch(function(err) {
+            if (err && (err._status === 401 || err.message === 'Unauthorized' || err.message === 'Token expired')) {
                 return tryRefresh().then(function(refreshed) {
                     if (refreshed) return CubeAPI.adminPost(path, formData);
                     if (window.CubeBase && typeof CubeBase.open === 'function') {

@@ -151,7 +151,8 @@ function showLeasingForm() { document.getElementById('leasingFormWrap').classLis
 function hideLeasingForm() { document.getElementById('leasingFormWrap').classList.add('d-none'); }
 function editLeasing(id) { apiGet('list_leasing').then(d => { const l = d.leasing.find(x=>x.id==id); if(l){document.getElementById('leasingFormWrap').classList.remove('d-none');document.getElementById('leasingId').value=l.id;document.getElementById('leasingTitle').value=l.option_title;document.getElementById('leasingPrice').value=l.option_price||'';document.getElementById('leasingDesc').value=l.option_desc||'';document.getElementById('leasingSort').value=l.sort_order;document.getElementById('leasingActive').value=l.is_active;} }); }
 async function saveLeasing(e) { e.preventDefault(); const fd=new FormData(document.getElementById('leasingForm')); const data={}; fd.forEach((v,k)=>data[k]=v); const action=data.id?'update_leasing':'create_leasing'; const d=await apiPost(action,data); if(d.success){loadLeasing();hideLeasingForm();}else{showAlertModal(d.error||'Error','error');} }
-async function deleteLeasing(id) { showConfirmDialog('Delete this option?', async function(){ const d=await apiPost('delete_leasing',{id:id}); if(d.success)loadLeasing(); }); }
+var _deletingLeasing = false;
+async function deleteLeasing(id) { if (_deletingLeasing) return; showConfirmDialog('Delete this option?', async function(){ _deletingLeasing = true; try { const d=await apiPost('delete_leasing',{id:id}); if(d.success)loadLeasing(); } finally { _deletingLeasing = false; } }); }
 loadLeasing();
 <?php elseif ($detailTab === 'extras'): ?>
 (async function() {

@@ -12,6 +12,32 @@ if (!$username) {
     exit;
 }
 
+$rateLimitKey = 'forgot_pwd_' . $_SERVER['REMOTE_ADDR'];
+$rateLimitFile = sys_get_temp_dir() . '/' . md5($rateLimitKey);
+$rateLimitPeriod = 300;
+$rateLimitMax = 5;
+$now = time();
+if (file_exists($rateLimitFile)) {
+    $data = json_decode(file_get_contents($rateLimitFile), true);
+    if ($data && is_array($data)) {
+        $attempts = $data['attempts'] ?? 0;
+        $firstAttempt = $data['first_attempt'] ?? $now;
+        if ($now - $firstAttempt > $rateLimitPeriod) {
+            $attempts = 0;
+            $firstAttempt = $now;
+        }
+        if ($attempts >= $rateLimitMax) {
+            http_response_code(429);
+            echo json_encode(['success' => false, 'error' => 'Too many requests. Please try again later.']);
+            exit;
+        }
+    }
+}
+file_put_contents($rateLimitFile, json_encode([
+    'attempts' => ($data['attempts'] ?? 0) + 1,
+    'first_attempt' => $data['first_attempt'] ?? $now,
+]), LOCK_EX);
+
 try {
     if (!isset($conn) || !$conn) {
         throw new Exception('Database connection not available');
@@ -19,7 +45,7 @@ try {
     
     $stmt = mysqli_prepare($conn, "SELECT id, email FROM admins WHERE username = ?");
     if (!$stmt) {
-        throw new Exception('Database error: ' . mysqli_error($conn));
+        throw new Exception('Database error');
     }
     mysqli_stmt_bind_param($stmt, 's', $username);
     mysqli_stmt_execute($stmt);
@@ -27,7 +53,7 @@ try {
     $admin = mysqli_fetch_assoc($result);
     
     if (!$admin) {
-        echo json_encode(['success' => false, 'error' => 'Username not found']);
+        echo json_encode(['success' => true, 'message' => 'If the username exists, a reset link has been sent to the registered email.']);
         exit;
     }
     
@@ -37,7 +63,7 @@ try {
     
     $stmt = mysqli_prepare($conn, "UPDATE admins SET reset_token = ?, reset_token_expiry = ? WHERE id = ?");
     if (!$stmt) {
-        throw new Exception('Database error: ' . mysqli_error($conn));
+        throw new Exception('Database error');
     }
     mysqli_stmt_bind_param($stmt, 'ssi', $resetToken, $expiry, $admin['id']);
     mysqli_stmt_execute($stmt);
@@ -46,13 +72,14 @@ try {
         $mail = new \CubeSpace\EmailService();
         $sent = $mail->send($admin['email'], 'Password Reset', 'Your reset token: ' . $resetToken . ' (expires in 1 hour)');
         if ($sent) {
-            echo json_encode(['success' => true, 'message' => 'Reset link sent to your email']);
+            echo json_encode(['success' => true, 'message' => 'If the username exists, a reset link has been sent to the registered email.']);
         } else {
             echo json_encode(['success' => true, 'reset_token' => $resetToken, 'warning' => 'Email not configured']);
         }
     } else {
-        echo json_encode(['success' => false, 'error' => 'Admin has no email address configured']);
+        echo json_encode(['success' => true, 'message' => 'If the username exists, a reset link has been sent to the registered email.']);
     }
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    log_app_error('forgot_password.php: ' . $e->getMessage());
+    echo json_encode(['success' => false, 'error' => 'An error occurred. Please try again later.']);
 }

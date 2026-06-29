@@ -35,6 +35,7 @@ function get_table($page) {
 }
 
 if ($action === 'bulk_delete') {
+    CSRFManager::require();
     $page = trim($_POST['page'] ?? '');
     $ids = $_POST['ids'] ?? [];
     $types = $_POST['types'] ?? [];
@@ -182,6 +183,7 @@ function bulk_dual_table_update($conn, $ids, $types, $field, $value, $actionName
 }
 
 if ($action === 'bulk_status') {
+    CSRFManager::require();
     $page = trim($_POST['page'] ?? '');
     $ids = $_POST['ids'] ?? [];
     $types = $_POST['types'] ?? [];
@@ -281,6 +283,7 @@ if ($action === 'bulk_status') {
 }
 
 if ($action === 'bulk_featured') {
+    CSRFManager::require();
     $page = trim($_POST['page'] ?? '');
     $ids = $_POST['ids'] ?? [];
     $types = $_POST['types'] ?? [];
@@ -340,6 +343,7 @@ if ($action === 'bulk_featured') {
 }
 
 if ($action === 'bulk_delete_activity') {
+    CSRFManager::require();
     $ids = $_POST['ids'] ?? [];
 
     if (!is_array($ids) || empty($ids)) {
@@ -364,6 +368,7 @@ if ($action === 'bulk_delete_activity') {
 }
 
 if ($action === 'bulk_toggle_active') {
+    CSRFManager::require();
     $ids = $_POST['ids'] ?? [];
     $value = (int)($_POST['is_active'] ?? 0);
     if (!is_array($ids) || empty($ids)) {
@@ -398,6 +403,7 @@ http_response_code(400);
 echo json_encode(['error' => 'Invalid action']);
 
 } catch (Throwable $e) {
+    log_app_error('bulk_crud.php: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => 'Internal server error']);
 }

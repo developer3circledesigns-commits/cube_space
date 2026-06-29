@@ -71,53 +71,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }).catch(function() { showAlertModal('Failed to load admin data', 'error'); });
 });
-document.getElementById('adminEditForm').addEventListener('submit', handleAdminForm);
-function handleAdminForm(e) {
-    e.preventDefault();
-    var form = e.target;
-    var btn = form.querySelector('button[type="submit"]');
-    var result = document.getElementById('formResult');
-    if (!result) return;
-    var fd = new FormData(form);
-    if (!fd.get('is_active')) fd.set('is_active', '0');
-    btn.disabled = true;
-    btn.textContent = 'Saving...';
-    result.className = 'alert d-none mt-2';
-    (async function() {
-        try {
-            var headers = { 'Authorization': 'Bearer ' + getToken(), 'X-CSRF-Token': (document.querySelector('meta[name="csrf-token"]') || {}).content || '' };
-            var r = await fetch('/admin/api/admin_crud.php?action=update', { method: 'POST', headers: headers, credentials: 'same-origin', body: fd });
-            if (r.status === 401) {
-                var refreshRes = await fetch('/admin/token_refresh.php', { method: 'POST', credentials: 'same-origin' });
-                if (refreshRes.ok) {
-                    var refreshData = await refreshRes.json();
-                    if (refreshData.access_token) {
-                        sessionStorage.setItem('admin_access_token', refreshData.access_token);
-                        headers['Authorization'] = 'Bearer ' + refreshData.access_token;
-                        r = await fetch('/admin/api/admin_crud.php?action=update', { method: 'POST', headers: headers, credentials: 'same-origin', body: fd });
-                    }
-                }
-            }
-            if (r.status === 401) { window.location.reload(); return; }
-            var d = await r.json();
-            result.classList.remove('d-none');
-            if (d.success) {
-                result.className = 'alert alert-success mt-2';
-                result.textContent = d.message;
-                setTimeout(function() { window.location.href = 'admins.php?saved=1'; }, 800);
-            } else {
-                result.className = 'alert alert-danger mt-2';
-                result.textContent = d.error || 'Operation failed';
-            }
-        } catch (err) {
-            result.classList.remove('d-none');
-            result.className = 'alert alert-danger mt-2';
-            result.textContent = err.message || 'Network error';
-        }
-        btn.disabled = false;
-        btn.textContent = 'Save Changes';
-    })();
-}
 </script>
 <?php
     require_once __DIR__ . '/footer.php';
@@ -177,6 +130,16 @@ if ($statusFilter) $exportUrl .= '&status=' . urlencode($statusFilter);
 <?php endif; if ($errorMsg): ?>
 <div class="alert alert-danger py-2"><?= $errorMsg ?></div>
 <?php endif; ?>
+<div id="adminToastContainer"></div>
+<script>
+(function() {
+    var msg = sessionStorage.getItem('adminToast');
+    if (msg) {
+        sessionStorage.removeItem('adminToast');
+        if (window.CubeToast) CubeToast.success(msg);
+    }
+})();
+</script>
 <div class="row g-3">
     <div class="col-md-12">
         <div class="admin-card">
@@ -373,7 +336,7 @@ function toggleAdminActive(id, username) {
     if (token) headers['Authorization'] = 'Bearer ' + token;
     fetch('/admin/api/admin_crud.php?action=toggle_active', { method: 'POST', headers: headers, body: fd })
         .then(function(r) { return r.json(); })
-        .then(function(d) { if (d.success) window.location.reload(); else showAlertModal(d.error, 'error'); })
+        .then(function(d) { if (d.success) { sessionStorage.setItem('adminToast', 'Status toggled successfully'); window.location.reload(); } else showAlertModal(d.error, 'error'); })
         .catch(function(err) { showAlertModal('Network error', 'error'); });
 }
 
@@ -472,14 +435,18 @@ function applyAdminBulkAction() {
     }
 
     var confirmMsg = '';
+    var confirmBtnText = 'Yes';
+    var confirmBtnClass = 'btn-danger';
     if (actionVal === 'delete') {
         confirmMsg = 'Are you sure you want to delete ' + checkedBoxes.length + ' selected admin(s)?';
     } else if (actionVal === 'activate' || actionVal === 'deactivate') {
         var label = actionVal.charAt(0).toUpperCase() + actionVal.slice(1);
         confirmMsg = label + ' ' + checkedBoxes.length + ' selected admin(s)?';
+        confirmBtnText = 'Apply';
+        confirmBtnClass = 'btn-primary';
     }
     if (confirmMsg) {
-        showConfirmDialog(confirmMsg, doAction);
+        showConfirmDialog(confirmMsg, doAction, confirmBtnText, confirmBtnClass);
     } else {
         doAction();
     }

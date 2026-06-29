@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/init.php';
 require_once __DIR__ . '/jwt_helper.php';
+admin_require_lib('csrf.php');
 
 $adminUser = '';
 $loggedIn = false;
@@ -32,6 +33,7 @@ if ($loggedIn) {
     header('Location: dashboard.php');
     exit;
 }
+$csrfTokenLogin = CSRFManager::generateToken();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -40,7 +42,7 @@ if ($loggedIn) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <title>Admin Login - CubeSpace</title>
-    <meta name="csrf-token" content="">
+    <meta name="csrf-token" content="<?= htmlspecialchars($csrfTokenLogin) ?>">
     <meta name="access-token" content="">
     <?php include dirname(__DIR__) . '/includes/head-meta.php'; ?>
     <link rel="icon" href="../favicon.ico" sizes="any">

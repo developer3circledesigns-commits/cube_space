@@ -66,6 +66,7 @@ if ($action === 'list_leasing') {
 }
 
 if ($action === 'create_leasing') {
+    CSRFManager::require();
     $officeId = (int)($_POST['office_id'] ?? 0);
     $optionTitle = trim($_POST['option_title'] ?? '');
     $optionDesc = trim($_POST['option_desc'] ?? '');
@@ -98,6 +99,7 @@ if ($action === 'create_leasing') {
 }
 
 if ($action === 'update_leasing') {
+    CSRFManager::require();
     $id = (int)($_POST['id'] ?? 0);
     $officeId = (int)($_POST['office_id'] ?? 0);
     $optionTitle = trim($_POST['option_title'] ?? '');
@@ -130,6 +132,7 @@ if ($action === 'update_leasing') {
 }
 
 if ($action === 'delete_leasing') {
+    CSRFManager::require();
     $id = (int)($_POST['id'] ?? 0);
     if (!$id) {
         http_response_code(400);
@@ -167,6 +170,7 @@ if ($action === 'delete_leasing') {
 // FEATURE HIGHLIGHTS & SEO TEXT
 // =====================================================
 if ($action === 'update_extras') {
+    CSRFManager::require();
     $officeId = (int)($_POST['office_id'] ?? 0);
     if (!$officeId) {
         http_response_code(400);
@@ -204,6 +208,7 @@ http_response_code(400);
 echo json_encode(['error' => 'Invalid action']);
 
 } catch (Throwable $e) {
+    log_app_error('detail_crud.php: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => 'Internal server error']);
 }

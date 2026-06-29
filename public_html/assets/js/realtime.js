@@ -81,10 +81,6 @@
                 try { Realtime.eventSource.close(); } catch (e) {}
             }
             var sseUrl = url + (url.indexOf('?') === -1 ? '?' : '&') + 'stream=true&since=' + Realtime.lastTimestamp;
-            if (Realtime.adminMode) {
-                var token = sessionStorage.getItem('admin_access_token');
-                if (token) sseUrl += '&token=' + encodeURIComponent(token);
-            }
             var es = new EventSource(sseUrl, { withCredentials: true });
             Realtime.eventSource = es;
 

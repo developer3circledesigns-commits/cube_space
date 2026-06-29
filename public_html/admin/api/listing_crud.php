@@ -44,6 +44,7 @@ function validate_image_upload($tmpPath, $originalName, $allowedExts) {
 }
 
 if ($action === 'create' || $action === 'update') {
+    CSRFManager::require();
     $id = (int)($_POST['id'] ?? 0);
     $title = trim($_POST['title'] ?? '');
     $listingType = trim($_POST['listing_type'] ?? '');
@@ -373,6 +374,7 @@ if ($action === 'export') {
 }
 
 if ($action === 'delete') {
+    CSRFManager::require();
     $id = (int)($_POST['id'] ?? 0);
     $listingType = trim($_POST['listing_type'] ?? '');
     $table = get_listing_table($listingType);
@@ -417,7 +419,8 @@ if ($action === 'delete') {
 http_response_code(400);
 echo json_encode(['error' => 'Invalid action']);
 } catch (Throwable $e) {
+    log_app_error('listing_crud.php: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => 'Internal server error']);
 
 }

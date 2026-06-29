@@ -1,7 +1,7 @@
     </main>
 </div>
 
-<div id="loadingOverlay" class="position-fixed top-0 start-0 w-100 h-100">
+<div id="loadingOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-none">
     <div class="d-flex flex-column align-items-center gap-2">
         <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
             <span class="visually-hidden">Loading...</span>
@@ -62,20 +62,27 @@ function showLoading(show) {
         else el.classList.add('d-none');
     }
 }
-function showConfirmDialog(message, callback) {
+function showConfirmDialog(message, callback, confirmText, confirmClass) {
+    confirmText = confirmText || 'Yes, Delete';
+    confirmClass = confirmClass || 'btn-danger';
+    var btn = document.getElementById('confirmYesBtn');
     document.getElementById('confirmMessage').textContent = message;
-    document.getElementById('confirmYesBtn').onclick = function() {
+    btn.textContent = confirmText;
+    btn.className = 'btn btn-sm px-3 ' + confirmClass;
+    btn.onclick = function() {
         var modalEl = document.getElementById('confirmModal');
         var modal = bootstrap.Modal.getInstance(modalEl);
         if (modal) modal.hide();
         callback();
     };
     var modalEl = document.getElementById('confirmModal');
-    var modal = new bootstrap.Modal(modalEl);
+    var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modalEl.addEventListener('hidden.bs.modal', function handler() {
         modalEl.removeEventListener('hidden.bs.modal', handler);
         document.getElementById('confirmYesBtn').onclick = null;
-    });
+        document.getElementById('confirmYesBtn').textContent = 'Yes, Delete';
+        document.getElementById('confirmYesBtn').className = 'btn btn-danger btn-sm px-3';
+    }, { once: true });
     modal.show();
 }
 function showAlertModal(message, type) {
@@ -86,7 +93,7 @@ function showAlertModal(message, type) {
     document.getElementById('alertIconInfo').classList.add('d-none');
     document.getElementById('alertIcon' + type.charAt(0).toUpperCase() + type.slice(1)).classList.remove('d-none');
     var modalEl = document.getElementById('alertModal');
-    var modal = new bootstrap.Modal(modalEl);
+    var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
 }
 function confirmDelete(id, type, title) {
@@ -219,7 +226,7 @@ function handleListingForm(e) {
     })();
 }
     if (!price && officeType === 'lease') {
-        showConfirmDialog('No price set for Lease. The listing will show without a price. Continue?', proceedSubmit);
+        showConfirmDialog('No price set for Lease. The listing will show without a price. Continue?', proceedSubmit, 'Continue', 'btn-primary');
     } else {
         proceedSubmit();
     }
@@ -321,14 +328,18 @@ async function applyBulkAction() {
         }
     };
     var confirmMsg = '';
+    var confirmBtnText = 'Yes';
+    var confirmBtnClass = 'btn-danger';
     if (apiAction === 'bulk_delete') {
         confirmMsg = 'Are you sure you want to delete ' + checkedBoxes.length + ' selected item(s)?';
     } else if (apiAction === 'bulk_status' || apiAction === 'bulk_featured') {
         var actionLabel = bulkBar.querySelector('select').options[bulkBar.querySelector('select').selectedIndex].text;
         confirmMsg = 'Apply "' + actionLabel + '" to ' + checkedBoxes.length + ' selected item(s)?';
+        confirmBtnText = 'Apply';
+        confirmBtnClass = 'btn-primary';
     }
     if (confirmMsg) {
-        showConfirmDialog(confirmMsg, doAction);
+        showConfirmDialog(confirmMsg, doAction, confirmBtnText, confirmBtnClass);
     } else {
         doAction();
     }

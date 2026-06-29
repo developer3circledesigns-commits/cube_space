@@ -121,6 +121,7 @@ if ($action === 'update') {
 }
 
 if ($action === 'delete') {
+    CSRFManager::require();
     $id = (int)($_POST['id'] ?? 0);
     if (!$id) { http_response_code(400); die(json_encode(['error' => 'ID required'])); }
 
@@ -149,6 +150,7 @@ if ($action === 'delete') {
 }
 
 if ($action === 'toggle_active') {
+    CSRFManager::require();
     $id = (int)($_POST['id'] ?? 0);
     if (!$id) { http_response_code(400); die(json_encode(['error' => 'ID required'])); }
 
@@ -231,6 +233,7 @@ http_response_code(400);
 echo json_encode(['error' => 'Invalid action']);
 
 } catch (Throwable $e) {
+    log_app_error('admin_crud.php: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Internal server error']);
 }
