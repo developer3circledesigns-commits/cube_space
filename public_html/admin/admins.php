@@ -195,7 +195,7 @@ if ($statusFilter) $exportUrl .= '&status=' . urlencode($statusFilter);
                     <a href="<?= $exportUrl ?>" class="btn btn-outline-success btn-sm"><i class="fa-solid fa-download me-1"></i>CSV</a>
                 </div>
 
-                <div class="bulk-bar <?= $total > 0 ? '' : 'd-none' ?> d-flex align-items-center gap-2 mb-2 p-2 bg-light rounded">
+                <div class="bulk-bar <?= $total > 0 ? '' : 'd-none' ?> d-flex align-items-center gap-2 mb-2 p-2 bg-light">
                     <select class="form-select form-select-sm" style="width:auto">
                         <option value="">Bulk actions</option>
                         <option value="delete">Delete</option>

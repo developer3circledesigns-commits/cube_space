@@ -92,7 +92,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
             <img src="../assets/images/final-logo.png" alt="CubeSpace" loading="lazy">
             <span>Admin</span>
         </div>
-        <nav class="nav nav-pills flex-column flex-grow-1 overflow-auto pt-2">
+        <nav class="nav flex-column flex-grow-1 overflow-auto pt-2">
             <a href="dashboard.php" class="nav-link <?= $currentPage === 'dashboard' ? 'active' : '' ?>"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
             <a href="contacts.php" class="nav-link <?= $currentPage === 'contacts' ? 'active' : '' ?>"><i class="fa-solid fa-message"></i>Enquiries<?php if ($newContactCount > 0): ?><span class="badge bg-danger ms-auto"><?= $newContactCount ?></span><?php endif; ?></a>
             <a href="managed-office.php" class="nav-link <?= $currentPage === 'managed-office' ? 'active' : '' ?>"><i class="fa-solid fa-briefcase"></i>Managed Office</a>
@@ -115,7 +115,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body">
-            <nav class="nav nav-pills flex-column gap-1">
+            <nav class="nav flex-column gap-1">
                 <a href="dashboard.php" class="nav-link text-white <?= $currentPage === 'dashboard' ? 'active bg-primary' : 'text-white-50' ?>" data-bs-dismiss="offcanvas"><i class="fa-solid fa-gauge-high me-2 w-auto"></i>Dashboard</a>
                 <a href="contacts.php" class="nav-link text-white <?= $currentPage === 'contacts' ? 'active bg-primary' : 'text-white-50' ?>" data-bs-dismiss="offcanvas"><i class="fa-solid fa-message me-2 w-auto"></i>Contacts<?php if ($newContactCount > 0): ?><span class="badge bg-danger ms-auto"><?= $newContactCount ?></span><?php endif; ?></a>
                 <a href="managed-office.php" class="nav-link text-white <?= $currentPage === 'managed-office' ? 'active bg-primary' : 'text-white-50' ?>" data-bs-dismiss="offcanvas"><i class="fa-solid fa-briefcase me-2 w-auto"></i>Managed Office</a>

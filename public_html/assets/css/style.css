@@ -5,6 +5,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    border-radius: 0 !important;
 }
 html {
     scroll-behavior: smooth;
@@ -84,7 +85,6 @@ body {
     background: #0d4ab4;
     color: #fff !important;
     padding: 12px 24px;
-    border-radius: 50px;
 }
 .btn-primary:hover {
     background: #083891;
@@ -103,7 +103,6 @@ body {
     transform: translateX(-50%);
     width: auto;
     min-width: 700px;
-    border-radius: 12px;
     padding: 20px 0;
     opacity: 0;
     visibility: hidden;
@@ -152,7 +151,6 @@ body {
     gap: 20px;
     text-decoration: none;
     padding: 20px;
-    border-radius: 16px;
     transition: all 0.3s ease;
     margin-bottom: 15px;
     border: 1px solid transparent;
@@ -166,7 +164,6 @@ body {
 .icon-box {
     min-width: 54px;
     height: 54px;
-    border-radius: 14px;
     background: #eef4ff;
     display: flex;
     align-items: center;
@@ -232,7 +229,6 @@ body {
 }
 .modal-card {
     background: #fff;
-    border-radius: 24px;
     width: 100%;
     max-width: 440px;
     padding: 40px;
@@ -280,7 +276,6 @@ body {
     height: 48px;
     padding: 0 16px;
     border: 1px solid #dbe3ef;
-    border-radius: 10px;
     font-size: 15px;
     outline: none;
     transition: border-color 0.2s;
@@ -294,7 +289,6 @@ body {
     background: #0d4ab4;
     color: #fff;
     border: none;
-    border-radius: 10px;
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
@@ -452,7 +446,6 @@ body {
     flex: 1;
     height: 40px;
     border: 1px solid #dbe3ef;
-    border-radius: 12px;
     padding: 0 15px;
     font-size: 14px;
     outline: none;
@@ -466,7 +459,6 @@ body {
     border: none;
     background: #0d4ab4;
     color: #fff;
-    border-radius: 12px;
     font-size: 15px;
     font-weight: 500;
     cursor: pointer;
@@ -499,7 +491,6 @@ body {
 }
 .about-image img {
     width: 100%;
-    border-radius: 25px;
     display: block;
     object-fit: cover;
 }
@@ -541,7 +532,6 @@ body {
 .feature-item {
     background: #f8fafc;
     padding: 5px 3px;
-    border-radius: 12px;
     font-weight: 600;
     color: #111827;
 }
@@ -553,7 +543,6 @@ body {
     max-width: 1000px;
     margin: 10px auto;
     background: #fff;
-    border-radius: 15px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, .08);
     padding: 35px;
 }
@@ -620,7 +609,6 @@ body {
     width: 150px;
     height: 90px;
     background: #fff;
-    border-radius: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -688,7 +676,6 @@ body {
     position: absolute;
     left: 0;
     bottom: 0;
-    border-radius: 20px;
 }
 .footer-col ul {
     list-style: none;
@@ -935,7 +922,6 @@ body {
     font-size: 0.7rem;
     font-weight: 700;
     padding: 3px 10px;
-    border-radius: 4px;
     z-index: 2;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -948,7 +934,6 @@ body {
     color: #fff;
     font-size: 0.7rem;
     padding: 2px 8px;
-    border-radius: 4px;
     z-index: 2;
     display: flex;
     align-items: center;
@@ -965,7 +950,6 @@ body {
 .stat-item {
     background: #f8f9fa;
     padding: 6px 8px;
-    border-radius: 6px;
     text-align: center;
 }
 .stat-label {
@@ -1037,7 +1021,6 @@ body {
     border: none;
     width: 28px;
     height: 28px;
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1069,7 +1052,6 @@ body {
 .carousel-dots button {
     width: 7px;
     height: 7px;
-    border-radius: 50%;
     border: none;
     background: rgba(255,255,255,0.5);
     cursor: pointer;
@@ -1079,7 +1061,6 @@ body {
 .carousel-dots button.active {
     background: #fff;
     width: 18px;
-    border-radius: 4px;
 }
 .placeholder-img {
     width: 100%;
@@ -1107,7 +1088,6 @@ body {
     color: #0d4ab4;
     border: 1px solid #cddfff;
     padding: 4px 10px;
-    border-radius: 6px;
     font-size: 0.8125rem;
     font-weight: 500;
 }
@@ -1155,7 +1135,6 @@ body {
 .skeleton-card {
     background: #fff;
     border: 1px solid #e9ecef;
-    border-radius: 14px;
     overflow: hidden;
     margin-bottom: 1rem;
 }
@@ -1173,7 +1152,6 @@ body {
     background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
-    border-radius: 4px;
     margin-bottom: 10px;
 }
 .skeleton-line.short { width: 60%; }
@@ -1213,7 +1191,6 @@ body {
     color: #2e7d32;
     font-size: 0.75rem;
     padding: 3px 10px;
-    border-radius: 4px;
     font-weight: 600;
     margin-bottom: 8px;
 }

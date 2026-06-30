@@ -2012,8 +2012,8 @@ if (isset($conn) && $conn) {
 
                 let statsHtml = '';
                 const statItems = [
-                    { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Available ' + o.available_sqft + ' sqft' : null },
-                    { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + o.min_inventory : null },
+                    { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Current Available Area On Rent ' + o.available_sqft + ' Sq Ft.' : null },
+
                 ];
                 statItems.forEach(s => {
                     if (s.value) {
@@ -2169,8 +2169,8 @@ if (isset($conn) && $conn) {
                 const address = o.address || o.area || o.city || '';
                 let statsHtml = '';
                 const statItems = [
-                    { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Available ' + o.available_sqft + ' sqft' : null },
-                    { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + o.min_inventory : null },
+                    { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Current Available Area On Rent ' + o.available_sqft + ' Sq Ft.' : null },
+
                 ];
                 statItems.forEach(s => {
                     if (s.value) {

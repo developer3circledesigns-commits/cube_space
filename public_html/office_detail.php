@@ -277,21 +277,99 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
         .breadcrumb a:hover { text-decoration: underline; }
         .breadcrumb .sep { color: #bdbdbd; }
 
-        /* ===== IMAGE GALLERY ===== */
-        .image-gallery { display: grid; grid-template-columns: 1.5fr 1fr; gap: 4px; border-radius: 12px; overflow: hidden; margin-bottom: 24px; cursor: pointer; position: relative; }
-        .gallery-main { position: relative; min-height: 380px; background: #e2e8f0; overflow: hidden; }
-        .gallery-main img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
-        .gallery-main:hover img { transform: scale(1.03); }
-        .gallery-side { display: grid; grid-template-rows: 1fr 1fr; gap: 4px; }
-        .gallery-item { position: relative; overflow: hidden; background: #e2e8f0; min-height: 188px; cursor: pointer; }
-        .gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
-        .gallery-item:hover img { transform: scale(1.03); }
-        .gallery-count {
-            position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.6);
-            color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 500;
-            backdrop-filter: blur(4px); display: flex; align-items: center; gap: 6px; z-index: 2;
+        /* ===== IMAGE GALLERY (first left big, rest right grid) ===== */
+        .image-gallery {
+            display: flex;
+            gap: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 24px;
+            position: relative;
+            background: #e2e8f0;
+            min-height: 460px;
         }
-        .photo-hint { position: absolute; bottom: 12px; left: 12px; background: rgba(0,0,0,0.5); color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 11px; backdrop-filter: blur(4px); z-index: 2; }
+        .gallery-featured {
+            flex: 0 0 50%;
+            max-width: 50%;
+            position: relative;
+            overflow: hidden;
+            background: #e2e8f0;
+            cursor: pointer;
+            border-right: 2px solid #fff;
+        }
+        .gallery-featured img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.4s;
+        }
+        .gallery-featured:hover img { transform: scale(1.04); }
+        .gallery-side {
+            flex: 1 1 50%;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-auto-rows: 1fr;
+            gap: 0;
+            min-height: 460px;
+        }
+        .gallery-side .gallery-item {
+            border-bottom: 2px solid #fff;
+            border-right: 2px solid #fff;
+        }
+        .gallery-side .gallery-item:nth-child(2n) { border-right: none; }
+        .gallery-side .gallery-item:nth-last-child(-n+2) { border-bottom: none; }
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            background: #e2e8f0;
+            cursor: pointer;
+            min-height: 0;
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s;
+            display: block;
+        }
+        .gallery-item:hover img { transform: scale(1.05); }
+        .gallery-item .gallery-more {
+            position: absolute; inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            color: #fff;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            backdrop-filter: blur(2px);
+            transition: background 0.2s;
+        }
+        .gallery-item .gallery-more:hover { background: rgba(0, 0, 0, 0.65); }
+        .gallery-item .gallery-more i { font-size: 22px; margin-bottom: 2px; }
+        .gallery-item .gallery-more small { font-size: 12px; font-weight: 500; opacity: 0.9; }
+        .photo-hint {
+            position: absolute; bottom: 12px; left: 12px;
+            background: rgba(0, 0, 0, 0.55); color: #fff;
+            padding: 6px 12px; border-radius: 6px;
+            font-size: 12px; font-weight: 500;
+            backdrop-filter: blur(4px); z-index: 2;
+            display: flex; align-items: center; gap: 6px;
+        }
+        @media (max-width: 900px) {
+            .image-gallery { flex-direction: column; min-height: auto; }
+            .gallery-featured {
+                flex: 0 0 auto; max-width: 100%; height: 320px;
+                border-right: none; border-bottom: 2px solid #fff;
+            }
+            .gallery-side { min-height: auto; }
+            .gallery-side .gallery-item { border-bottom: 2px solid #fff; }
+            .gallery-side .gallery-item:nth-last-child(-n+2) { border-bottom: none; }
+        }
+        @media (max-width: 500px) {
+            .gallery-side .gallery-item { height: 140px; }
+        }
 
         /* ===== LIGHTBOX ===== */
         .lightbox { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.93); display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
@@ -386,22 +464,33 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
         .cd-value { font-size: 16px; font-weight: 700; color: #111827; }
 
         /* ===== AMENITIES ===== */
-        .amenities-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-        .amenity-item {
-            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-            background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9;
-            transition: all 0.15s;
+        .amenities-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0;
+            border-top: 1px solid var(--cs-border);
+            border-left: 1px solid var(--cs-border);
         }
-        .amenity-item:hover { border-color: #0d4ab4; background: #eef4ff; }
+        .amenity-item {
+            display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+            background: #f1f5fb;
+            border-right: 1px solid var(--cs-border);
+            border-bottom: 1px solid var(--cs-border);
+            color: #1e3a8a;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .amenity-item:nth-child(3n) { border-right: none; }
+        .amenity-item:nth-last-child(-n+3) { border-bottom: none; }
         .amenity-item .icon {
-            width: 36px; height: 36px; border-radius: 8px; background: #eef4ff;
-            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            display: none;
         }
         .amenity-item .icon i { font-size: 16px; color: #0d4ab4; }
         .amenity-item span { font-size: 14px; font-weight: 500; color: #374151; }
         .amenities-tnc {
             margin-top: 16px; padding: 12px 16px; background: #212121; color: #fff;
-            border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 8px;
+            font-size: 12px; display: flex; align-items: center; gap: 8px;
+            border: 1px solid #212121;
         }
         .amenities-tnc i { color: #f59e0b; }
 
@@ -537,10 +626,12 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
             .nav-tab { padding: 12px 16px; font-size: 13px; }
         }
         @media (max-width: 768px) {
-            .image-gallery { grid-template-columns: 1fr; grid-template-rows: 280px; }
-            .gallery-side { display: none; }
             .ws-name { font-size: 22px; }
             .amenities-grid { grid-template-columns: repeat(2, 1fr); }
+            .amenity-item:nth-child(3n) { border-right: 1px solid var(--cs-border); }
+            .amenity-item:nth-child(2n) { border-right: none; }
+            .amenity-item:nth-last-child(-n+3) { border-bottom: 1px solid var(--cs-border); }
+            .amenity-item:nth-last-child(-n+2) { border-bottom: none; }
 
             .pricing-card { flex-direction: column; }
             .pricing-card-img { width: 100%; height: 160px; }
@@ -558,6 +649,12 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
         @media (max-width: 576px) {
             .page-container { padding: 16px 16px 120px; }
             .amenities-grid { grid-template-columns: 1fr; }
+            .amenity-item { border-right: none; }
+            .amenity-item:nth-child(2n),
+            .amenity-item:nth-child(3n) { border-right: none; }
+            .amenity-item:nth-last-child(-n+2),
+            .amenity-item:nth-last-child(-n+3) { border-bottom: 1px solid var(--cs-border); }
+            .amenity-item:last-child { border-bottom: none; }
             .center-details-grid { grid-template-columns: 1fr; }
             .info-strip { flex-direction: column; gap: 10px; align-items: flex-start; }
             .info-strip-divider { display: none; }
@@ -602,30 +699,37 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                 <span><?php echo $officeArea; ?></span>
             </div>
 
-            <!-- Image Gallery -->
+            <!-- Image Gallery (first image left big, rest right grid) -->
             <?php
-            $img1 = !empty($images[0]) ? htmlspecialchars($images[0]) : 'https://images.unsplash.com/photo-1497366756111-5c12c1785e86?w=1200';
-            $img2 = !empty($images[1]) ? htmlspecialchars($images[1]) : 'https://images.unsplash.com/photo-1517502884422-41eaead166d4?w=800';
-            $img3 = !empty($images[2]) ? htmlspecialchars($images[2]) : 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800';
             $totalImages = count($images);
+            $firstImage = $images[0] ?? 'https://images.unsplash.com/photo-1497366756111-5c12c1785e86?w=1200';
+            $restImages = array_slice($images, 1);
+            $restCount = count($restImages);
+            // For the overlay on the last visible right-side image when there are many
+            $hiddenCount = max(0, $restCount - 4); // up to 4 thumbnails shown in right grid; the 4th gets overlay if more
             ?>
-            <div class="image-gallery" onclick="openLightbox(0)">
-                <div class="gallery-main">
-                    <img src="<?php echo $img1; ?>" alt="<?php echo $officeName; ?>" loading="lazy" onerror="imgErrorToPlaceholder(this)">
-                    <span class="photo-hint"><i class="fa-solid fa-expand"></i> Click to view all</span>
+            <div class="image-gallery">
+                <div class="gallery-featured" onclick="openLightbox(0)">
+                    <img src="<?php echo htmlspecialchars($firstImage); ?>" alt="<?php echo $officeName; ?>" loading="lazy" onerror="imgErrorToPlaceholder(this)">
+                    <span class="photo-hint"><i class="fa-solid fa-expand"></i> Click to view all <?php echo (int)$totalImages; ?> photos</span>
                 </div>
                 <div class="gallery-side">
-                    <div class="gallery-item">
-                        <img src="<?php echo $img2; ?>" alt="<?php echo $officeName; ?>" loading="lazy" onerror="imgErrorToPlaceholder(this)">
-                    </div>
-                    <?php if ($totalImages > 2): ?>
-                    <div class="gallery-item">
-                        <img src="<?php echo $img3; ?>" alt="<?php echo $officeName; ?>" loading="lazy" onerror="imgErrorToPlaceholder(this)">
-                        <?php if ($totalImages > 3): ?>
-                        <div class="gallery-count"><i class="fa-solid fa-images"></i> <?php echo (int)$totalImages; ?> photos</div>
+                    <?php foreach ($restImages as $i => $img):
+                        $src = htmlspecialchars($img);
+                        $lightboxIdx = $i + 1;
+                        $showOverlay = ($i === 3 && $restCount > 4);
+                    ?>
+                    <div class="gallery-item" onclick="openLightbox(<?php echo (int)$lightboxIdx; ?>)">
+                        <img src="<?php echo $src; ?>" alt="<?php echo $officeName; ?>" loading="lazy" onerror="imgErrorToPlaceholder(this)">
+                        <?php if ($showOverlay): ?>
+                        <div class="gallery-more">
+                            <i class="fa-solid fa-images"></i>
+                            +<?php echo (int)$hiddenCount; ?> more
+                            <small>View all</small>
+                        </div>
                         <?php endif; ?>
                     </div>
-                    <?php endif; ?>
+                    <?php endforeach; ?>
                 </div>
             </div>
 
@@ -664,13 +768,13 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                     <?php echo nl2br(htmlspecialchars($officeDescription)); ?>
                 </div>
                 <button class="read-more-btn" onclick="toggleOverview()">Read more <i class="fa-solid fa-chevron-down"></i></button>
-                <?php if (!empty($featureHighlights)): ?>
+                <!-- <?php if (!empty($featureHighlights)): ?>
                 <div class="feature-highlights">
                     <?php foreach ($featureHighlights as $highlight): ?>
                     <span class="feature-chip"><i class="fa-solid fa-check"></i> <?php echo htmlspecialchars($highlight); ?></span>
                     <?php endforeach; ?>
                 </div>
-                <?php endif; ?>
+                <?php endif; ?> -->
             </div>
             <?php endif; ?>
 
@@ -690,8 +794,15 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                     <div class="cd-item">
                         <div class="cd-icon"><i class="fa-solid fa-people-group"></i></div>
                         <div>
-                            <div class="cd-label">Total Seating Capacity</div>
+                            <div class="cd-label">Current Available Seats</div>
                             <div class="cd-value"><?php echo $totalSeats; ?> Seats</div>
+                        </div>
+                    </div>
+                    <div class="cd-item">
+                        <div class="cd-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                        <div>
+                            <div class="cd-label">Move-in</div>
+                            <div class="cd-value">Immediate</div>
                         </div>
                     </div>
                     <?php else: ?>
@@ -702,17 +813,15 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                             <div class="cd-value"><?php echo $totalSqft ? number_format($totalSqft) . ' sqft' : '-'; ?></div>
                         </div>
                     </div>
-                    <?php endif; ?>
-                    <?php if ($totalSqft && !$isManaged): ?>
+                    <?php if ($availableSqft): ?>
                     <div class="cd-item">
                         <div class="cd-icon"><i class="fa-solid fa-chart-area"></i></div>
                         <div>
                             <div class="cd-label">Available Area</div>
-                            <div class="cd-value"><?php echo $availableSqft ? number_format($availableSqft) . ' sqft' : '-'; ?></div>
+                            <div class="cd-value"><?php echo number_format($availableSqft) . ' sqft'; ?></div>
                         </div>
                     </div>
                     <?php endif; ?>
-                    <?php if (!$isManaged): ?>
                     <div class="cd-item">
                         <div class="cd-icon"><i class="fa-solid fa-couch"></i></div>
                         <div>
@@ -725,21 +834,6 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                         <div>
                             <div class="cd-label">Min Inventory</div>
                             <div class="cd-value"><?php echo htmlspecialchars((string)$minInventory); ?></div>
-                        </div>
-                    </div>
-                    <?php else: ?>
-                    <div class="cd-item">
-                        <div class="cd-icon"><i class="fa-solid fa-vector-square"></i></div>
-                        <div>
-                            <div class="cd-label">Total Area</div>
-                            <div class="cd-value"><?php echo $totalSqft ? number_format($totalSqft) . ' sqft' : '-'; ?></div>
-                        </div>
-                    </div>
-                    <div class="cd-item">
-                        <div class="cd-icon"><i class="fa-solid fa-calendar-check"></i></div>
-                        <div>
-                            <div class="cd-label">Move-in</div>
-                            <div class="cd-value">Immediate</div>
                         </div>
                     </div>
                     <?php endif; ?>
@@ -757,7 +851,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                     ?>
                     <div class="amenity-item">
                         <div class="icon"><i class="fa-solid <?php echo $icon ? e($icon) : 'fa-check'; ?>"></i></div>
-                        <span><?php echo htmlspecialchars($name); ?></span>
+                        <span><?php echo e($name); ?></span>
                     </div>
                     <?php endforeach; ?>
                 </div>
@@ -768,7 +862,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
             </div>
             <?php endif; ?>
 
-            <!-- Pricing / Leasing Options -->
+            <!-- Pricing / Leasing Options
             <?php if (!empty($leasingOptions)): ?>
             <div class="section" id="pricing">
                 <div class="section-title"><i class="fa-solid fa-indian-rupee-sign"></i> Pricing & Leasing Options</div>
@@ -783,7 +877,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                         $price = is_array($option) ? ($option['option_price'] ?? $option['price'] ?? $option['amount'] ?? 0) : 0;
                         $period = is_array($option) ? ($option['period'] ?? 'month') : 'month';
                         $perUnit = is_array($option) ? ($option['per_unit'] ?? $option['unit'] ?? '') : '';
-                        $img = is_array($option) ? ($option['image'] ?? $option['img'] ?? $img1) : $img1;
+                        $img = is_array($option) ? ($option['image'] ?? $option['img'] ?? ($images[0] ?? '')) : ($images[0] ?? '');
                     ?>
                     <div class="pricing-card">
                         <div class="pricing-card-img">
@@ -806,7 +900,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                     <?php endforeach; ?>
                 </div>
             </div>
-            <?php endif; ?>
+            <?php endif; ?> -->
 
             <!-- SEO Content -->
             <?php if (!empty($officeSeoText)): ?>
@@ -854,9 +948,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                 <div class="sidebar-card-header">
                     <div class="expert-avatar"><i class="fa-solid fa-user-tie"></i></div>
                     <div class="expert-info">
-                        <h4>CubeSpace Expert</h4>
-                        <p>Workspace Consultant</p>
-                        <div class="expert-badge"><i class="fa-solid fa-circle-check"></i> Verified Expert</div>
+                        <h4>Connect with our workspace expert</h4>
                     </div>
                 </div>
                 <form class="sidebar-form" id="contactForm" onsubmit="handleSidebarForm(event)">
@@ -891,7 +983,6 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                         <textarea name="message" placeholder="Tell us about your requirements..." data-rules="max:1000"></textarea>
                     </div>
                     <button type="submit" class="btn-submit"><i class="fa-solid fa-paper-plane"></i> Get Best Price</button>
-                    <button type="button" class="btn-whatsapp" onclick="window.open('https://wa.me/919962200015')"><i class="fa-brands fa-whatsapp"></i> WhatsApp Us</button>
                     <button type="button" class="btn-call-sidebar" onclick="window.open('tel:+919962200015')"><i class="fa-solid fa-phone"></i> Call +91 99622 00015</button>
                 </form>
             </div>

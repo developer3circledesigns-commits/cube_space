@@ -59,7 +59,7 @@ cubespace_require_project('lib/config.php');
 $pageTitle = 'Office Spaces - CubeSpace';
 $metaDesc = 'Browse furnished and unfurnished office spaces in Chennai. Fully equipped offices and shell spaces for custom fit-outs across prime business locations.';
 $breadcrumbLabel = 'Office Spaces';
-$heading = 'Office Spaces in';
+$heading = 'Furnished / Unfurnished Office Spaces in';
 $subheading = 'Furnished and unfurnished office spaces across prime locations. Fully equipped plug-and-play offices and shell spaces for custom fit-outs.';
 
 $totalCount = 0;
@@ -1481,7 +1481,7 @@ if (isset($conn) && $conn) {
                 <?php endforeach; ?>
             </select>
             <select class="form-select form-select-sm filter-select filter-sqft-select" id="filterSqft" aria-label="Filter by Square Feet">
-                <option value="">All Sq.ft</option>
+                <option value="">All Sq Ft</option>
                 <option value="0-1000">0 - 1000</option>
                 <option value="1000-2000">1000 - 2000</option>
                 <option value="2000-5000">2000 - 5000</option>
@@ -1824,7 +1824,7 @@ if (isset($conn) && $conn) {
             if (sqftVal) {
                 const sqftEl = document.getElementById('filterSqft');
                 const text = sqftEl.options[sqftEl.selectedIndex]?.text || sqftVal;
-                filters.push({ key: 'sqft', label: text + ' sq.ft' });
+                filters.push({ key: 'sqft', label: text + ' Sq Ft.' });
             }
 
             if (filters.length === 0) {
@@ -2013,9 +2013,6 @@ if (isset($conn) && $conn) {
                     carouselHtml = '<div class="placeholder-img"><i class="fa-solid fa-building"></i></div>';
                 }
 
-                const typeBadge = o.listing_type_db ?
-                    `<span class="badge-type position-absolute top-0 end-0 m-2" style="background: ${o.listing_type_db === 'furnished' ? '#0d4ab4' : '#6b7280'}; color: #fff; font-size: 0.65rem; font-weight: 600; padding: 2px 10px; border-radius: 4px; z-index: 5;">${o.listing_type_db === 'furnished' ? 'Furnished' : 'Unfurnished'}</span>` :
-                    '';
                 const imgCount = o.images_arr && o.images_arr.length > 1 ?
                     `<div class="img-count"><i class="fa-solid fa-image"></i> ${o.images_arr.length}</div>` :
                     '';
@@ -2024,8 +2021,10 @@ if (isset($conn) && $conn) {
 
                 let statsHtml = '';
                 const statItems = [
-                    { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Available ' + o.available_sqft + ' sqft' : null },
-                    { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + o.min_inventory : null },
+                    { icon: 'fa-building', value: o.total_area_sqft ? 'Total Building Leasable Area ' + o.total_area_sqft + ' sqft' : null },
+                    { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Current Available Area On Rent ' + o.available_sqft: null },
+                    
+
                 ];
                 statItems.forEach(s => {
                     if (s.value) {
@@ -2054,7 +2053,6 @@ if (isset($conn) && $conn) {
                         <div class="card office-card flex-lg-row" data-slug="${escHtml(o.slug)}" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
                             <div class="card-img-top office-card-img">
                                 ${carouselHtml}
-                                ${typeBadge}
                                 ${imgCount}
                             </div>
                             <div class="card-body d-flex flex-column">
@@ -2065,7 +2063,7 @@ if (isset($conn) && $conn) {
                                 <div class="card-footer-row mt-auto">
                                     <div class="card-price">
                                         <span class="price-label" style="font-weight:bold; color:#212529;">
-    Quoted Price 
+    Quoted Rent 
     <span style="font-weight:normal; text-transform:none;">(Negotiable)</span>
 </span>
                                         ${price}
@@ -2138,7 +2136,6 @@ if (isset($conn) && $conn) {
             nearest.forEach(o => {
                 const carouselId = 'ncar-' + o.id;
                 let carouselHtml = '';
-                let nTypeBadge = '';
                 let imgCountHtml = '';
 
                 if (o.images_arr && o.images_arr.length) {
@@ -2168,9 +2165,6 @@ if (isset($conn) && $conn) {
                         }
                         carouselHtml += '</div>';
                     }
-                    nTypeBadge = o.listing_type_db ?
-                        `<span class="badge-type position-absolute top-0 end-0 m-2" style="background: ${o.listing_type_db === 'furnished' ? '#0d4ab4' : '#6b7280'}; color: #fff; font-size: 0.65rem; font-weight: 600; padding: 2px 10px; border-radius: 4px; z-index: 5;">${o.listing_type_db === 'furnished' ? 'Furnished' : 'Unfurnished'}</span>` :
-                        '';
                     imgCountHtml = o.images_arr.length > 1 ?
                         `<div class="img-count"><i class="fa-solid fa-image"></i> ${o.images_arr.length}</div>` :
                         '';
@@ -2185,8 +2179,8 @@ if (isset($conn) && $conn) {
                 const address = o.address || o.area || o.city || '';
                 let statsHtml = '';
                 const statItems = [
-                    { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Available ' + o.available_sqft + ' sqft' : null },
-                    { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + o.min_inventory : null },
+                    { icon: 'fa-building', value: o.total_area_sqft ? 'Total Building Leasable Area ' + o.total_area_sqft + ' Sq Ft.' : null },
+                    { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Current Available Area On Rent ' + o.available_sqft + ' Sq Ft.' : null },
                 ];
                 statItems.forEach(s => {
                     if (s.value) {
@@ -2216,7 +2210,6 @@ if (isset($conn) && $conn) {
                                     <div class="card-img-top office-card-img position-relative overflow-hidden">
                                         <span class="badge-nearby"><i class="fa-regular fa-compass"></i> Nearby</span>
                                         ${carouselHtml}
-                                        ${nTypeBadge}
                                         ${imgCountHtml}
                                     </div>
                                     <div class="card-body d-flex flex-column">
@@ -2227,7 +2220,7 @@ if (isset($conn) && $conn) {
                                         ${statsHtml ? '<div class="stats-row">' + statsHtml + '</div>' : ''}
                                         <div class="card-footer-row mt-auto">
                                             <div class="card-price">
-                                                <span class="price-label">Quoted price</span>
+                                                <span class="price-label">Quoted Rent</span>
                                                 ${price}
                                             </div>
                                             <div class="card-actions">

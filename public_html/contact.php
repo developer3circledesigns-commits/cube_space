@@ -69,6 +69,7 @@ ob_start();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        * { border-radius: 0 !important; }
         /* Contact page hero banner */
         .contact-hero {
             background: linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.5)),url(assets/images/hero.jpg) center/cover;
@@ -108,7 +109,6 @@ ob_start();
         .contact-info-card {
             background: #fff;
             border: 1px solid #e8ecf0;
-            border-radius: 12px;
             padding: 32px;
         }
         .contact-form-card h2 {
@@ -128,7 +128,6 @@ ob_start();
             height: 48px;
             padding: 0 14px;
             border: 1px solid #d2d3ee;
-            border-radius: 8px;
             font-size: 14px;
             font-family: inherit;
             color: #212121;
@@ -149,7 +148,6 @@ ob_start();
             background: #f4f4fb;
             border: 1px solid #d2d3ee;
             border-right: none;
-            border-radius: 8px 0 0 8px;
             display: flex;
             align-items: center;
             font-size: 14px;
@@ -161,7 +159,6 @@ ob_start();
             height: 48px;
             padding: 0 14px;
             border: 1px solid #d2d3ee;
-            border-radius: 0 8px 8px 0;
             font-size: 14px;
             font-family: inherit;
             color: #212121;
@@ -174,7 +171,6 @@ ob_start();
             background: #0d4ab4;
             color: #fff;
             border: none;
-            border-radius: 8px;
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
@@ -274,7 +270,7 @@ ob_start();
 
                 <form id="contactForm">
 
-                    <div id="contactMsg" style="display:none; padding:12px; border-radius:10px; margin-bottom:15px;"></div>
+                    <div id="contactMsg" style="display:none; padding:12px; margin-bottom:15px;"></div>
 
                     <div class="mb-3">
                         <input type="text" name="name" placeholder="Name*" required data-rules="required|max:120" data-label="Name">

@@ -60,7 +60,7 @@ if ($mode === 'add' || $mode === 'edit'):
 <div class="card border-0 shadow-sm">
     <div class="card-body">
         <?php if ($mode === 'edit' && $listing['listing_code']): ?>
-        <div class="mb-3 p-2 bg-light rounded small">
+        <div class="mb-3 p-2 bg-light small">
             <span class="text-muted">Listing Code:</span> <strong><?= htmlspecialchars($listing['listing_code']) ?></strong>
             <?php if ($listing['slug']): ?><span class="ms-3 text-muted">Slug:</span> <code><?= htmlspecialchars($listing['slug']) ?></code><?php endif; ?>
         </div>
@@ -183,9 +183,9 @@ if ($mode === 'add' || $mode === 'edit'):
                         ?>
                         <div class="position-relative" data-src="<?= htmlspecialchars($img) ?>">
                             <?php if ($imgExists): ?>
-                            <img src="<?= htmlspecialchars($img) ?>" class="rounded border" style="width: 70px; height: 70px; object-fit: cover;" loading="lazy" alt="Listing image">
+                            <img src="<?= htmlspecialchars($img) ?>" class="border" style="width: 70px; height: 70px; object-fit: cover;" loading="lazy" alt="Listing image">
                             <?php else: ?>
-                            <div class="d-flex align-items-center justify-content-center rounded border bg-light" style="width:70px;height:70px;"><i class="fa-solid fa-image text-muted"></i></div>
+                            <div class="d-flex align-items-center justify-content-center border bg-light" style="width:70px;height:70px;"><i class="fa-solid fa-image text-muted"></i></div>
                             <?php endif; ?>
                             <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0" style="font-size: 10px; line-height: 1; padding: 1px 5px;" onclick="removeExistingImage(this)">&times;</button>
                         </div>
