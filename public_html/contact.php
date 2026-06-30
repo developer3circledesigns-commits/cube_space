@@ -334,7 +334,7 @@ ob_start();
             <div class="contact-info-card">
                 <div class="contact-info-group">
                     <h3><i class="fa-solid fa-phone"></i>Call us</h3>
-                    <p class="info-desc">Reach out to our sales team directly for any details, pricing or availability</p>
+                    <p class="info-desc">Reach out to our sales team directly for any details.</p>
                     <p class="info-value">+(91) 99622 00015</p>
                 </div>
 

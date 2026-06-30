@@ -871,7 +871,7 @@ body {
     border: 1px solid #dee2e6 !important;
     background: #fff !important;
     color: #495057 !important;
-    border-radius: 20px !important;
+    border-radius: 0 !important;
     padding: 4px 14px !important;
     font-size: 0.8125rem !important;
     transition: all 0.2s ease;
@@ -889,7 +889,7 @@ body {
 
 /* Listing cards */
 .office-card {
-    border-radius: 14px !important;
+    border-radius: 0 !important;
     overflow: hidden;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;

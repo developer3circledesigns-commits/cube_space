@@ -158,7 +158,7 @@ if ($mode === 'add' || $mode === 'edit'):
                         ?>
                         <div class="position-relative" data-src="<?= htmlspecialchars($img) ?>">
                             <?php if ($imgExists): ?>
-                            <img src="<?= htmlspecialchars($img) ?>" class="rounded border" style="width: 70px; height: 70px; object-fit: cover;" loading="lazy" alt="Listing image">
+                            <img src="<?= htmlspecialchars($img) ?>" class="rounded border" style="width: 70px; height: 40px; object-fit: cover;" loading="lazy" alt="Listing image">
                             <?php else: ?>
                             <div class="d-flex align-items-center justify-content-center rounded border bg-light" style="width:70px;height:70px;"><i class="fa-solid fa-image text-muted"></i></div>
                             <?php endif; ?>

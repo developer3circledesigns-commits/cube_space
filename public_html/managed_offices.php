@@ -115,10 +115,9 @@ if (isset($conn) && $conn) {
         /* ----- Filter Bar ----- */
         .filter-bar {
             background: #ffffff;
-            border-radius: var(--radius);
             padding: 14px 18px;
             box-shadow: var(--shadow-sm);
-            border: 1px solid rgba(13, 74, 180, 0.06);
+            border: 1px solid #dcdcdc;
             gap: 10px;
             flex-wrap: wrap;
             position: sticky;
@@ -126,7 +125,6 @@ if (isset($conn) && $conn) {
             z-index: 99;
         }
         .filter-bar .filter-select {
-            border-radius: 0;
             border-color: #0d4ab4;
             font-size: 0.85rem;
             padding: 8px 34px 8px 14px;
@@ -145,7 +143,7 @@ if (isset($conn) && $conn) {
             box-shadow: 0 0 0 3px rgba(13, 74, 180, 0.12);
         }
         .filter-bar .form-control {
-            border-radius: 8px;
+            border: 1px solid #dcdcdc;
             border-color: #e5e7eb;
             font-size: 0.85rem;
             padding: 6px 12px;
@@ -182,10 +180,9 @@ if (isset($conn) && $conn) {
         /* ----- Localities ----- */
         .localities-section {
             background: #ffffff;
-            border-radius: var(--radius);
             padding: 16px 18px;
             box-shadow: var(--shadow-sm);
-            border: 1px solid rgba(13, 74, 180, 0.06);
+            border: 1px solid #dcdcdc;
         }
         .localities-section .d-flex.align-items-center {
             gap: 8px;
@@ -220,7 +217,6 @@ if (isset($conn) && $conn) {
             flex-shrink: 0;
             width: 28px;
             height: 28px;
-            border-radius: 50%;
             border: 1px solid #dee2e6;
             background: #fff;
             display: flex;
@@ -244,7 +240,6 @@ if (isset($conn) && $conn) {
             pointer-events: none;
         }
         .locality-chip {
-            border-radius: 20px;
             padding: 5px 16px;
             font-size: 0.8rem;
             font-weight: 500;
@@ -286,7 +281,6 @@ if (isset($conn) && $conn) {
         }
         .results-counter #btnClearAll {
             font-size: 0.8rem;
-            border-radius: 8px;
             padding: 5px 16px;
             border-color: #e5e7eb;
             color: #6b7280;
@@ -318,7 +312,6 @@ if (isset($conn) && $conn) {
             font-size: 0.8rem;
             font-weight: 500;
             padding: 4px 10px 4px 14px;
-            border-radius: 20px;
             border: 1px solid rgba(13, 74, 180, 0.12);
         }
         .filter-tag button {
@@ -344,42 +337,45 @@ if (isset($conn) && $conn) {
         .office-card {
             cursor: pointer;
             transition: box-shadow 0.2s ease, border-color 0.2s ease;
+
+            border-radius: 0;
         }
         .office-card:hover {
             box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-            border-color: #d0d4da;
+            border-radius: 0;
         }
         .card.office-card {
-            border-radius: 10px;
-            border: 1px solid #e8eaed;
+            border-radius: 0;
+            border: 1px solid #dcdcdc;
             overflow: hidden;
             background: #ffffff;
         }
         @media (min-width: 992px) {
             .office-card.flex-lg-row .office-card-img {
-                width: 45%;
+                width: 35%;
                 flex-shrink: 0;
-                min-height: 50px;
-                aspect-ratio: 21 / 9;
-                border-radius: 10px 0 0 10px !important;
+                aspect-ratio: 16 / 9;
+                border-radius: 0 !important;
             }
             .office-card.flex-lg-row .card-body {
                 flex: 1;
-                padding: 16px 20px;
+                padding: 10px 20px;
+    
+                border-radius: 0 !important;
             }
         }
         @media (min-width: 768px) and (max-width: 991px) {
             .office-card .office-card-img {
-                aspect-ratio: 21 / 9;
-                min-height: 35px;
-                max-height: 70px;
+                aspect-ratio: 16 / 9;
+    
+                border-radius: 0 !important;
             }
         }
         @media (max-width: 767px) {
             .office-card .office-card-img {
-                aspect-ratio: 21 / 9;
-                min-height: 30px;
-                max-height: 60px;
+                aspect-ratio: 16 / 9;
+    
+                border-radius: 0 !important;
             }
         }
         .office-card .office-card-img {
@@ -389,6 +385,8 @@ if (isset($conn) && $conn) {
             display: flex;
             align-items: stretch;
             width: 100%;
+
+            border-radius: 0 !important;
         }
         .office-card .office-card-img .placeholder-img {
             display: flex;
@@ -396,11 +394,13 @@ if (isset($conn) && $conn) {
             justify-content: center;
             width: 100%;
             height: 100%;
-            min-height: 120px;
+            min-height: 20px;
             background: #eef2f7;
             color: #b0b7c3;
             font-size: 2.5rem;
             flex: 1;
+
+            border-radius: 0 !important;
         }
         .office-card .office-card-img .card-carousel {
             display: flex;
@@ -410,6 +410,8 @@ if (isset($conn) && $conn) {
             width: 100%;
             height: 100%;
             flex: 1;
+
+            border-radius: 0 !important;
         }
         .office-card .office-card-img .card-carousel .carousel-slide {
             flex: 0 0 100%;
@@ -417,6 +419,8 @@ if (isset($conn) && $conn) {
             overflow: hidden;
             display: flex;
             align-items: stretch;
+
+            border-radius: 0 !important;
         }
         .office-card .office-card-img .card-carousel .carousel-slide img {
             width: 100%;
@@ -424,23 +428,28 @@ if (isset($conn) && $conn) {
             object-fit: cover;
             display: block;
             flex-shrink: 0;
+
+            border-radius: 0 !important;
         }
         .office-card .office-card-img .img-count {
             position: absolute;
-            bottom: 10px;
+            bottom: 6px;
             right: 10px;
             background: rgba(0,0,0,0.55);
             color: #fff;
             font-size: 0.65rem;
             padding: 2px 10px;
-            border-radius: 4px;
+            border-radius: 0;
             z-index: 5;
             display: flex;
             align-items: center;
             gap: 4px;
+
+            border-radius: 0 !important;
         }
         .office-card .office-card-img .img-count i {
             font-size: 0.6rem;
+            border-radius: 0 !important;
         }
 
         /* Carousel buttons */
@@ -450,7 +459,7 @@ if (isset($conn) && $conn) {
             transform: translateY(-50%);
             background: rgba(255,255,255,0.9);
             border: none;
-            border-radius: 50%;
+            border-radius: 0;
             width: 30px;
             height: 30px;
             display: flex;
@@ -463,15 +472,20 @@ if (isset($conn) && $conn) {
             transition: opacity 0.2s;
             box-shadow: 0 1px 4px rgba(0,0,0,0.1);
             opacity: 0;
+            border-radius: 0 !important;
         }
         .office-card:hover .office-card-img .carousel-btn {
             opacity: 1;
+            border-radius: 0 !important;
         }
         .office-card .office-card-img .carousel-prev {
             left: 8px;
+            border-radius: 0 !important;
         }
         .office-card .office-card-img .carousel-next {
             right: 8px;
+            border-radius: 0 !important;
+
         }
 
         /* Carousel dots */
@@ -483,26 +497,29 @@ if (isset($conn) && $conn) {
             display: flex;
             gap: 5px;
             z-index: 6;
+            border-radius: 0 !important;
         }
         .office-card .office-card-img .carousel-dots button {
             width: 6px;
             height: 6px;
-            border-radius: 50%;
+            border-radius: 0;
             border: none;
             background: rgba(255,255,255,0.5);
             padding: 0;
             transition: all 0.2s;
             cursor: pointer;
+            border-radius: 0 !important;
         }
         .office-card .office-card-img .carousel-dots button.active {
             background: #fff;
             width: 18px;
-            border-radius: 3px;
+            border-radius: 0 !important;
         }
 
         /* Card Body */
         .office-card .card-body {
-            padding: 14px 16px 16px;
+            padding: 10px 16px 10px;
+            border-radius: 0;
         }
         .office-card .card-body .property-name {
             font-size: 1rem;
@@ -510,6 +527,7 @@ if (isset($conn) && $conn) {
             margin: 0 0 2px 0;
             color: #1a1a2e;
             line-height: 1.3;
+            border-radius: 0 !important;
         }
         .office-card .card-body .property-address {
             font-size: 0.8rem;
@@ -518,17 +536,20 @@ if (isset($conn) && $conn) {
             display: flex;
             align-items: flex-start;
             gap: 5px;
+            border-radius: 0 !important;
         }
         .office-card .card-body .property-address i {
             margin-top: 3px;
             color: var(--primary);
             font-size: 0.75rem;
+            border-radius: 0 !important;
         }
         .office-card .card-body .stats-row {
             display: flex;
             flex-wrap: wrap;
             gap: 4px 10px;
             margin-bottom: 10px;
+            border-radius: 0 !important;
         }
         .office-card .card-body .stats-row .stat-item {
             display: flex;
@@ -536,41 +557,50 @@ if (isset($conn) && $conn) {
             gap: 4px;
             font-size: 0.78rem;
             color: #4b5563;
+            border-radius: 0 !important;
         }
         .office-card .card-body .stats-row .stat-item i {
             color: var(--primary);
             font-size: 0.7rem;
             width: 14px;
-            text-align: center;
+            text-align: left;
+            border-radius: 0 !important;
         }
         .office-card .card-body .stats-row .stat-item .stat-value {
             font-weight: 600;
             color: #1a1a2e;
             white-space: nowrap;
+            border-radius: 0 !important;
         }
         .office-card .card-body .stats-row .stat-item.inv-badge .stat-value {
             padding: 1px 10px;
-            border-radius: 20px;
+
             font-size: 0.7rem;
             font-weight: 600;
             white-space: nowrap;
+            border-radius: 0 !important;
         }
         .office-card .card-body .stats-row .stat-item.inv-ready i {
             color: #166534;
+            border-radius: 0 !important;
         }
         .office-card .card-body .stats-row .stat-item.inv-ready .stat-value {
             background: #dcfce7;
             color: #166534;
+            border-radius: 0 !important;
         }
         .office-card .card-body .stats-row .stat-item.inv-processing i {
             color: #92400e;
+            border-radius: 0 !important;
         }
         .office-card .card-body .stats-row .stat-item.inv-processing .stat-value {
             background: #fef3c7;
             color: #92400e;
+            border-radius: 0 !important;
         }
         .office-card .card-body .description-wrapper {
             margin-bottom: 8px;
+            border-radius: 0 !important;
         }
         .office-card .card-body .description-text {
             font-size: 0.78rem;
@@ -582,9 +612,11 @@ if (isset($conn) && $conn) {
             -webkit-box-orient: vertical;
             overflow: hidden;
             margin: 0;
+            border-radius: 0 !important;
         }
         .office-card .card-body .description-text.expanded {
             -webkit-line-clamp: unset;
+            border-radius: 0 !important;
         }
         .office-card .card-body .description-toggle {
             background: none;
@@ -598,16 +630,20 @@ if (isset($conn) && $conn) {
             display: inline-flex;
             align-items: center;
             gap: 4px;
+            border-radius: 0 !important;
         }
         .office-card .card-body .description-toggle:hover {
             opacity: 0.8;
+            border-radius: 0 !important;
         }
         .office-card .card-body .description-toggle i {
             font-size: 0.6rem;
             transition: transform 0.2s;
+            border-radius: 0 !important;
         }
         .office-card .card-body .description-toggle.expanded i {
             transform: rotate(180deg);
+            border-radius: 0 !important;
         }
         .office-card .card-body .card-footer-row {
             display: flex;
@@ -616,35 +652,40 @@ if (isset($conn) && $conn) {
             gap: 10px;
             padding-top: 12px;
             border-top: 1px solid #f0f2f5;
+            border-radius: 0 !important;
         }
         .office-card .card-body .card-price {
             display: flex;
             flex-direction: column;
+            border-radius: 0 !important;
         }
         .office-card .card-body .card-price .price-label {
             font-size: 0.6rem;
             color: #9ca3af;
             text-transform: uppercase;
             letter-spacing: 0.3px;
+            border-radius: 0 !important;
         }
         .office-card .card-body .card-price .amount {
             font-size: 1.1rem;
             font-weight: 700;
             color: var(--primary);
             line-height: 1.2;
+            border-radius: 0 !important;
         }
         .office-card .card-body .card-price .period {
             font-size: 0.7rem;
             color: #6b7280;
             font-weight: 400;
+            border-radius: 0 !important;
         }
         .office-card .card-body .card-price .contact-price {
             font-weight: 600;
             color: #6b7280;
             font-size: 0.85rem;
+            border-radius: 0 !important;
         }
         .office-card .card-body .card-actions .btn {
-            border-radius: 6px;
             font-weight: 600;
             font-size: 0.78rem;
             padding: 6px 18px;
@@ -653,9 +694,11 @@ if (isset($conn) && $conn) {
             color: #fff;
             transition: background 0.2s;
             white-space: nowrap;
+            border-radius: 0 !important;
         }
         .office-card .card-body .card-actions .btn:hover {
             background: var(--primary-dark);
+            border-radius: 0 !important;
         }
 
         /* ----- Pagination ----- */
@@ -668,7 +711,6 @@ if (isset($conn) && $conn) {
             gap: 4px;
         }
         .pagination-wrapper .page-link {
-            border-radius: 8px;
             border: 1px solid #e5e7eb;
             color: #1a1a2e;
             padding: 6px 14px;
@@ -737,7 +779,7 @@ if (isset($conn) && $conn) {
             font-size: 0.7rem;
             font-weight: 600;
             padding: 2px 12px;
-            border-radius: 20px;
+
             margin-bottom: 8px;
         }
         .badge-nearby {
@@ -749,16 +791,15 @@ if (isset($conn) && $conn) {
             font-size: 0.7rem;
             font-weight: 600;
             padding: 4px 14px;
-            border-radius: 20px;
+
             z-index: 5;
             box-shadow: 0 2px 8px rgba(13, 74, 180, 0.25);
         }
 
         /* ----- Sidebar ----- */
         .aside-card {
-            border-radius: var(--radius);
-            border: 1px solid rgba(13, 74, 180, 0.06);
-            box-shadow: var(--shadow-sm);
+            border: 1px solid #dcdcdc;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
             background: #ffffff;
             transition: var(--transition);
         }
@@ -789,7 +830,7 @@ if (isset($conn) && $conn) {
         .aside-card .card-body .consultant-avatar {
             width: 48px;
             height: 48px;
-            border-radius: 50%;
+
             background: var(--primary-light);
             display: flex;
             align-items: center;
@@ -798,7 +839,6 @@ if (isset($conn) && $conn) {
             font-size: 1.4rem;
         }
         .aside-card .card-body .btn-primary {
-            border-radius: 8px;
             font-weight: 600;
             padding: 10px;
             background: var(--primary);
@@ -815,14 +855,13 @@ if (isset($conn) && $conn) {
         }
         .aside-card .card-body ul.list-unstyled li i {
             width: 18px;
-            text-align: center;
+            text-align: left;
         }
 
         /* ----- Modals ----- */
         .modal-content {
-            border-radius: 16px !important;
-            border: none;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            border: 1px solid #dcdcdc;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         }
         .modal-header {
             border-bottom: none;
@@ -833,7 +872,6 @@ if (isset($conn) && $conn) {
             box-shadow: none;
         }
         .modal-body .form-control {
-            border-radius: 8px;
             border-color: #e5e7eb;
             padding: 10px 14px;
             font-size: 0.9rem;
@@ -843,7 +881,6 @@ if (isset($conn) && $conn) {
             box-shadow: 0 0 0 3px rgba(13, 74, 180, 0.12);
         }
         .modal-body .btn-primary {
-            border-radius: 8px;
             font-weight: 600;
             padding: 10px;
             background: var(--primary);
@@ -854,7 +891,6 @@ if (isset($conn) && $conn) {
             background: var(--primary-dark);
         }
         .modal-dialog-centered .modal-content {
-            border-radius: 16px;
         }
         .gp-modal-row {
             min-height: 440px;
@@ -862,7 +898,6 @@ if (isset($conn) && $conn) {
         }
         .gp-modal-left {
             background: var(--primary-light);
-            border-radius: 16px 0 0 16px;
             display: flex;
             align-items: center;
             position: relative;
@@ -892,15 +927,16 @@ if (isset($conn) && $conn) {
             transform: rotate(-15deg);
         }
         .gp-modal-left-inner {
-            padding: 36px 30px;
+            padding: 36px 50px 36px 40px;
             position: relative;
             z-index: 1;
         }
         .gp-modal-logo {
-            margin-bottom: 24px;
+            margin-bottom: 10px;
+            text-align: right;
         }
         .gp-modal-logo img {
-            height: 80px;
+            height: 70px;
             width: auto;
             max-width: 100%;
             object-fit: contain;
@@ -914,17 +950,18 @@ if (isset($conn) && $conn) {
             font-size: 0.7rem;
             font-weight: 600;
             padding: 4px 14px;
-            border-radius: 20px;
+
             margin-bottom: 16px;
             letter-spacing: 0.3px;
             text-transform: uppercase;
         }
         .gp-left-heading {
-            font-size: 1.3rem;
-            font-weight: 800;
-            line-height: 1.35;
+            font-size: 0.72rem;
+            font-weight: 500;
+            line-height: 1.3;
             color: #1a1a2e;
-            margin-bottom: 8px;
+            margin-bottom: 0;
+            text-align: right;
         }
         .gp-left-sub {
             font-size: 0.92rem;
@@ -953,7 +990,7 @@ if (isset($conn) && $conn) {
         .gp-left-features span .feat-icon {
             width: 22px;
             height: 22px;
-            border-radius: 50%;
+
             background: #dcfce7;
             display: inline-flex;
             align-items: center;
@@ -979,7 +1016,6 @@ if (isset($conn) && $conn) {
         .gp-modal-right .form-control {
             font-size: 0.85rem;
             padding: 9px 14px;
-            border-radius: 8px;
             border: 1.5px solid #e5e7eb;
             background: #fafbff;
             transition: border-color 0.2s, box-shadow 0.2s;
@@ -990,7 +1026,6 @@ if (isset($conn) && $conn) {
             background: #fff;
         }
         .gp-modal-right .btn-primary {
-            border-radius: 8px;
             font-weight: 600;
             font-size: 0.88rem;
             padding: 11px;
@@ -1006,7 +1041,6 @@ if (isset($conn) && $conn) {
         }
         @media (max-width: 767px) {
             .gp-modal-left {
-                border-radius: 16px 16px 0 0;
             }
             .gp-modal-left::before,
             .gp-modal-left::after {
@@ -1040,10 +1074,10 @@ if (isset($conn) && $conn) {
         }
         .toast {
             padding: 14px 20px;
-            border-radius: 10px;
             font-weight: 500;
             font-size: 0.9rem;
             color: #ffffff;
+            border: 1px solid #dcdcdc;
             box-shadow: var(--shadow-md);
             animation: slideUp 0.3s ease;
             background: #1a1a2e;
@@ -1070,11 +1104,10 @@ if (isset($conn) && $conn) {
 
         /* ----- Empty State ----- */
         .empty-state {
-            text-align: center;
+            text-align: left;
             padding: 60px 20px;
             background: #ffffff;
-            border-radius: var(--radius);
-            border: 1px solid rgba(13, 74, 180, 0.06);
+            border: 1px solid #dcdcdc;
         }
         .empty-state i {
             font-size: 3rem;
@@ -1094,7 +1127,6 @@ if (isset($conn) && $conn) {
             background: var(--primary);
             color: #ffffff;
             border: none;
-            border-radius: 8px;
             padding: 10px 28px;
             font-weight: 600;
             transition: var(--transition);
@@ -1107,19 +1139,17 @@ if (isset($conn) && $conn) {
         /* ----- Skeleton ----- */
         .skeleton-card {
             background: #ffffff;
-            border-radius: var(--radius);
-            border: 1px solid rgba(13, 74, 180, 0.06);
+            border: 1px solid #dcdcdc;
             overflow: hidden;
-            box-shadow: var(--shadow-sm);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         }
         .skeleton-card .skeleton {
             background: linear-gradient(90deg, #f0f2f5 25%, #e5e7eb 50%, #f0f2f5 75%);
             background-size: 200% 100%;
             animation: shimmer 1.5s infinite;
-            border-radius: 4px;
         }
         .skeleton-card .skeleton-img {
-            height: 200px;
+            height: 45px;
             width: 100%;
         }
         .skeleton-card .skeleton-body {
@@ -1128,7 +1158,6 @@ if (isset($conn) && $conn) {
         .skeleton-card .skeleton-line {
             height: 14px;
             margin-bottom: 8px;
-            border-radius: 4px;
         }
         .skeleton-card .skeleton-line.short {
             width: 60%;
@@ -1225,50 +1254,62 @@ if (isset($conn) && $conn) {
             }
             .office-card .office-card-img {
                 aspect-ratio: 16 / 9;
-                min-height: 100px;
-                max-height: 200px;
+                min-height: 45px;
+                max-height: 80px;
+                border-radius: 0 !important;
             }
             .office-card .card-body {
-                padding: 10px 12px 12px;
+                padding: 3px 12px 4px;
+                border-radius: 0 !important;
             }
             .office-card .card-body .property-name {
                 font-size: 0.88rem;
                 margin-bottom: 1px;
+                border-radius: 0 !important;
             }
             .office-card .card-body .property-address {
                 font-size: 0.73rem;
                 margin-bottom: 8px;
+                border-radius: 0 !important;
             }
             .office-card .card-body .stats-row {
                 gap: 3px 6px;
                 margin-bottom: 8px;
+                border-radius: 0 !important;
             }
             .office-card .card-body .stats-row .stat-item {
                 font-size: 0.7rem;
+                border-radius: 0 !important;
             }
             .office-card .card-body .card-footer-row {
                 padding-top: 10px;
                 gap: 8px;
+                border-radius: 0 !important;
             }
             .office-card .card-body .card-price .amount {
                 font-size: 0.9rem;
+                border-radius: 0 !important;
             }
             .office-card .card-body .card-actions .btn {
                 font-size: 0.68rem;
                 padding: 5px 12px;
+                border-radius: 0 !important;
             }
             .office-card .office-card-img .carousel-btn {
                 width: 24px;
                 height: 24px;
                 font-size: 0.6rem;
                 opacity: 1;
+                border-radius: 0 !important;
             }
             .office-card .office-card-img .carousel-dots button {
                 width: 5px;
                 height: 5px;
+                border-radius: 0;
             }
             .office-card .office-card-img .carousel-dots button.active {
                 width: 14px;
+                border-radius: 0;
             }
             .listing-cards {
                 gap: 10px;
@@ -1293,8 +1334,7 @@ if (isset($conn) && $conn) {
                 margin: 12px;
             }
             .modal-content {
-                border-radius: 12px !important;
-            }
+                }
             .modal-body .form-control {
                 font-size: 0.85rem;
                 padding: 8px 12px;
@@ -1314,44 +1354,57 @@ if (isset($conn) && $conn) {
                 padding-right: 8px;
             }
             .office-card .office-card-img {
-                min-height: 80px;
-                max-height: 150px;
+                aspect-ratio: 16 / 9;
+                min-height: 35px;
+                max-height: 60px;
+                border-radius: 0 !important;
             }
             .office-card .card-body {
-                padding: 8px 10px 10px;
+                padding: 2px 10px 3px;
+                border-radius: 0 !important;
             }
             .office-card .card-body .property-name {
                 font-size: 0.82rem;
+                border-radius: 0 !important;
             }
             .office-card .card-body .property-address {
                 margin-bottom: 6px;
+                border-radius: 0 !important;
             }
             .office-card .card-body .stats-row {
                 gap: 2px 4px;
                 margin-bottom: 6px;
+                border-radius: 0 !important;
             }
             .office-card .card-body .stats-row .stat-item {
                 font-size: 0.66rem;
+                border-radius: 0 !important;
             }
             .office-card .card-body .card-footer-row {
                 padding-top: 8px;
                 flex-wrap: wrap;
+                border-radius: 0 !important;
             }
             .office-card .card-body .card-price .amount {
                 font-size: 0.82rem;
+                border-radius: 0 !important;
             }
             .office-card .card-body .card-price .price-label {
                 font-size: 0.55rem;
+                border-radius: 0 !important;
             }
             .office-card .card-body .card-actions .btn {
                 font-size: 0.63rem;
                 padding: 4px 10px;
+                border-radius: 0 !important;
             }
             .office-card .card-body .description-text {
                 font-size: 0.72rem;
+                border-radius: 0 !important;
             }
             .office-card .card-body .description-toggle {
                 font-size: 0.65rem;
+                border-radius: 0 !important;
             }
             .locality-chip {
                 font-size: 0.63rem;
@@ -1485,10 +1538,10 @@ if (isset($conn) && $conn) {
                         <p class="small fw-semibold text-center">Move into your ideal workspace — stress-free</p>
                         <div class="text-center">
                             <ul class="list-unstyled small mb-0 d-inline-block text-start">
-                                <li class="mb-2 d-flex align-items-center"><i class="fa-solid fa-file-contract text-primary me-2" style="width: 20px; text-align: center;"></i><span>Flexible Leasing Solutions</span></li>
-                                <li class="mb-2 d-flex align-items-center"><i class="fa-solid fa-building text-primary me-2" style="width: 20px; text-align: center;"></i><span>Premium Office Locations</span></li>
-                                <li class="mb-2 d-flex align-items-center"><i class="fa-solid fa-user-tie text-primary me-2" style="width: 20px; text-align: center;"></i><span>Dedicated Workspace Experts</span></li>
-                                <li class="mb-2 d-flex align-items-center"><i class="fa-solid fa-city text-primary me-2" style="width: 20px; text-align: center;"></i><span>Enterprise Ready Offices</span></li>
+                                <li class="mb-2 d-flex align-items-center"><i class="fa-solid fa-file-contract text-primary me-2" style="width: 20px; text-align: left;"></i><span>Flexible Leasing Solutions</span></li>
+                                <li class="mb-2 d-flex align-items-center"><i class="fa-solid fa-building text-primary me-2" style="width: 20px; text-align: left;"></i><span>Premium Office Locations</span></li>
+                                <li class="mb-2 d-flex align-items-center"><i class="fa-solid fa-user-tie text-primary me-2" style="width: 20px; text-align: left;"></i><span>Dedicated Workspace Experts</span></li>
+                                <li class="mb-2 d-flex align-items-center"><i class="fa-solid fa-city text-primary me-2" style="width: 20px; text-align: left;"></i><span>Enterprise Ready Offices</span></li>
                             </ul>
                         </div>
                         <button class="btn btn-primary w-100" id="btnRequestCallback"><i class="fa-solid fa-phone"></i> Request Callback</button>
@@ -1558,10 +1611,9 @@ if (isset($conn) && $conn) {
                                     <img src="assets/images/final-logo.png" alt="CubeSpace">
                                 </div>
                                 <!--<div class="gp-left-badge"><i class="fa-regular fa-building"></i> Workspace Expert</div>-->
-                                <h4 class="gp-left-heading" style="text-align: left;">
-    <i class="fa-regular fa-comment-dots"></i>
-    Connect with our workspace expert
-</h4>
+                                <h6 class="gp-left-heading">
+     Connect with our workspace expert
+ </h6>
                                 <!--<h4 class="gp-left-sub gp-left-heading"><i class="fa-regular fa-comment-dots gp-left-heading"></i> Connect With Our Workspace Experts</h4>-->
                                 <!-- <div class="gp-left-features">
                                     <span><span class="feat-icon"><i class="fa-solid fa-check"></i></span> Zero brokerage fee</span>
@@ -1960,8 +2012,8 @@ if (isset($conn) && $conn) {
 
                 let statsHtml = '';
                 const statItems = [
-                    { icon: 'fa-users', value: o.total_seats ? 'Available seating capacity ' + o.total_seats : null },
-                    { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + o.min_inventory : null },
+                    { icon: 'fa-users', value: o.total_seats ? 'Current Available Seats ' + o.total_seats : null },
+                    { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + String(o.min_inventory).replace(/\b(cabin|office|floor|seats?|people|persons?|none)\b\s*\+?\s*/gi, '').trim() : null },
                 ];
                 statItems.forEach(s => {
                     if (s.value) {
@@ -1969,10 +2021,7 @@ if (isset($conn) && $conn) {
                             `<span class="stat-item"><i class="fa-solid ${s.icon}"></i> <span class="stat-value">${s.value}</span></span>`;
                     }
                 });
-                if (o.inventory_type) {
-                    const isReady = o.inventory_type === 'Ready to move in';
-                    statsHtml += `<span class="stat-item inv-badge ${isReady ? 'inv-ready' : 'inv-processing'}"><i class="fa-solid ${isReady ? 'fa-circle-check' : 'fa-clock'}"></i> <span class="stat-value">${isReady ? 'Ready to move in' : 'Processing'}</span></span>`;
-                }
+                statsHtml += `<span class="stat-item inv-badge inv-ready"><i class="fa-solid fa-circle-check"></i> <span class="stat-value">Ready to move in</span></span>`;
 
                 const period = o.office_space_type === 'lease' ? 'seat / year' : 'seat / month';
                 const price = o.price != null ?
@@ -2118,7 +2167,7 @@ if (isset($conn) && $conn) {
                 let statsHtml = '';
                 const statItems = [
                     { icon: 'fa-users', value: o.total_seats ? 'Available seating capacity ' + o.total_seats : null },
-                    { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + o.min_inventory : null },
+                    { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + String(o.min_inventory).replace(/\b(cabin|office|floor|seats?|people|persons?|none)\b\s*\+?\s*/gi, '').trim() : null },
                 ];
                 statItems.forEach(s => {
                     if (s.value) {
@@ -2126,10 +2175,7 @@ if (isset($conn) && $conn) {
                             `<span class="stat-item"><i class="fa-solid ${s.icon}"></i> <span class="stat-value">${s.value}</span></span>`;
                     }
                 });
-                if (o.inventory_type) {
-                    const isReady = o.inventory_type === 'Ready to move in';
-                    statsHtml += `<span class="stat-item inv-badge ${isReady ? 'inv-ready' : 'inv-processing'}"><i class="fa-solid ${isReady ? 'fa-circle-check' : 'fa-clock'}"></i> <span class="stat-value">${isReady ? 'Ready to move in' : 'Processing'}</span></span>`;
-                }
+                statsHtml += `<span class="stat-item inv-badge inv-ready"><i class="fa-solid fa-circle-check"></i> <span class="stat-value">Ready to move in</span></span>`;
 
                 const period = o.office_space_type === 'lease' ? ' seat / year' : 'seat / month';
                 const price = o.price != null ?

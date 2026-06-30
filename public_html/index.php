@@ -114,7 +114,7 @@ if ($action === 'forgot_password' || $action === 'reset_password') {
                     </div>
                     <div class="leasing-tabs">
                         <button type="button" class="tab-btn" onclick="cubeNavigate('furnished_offices.php')">
-                            Furnished / Unfurnished Office Spaces<br><span>( Regular Lease On S<span style="text-transform: lowercase;">q</span>F<span style="text-transform: lowercase;">t</span> Basis )</span>
+                            Furnished / Unfurnished Office Spaces<br><span style="text-transform: none;">( Regular Lease On S<span style="text-transform: lowercase;">q</span> F<span style="text-transform: lowercase;">t</span> basis )</span>
                             <br><span class="hero-tab-cta" style="text-decoration:none !important;">Click Here</span>
                         </button>
                     </div>
