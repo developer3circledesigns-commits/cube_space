@@ -43,7 +43,7 @@ if (!function_exists('isActive')) {
             </li>
             <li><a href="contact.php"<?= isActive('contact.php') ?>>Share your Requirement</a></li>
             <li>
-                <a href="<?= htmlspecialchars(app_url('admin/'), ENT_QUOTES, 'UTF-8') ?>" class="admin-login-link" title="Admin Login" aria-label="Admin Login" target="_blank" rel="noopener noreferrer">
+                <a href="/admin/" class="admin-login-link" title="Admin Login" aria-label="Admin Login" target="_blank" rel="noopener noreferrer">
                     <i class="fa-solid fa-circle-user"></i>
                     <span class="visually-hidden">Admin Login</span>
                 </a>
@@ -59,7 +59,7 @@ if (!function_exists('isActive')) {
             <li><a href="unfurnished_offices.php"<?= isActive(['managed_offices.php', 'furnished_offices.php', 'unfurnished_offices.php', 'office_detail.php']) ?>><i class="fa-solid fa-building-user nav-mobile-icon"></i>Unfurnished Offices</a></li>
             <li><a href="contact.php"<?= isActive('contact.php') ?>><i class="fa-solid fa-envelope nav-mobile-icon"></i>Contact Us</a></li>
             <li><a href="contact.php"<?= isActive('contact.php') ?>><i class="fa-solid fa-paper-plane nav-mobile-icon"></i>Share Requirement</a></li>
-            <li><a href="<?= htmlspecialchars(app_url('admin/'), ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer"<?= isActive('admin') ?>><i class="fa-solid fa-user-shield nav-mobile-icon"></i>Admin Login</a></li>
+            <li><a href="/admin/" target="_blank" rel="noopener noreferrer"<?= isActive('admin') ?>><i class="fa-solid fa-user-shield nav-mobile-icon"></i>Admin Login</a></li>
         </ul>
     </div>
 </nav>

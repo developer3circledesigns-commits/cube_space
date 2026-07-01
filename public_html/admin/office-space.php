@@ -2,17 +2,6 @@
 require_once __DIR__ . '/layout.php';
 admin_require_lib('config.php');
 
-function os_enquiries_count($office_id) {
-    global $conn;
-    static $cache = [];
-    if (isset($cache[$office_id])) return $cache[$office_id];
-    $s = mysqli_prepare($conn, "SELECT COUNT(*) as cnt FROM contacts WHERE office_id = ?");
-    mysqli_stmt_bind_param($s, 'i', $office_id);
-    mysqli_stmt_execute($s);
-    $cnt = (int)mysqli_fetch_assoc(mysqli_stmt_get_result($s))['cnt'];
-    $cache[$office_id] = $cnt;
-    return $cnt;
-}
 
 function os_fmt_feature_highlights($val) {
     $decoded = json_decode($val ?? '[]', true);
@@ -51,7 +40,11 @@ if ($mode === 'add' || $mode === 'edit'):
     }
     $amenities = json_decode($listing['amenities'] ?? '[]', true);
     $images = json_decode($listing['images'] ?? '[]', true);
-    $cities = mysqli_query($conn, "(SELECT DISTINCT city FROM furnished_offices WHERE city != '') UNION (SELECT DISTINCT city FROM unfurnished_offices WHERE city != '') ORDER BY city");
+    $cities = mysqli_query($conn, "SELECT city FROM (SELECT city COLLATE utf8mb4_unicode_ci AS city FROM listing_cities UNION SELECT DISTINCT city COLLATE utf8mb4_unicode_ci AS city FROM furnished_offices WHERE city != '' UNION SELECT DISTINCT city COLLATE utf8mb4_unicode_ci AS city FROM unfurnished_offices WHERE city != '') AS c ORDER BY city");
+    if (!$cities) $cities = false;
+    $areas = mysqli_query($conn, "SELECT area, city FROM (SELECT area COLLATE utf8mb4_unicode_ci AS area, city COLLATE utf8mb4_unicode_ci AS city FROM listing_areas UNION SELECT DISTINCT area COLLATE utf8mb4_unicode_ci AS area, city COLLATE utf8mb4_unicode_ci AS city FROM furnished_offices WHERE area != '' AND area IS NOT NULL UNION SELECT DISTINCT area COLLATE utf8mb4_unicode_ci AS area, city COLLATE utf8mb4_unicode_ci AS city FROM unfurnished_offices WHERE area != '' AND area IS NOT NULL) AS a ORDER BY area");
+    if (!$areas) $areas = false;
+    $amenityList = ['WiFi','Air Conditioning','Power Backup','Parking','Security Guard','CCTV Surveillance','Elevator / Lift','Reception Area','Pantry / Cafeteria','Meeting Room','Visitor Parking','24/7 Access'];
 ?>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold mb-0"><?= $mode === 'add' ? 'Add' : 'Edit' ?> <?= $mode === 'edit' ? ucfirst($editType) : '' ?> Office Space</h4>
@@ -65,142 +58,150 @@ if ($mode === 'add' || $mode === 'edit'):
             <?php if ($listing['slug']): ?><span class="ms-3 text-muted">Slug:</span> <code><?= htmlspecialchars($listing['slug']) ?></code><?php endif; ?>
         </div>
         <?php endif; ?>
-        <form id="listingForm" enctype="multipart/form-data" novalidate>
+        <form id="listingForm" class="row g-3 needs-validation" enctype="multipart/form-data" novalidate>
             <input type="hidden" name="id" value="<?= $editId ?>">
             <input type="hidden" name="listing_type" value="<?= $editType ?>">
             <input type="hidden" name="existing_images" id="existingImages" value='<?= htmlspecialchars(json_encode($images)) ?>'>
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label for="title" class="form-label small fw-semibold">Title <span class="text-danger">*</span></label>
-                    <input type="text" name="title" id="title" class="form-control form-control-sm" required value="<?= htmlspecialchars($listing['title']) ?>" placeholder="e.g. RMZ Millenia">
-                </div>
-                <div class="col-md-3">
-                    <label for="lstype" class="form-label small fw-semibold">Furnishing Type</label>
-                    <?php if ($mode === 'add'): ?>
-                    <select name="listing_type" class="form-select form-select-sm" id="lstype">
-                        <option value="furnished" <?= ($editType) === 'furnished' ? 'selected' : '' ?>>Furnished</option>
-                        <option value="unfurnished" <?= ($editType) === 'unfurnished' ? 'selected' : '' ?>>Unfurnished</option>
-                    </select>
-                    <?php else: ?>
-                    <input type="text" class="form-control form-control-sm" value="<?= ucfirst($editType) ?>" disabled>
-                    <input type="hidden" name="listing_type" value="<?= $editType ?>">
-                    <?php endif; ?>
-                </div>
-                <div class="col-md-3">
-                    <label for="city" class="form-label small fw-semibold">City <span class="text-danger">*</span></label>
-                    <select name="city" id="city" class="form-select form-select-sm" required>
-                        <option value="">- Select -</option>
-                        <?php if ($cities): mysqli_data_seek($cities, 0); while ($c = mysqli_fetch_assoc($cities)): ?>
-                        <option value="<?= htmlspecialchars($c['city']) ?>" <?= $listing['city']===$c['city']?'selected':'' ?>><?= htmlspecialchars(ucfirst($c['city'])) ?></option>
-                        <?php endwhile; endif; ?>
-                        <option value="chennai" <?= $listing['city']==='chennai'?'selected':'' ?>>Chennai</option>
-                        <option value="bangalore" <?= $listing['city']==='bangalore'?'selected':'' ?>>Bangalore</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label for="area" class="form-label small fw-semibold">Area / Locality <span class="text-danger">*</span></label>
-                    <input type="text" name="area" id="area" class="form-control form-control-sm" required value="<?= htmlspecialchars($listing['area']??'') ?>" placeholder="e.g. OMR">
-                </div>
-                <div class="col-md-3">
-                    <label for="total_seats" class="form-label small fw-semibold">Total Seats</label>
-                    <input type="number" name="total_seats" id="total_seats" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['total_seats']??'') ?>" placeholder="e.g. 100">
-                </div>
-                <div class="col-md-3">
-                    <label for="total_area_sqft" class="form-label small fw-semibold">Area (sq.ft) <span class="text-danger">*</span></label>
-                    <input type="number" name="total_area_sqft" id="total_area_sqft" class="form-control form-control-sm" required value="<?= htmlspecialchars($listing['total_area_sqft']??'') ?>" placeholder="e.g. 5000">
-                </div>
-                <div class="col-md-3">
-                    <label for="available_sqft" class="form-label small fw-semibold">Available (sq.ft)</label>
-                    <input type="number" name="available_sqft" id="available_sqft" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['available_sqft']??'') ?>" placeholder="e.g. 5000">
-                </div>
-                <div class="col-md-3">
-                    <label for="inventory_type" class="form-label small fw-semibold">Inventory Type</label>
-                    <input type="text" name="inventory_type" id="inventory_type" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['inventory_type']??'') ?>" placeholder="e.g. Open + Cabin">
-                </div>
-                <div class="col-md-3">
-                    <label for="min_inventory" class="form-label small fw-semibold">Min Inventory</label>
-                    <input type="text" name="min_inventory" id="min_inventory" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['min_inventory']??'') ?>" placeholder="e.g. 10 seats">
-                </div>
-                <div class="col-md-3">
-                    <label for="price" class="form-label small fw-semibold">Price</label>
-                    <input type="number" step="0.01" name="price" id="price" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price']??'') ?>" placeholder="e.g. 300000">
-                </div>
-                <div class="col-md-3">
-                    <label for="price_label" class="form-label small fw-semibold">Price Label</label>
-                    <input type="text" name="price_label" id="price_label" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price_label']??'') ?>" placeholder="e.g. ₹3 Lakhs/mo">
-                </div>
-                <div class="col-md-3">
-                    <label for="officeSpaceType2" class="form-label small fw-semibold">Office Space Type</label>
-                    <select name="office_space_type" class="form-select form-select-sm" id="officeSpaceType2">
-                        <option value="rent" <?= ($listing['office_space_type'] ?? 'rent') === 'rent' ? 'selected' : '' ?>>Rent (Monthly)</option>
-                        <option value="lease" <?= ($listing['office_space_type'] ?? 'rent') === 'lease' ? 'selected' : '' ?>>Lease (Yearly)</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label for="latitude" class="form-label small fw-semibold">Latitude</label>
-                    <input type="number" step="any" name="latitude" id="latitude" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['latitude'] ?? '') ?>" placeholder="e.g. 12.9716">
-                </div>
-                <div class="col-md-3">
-                    <label for="longitude" class="form-label small fw-semibold">Longitude</label>
-                    <input type="number" step="any" name="longitude" id="longitude" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['longitude'] ?? '') ?>" placeholder="e.g. 77.6412">
-                </div>
-                <div class="col-md-3">
-                    <label for="status" class="form-label small fw-semibold">Status</label>
-                    <select name="status" id="status" class="form-select form-select-sm">
-                        <option value="draft" <?= $listing['status']==='draft'?'selected':'' ?>>Draft</option>
-                        <option value="published" <?= $listing['status']==='published'?'selected':'' ?>>Published</option>
-                        <option value="archived" <?= $listing['status']==='archived'?'selected':'' ?>>Archived</option>
-                    </select>
-                </div>
-                <div class="col-12">
-                    <label for="address" class="form-label small fw-semibold">Address <span class="text-danger">*</span></label>
-                    <textarea name="address" id="address" class="form-control form-control-sm" rows="2" required placeholder="Full address"><?= htmlspecialchars($listing['address']??'') ?></textarea>
-                </div>
-                <div class="col-12">
-                    <label for="description" class="form-label small fw-semibold">Description</label>
-                    <textarea name="description" id="description" class="form-control form-control-sm" rows="3" placeholder="Describe the property"><?= htmlspecialchars($listing['description']??'') ?></textarea>
-                </div>
-                <div class="col-md-6">
-                    <label for="amenities" class="form-label small fw-semibold">Amenities (comma separated)</label>
-                    <input type="text" name="amenities" id="amenities" class="form-control form-control-sm" value="<?= htmlspecialchars(implode(', ', $amenities)) ?>" placeholder="WiFi, AC, Parking">
-                </div>
-                <div class="col-md-6">
-                    <label for="feature_highlights" class="form-label small fw-semibold">Feature Highlights (one per line)</label>
-                    <textarea name="feature_highlights" id="feature_highlights" class="form-control form-control-sm" rows="2" placeholder="e.g. Fully Furnished, 24/7 Power Backup"><?= htmlspecialchars(os_fmt_feature_highlights($listing['feature_highlights'] ?? '[]')) ?></textarea>
-                </div>
-                <div class="col-12">
-                    <label for="seo_text" class="form-label small fw-semibold">SEO Text</label>
-                    <textarea name="seo_text" id="seo_text" class="form-control form-control-sm" rows="3" placeholder="<h3>About this Workspace</h3>"><?= htmlspecialchars($listing['seo_text'] ?? '') ?></textarea>
-                </div>
-                <div class="col-12">
-                    <label for="images" class="form-label small fw-semibold">Images</label>
-                    <input type="file" name="images[]" id="images" class="form-control form-control-sm" accept="image/*" multiple>
-                    <?php if (!empty($images)): ?>
-                    <div class="d-flex flex-wrap gap-2 mt-2" id="existingImagesContainer">
-                        <?php foreach ($images as $img):
-                            $imgPath = $_SERVER['DOCUMENT_ROOT'] . $img;
-                            $imgExists = file_exists($imgPath);
-                        ?>
-                        <div class="position-relative" data-src="<?= htmlspecialchars($img) ?>">
-                            <?php if ($imgExists): ?>
-                            <img src="<?= htmlspecialchars($img) ?>" class="border" style="width: 70px; height: 70px; object-fit: cover;" loading="lazy" alt="Listing image">
-                            <?php else: ?>
-                            <div class="d-flex align-items-center justify-content-center border bg-light" style="width:70px;height:70px;"><i class="fa-solid fa-image text-muted"></i></div>
-                            <?php endif; ?>
-                            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0" style="font-size: 10px; line-height: 1; padding: 1px 5px;" onclick="removeExistingImage(this)">&times;</button>
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
-                    <?php endif; ?>
-                </div>
-                <div class="col-12">
-                    <div class="form-check">
-                        <input type="checkbox" name="featured" value="1" class="form-check-input" id="featuredCheck" <?= $listing['featured']?'checked':'' ?>>
-                        <label class="form-check-label small" for="featuredCheck">Featured listing</label>
-                    </div>
+            <input type="hidden" name="amenities" id="amenitiesInput" value="<?= htmlspecialchars($listing['amenities'] ?? '[]') ?>">
+            <input type="hidden" name="office_space_type" value="rent">
+
+            <div class="col-md-6 position-relative">
+                <label for="title" class="form-label small fw-semibold">Title <span class="text-danger">*</span></label>
+                <input type="text" name="title" id="title" class="form-control form-control-sm" required value="<?= htmlspecialchars($listing['title']) ?>" placeholder="e.g. RMZ Millenia">
+                <div class="valid-tooltip">Looks good!</div>
+                <div class="invalid-tooltip">Please enter a title.</div>
+            </div>
+
+            <div class="col-md-3 position-relative">
+                <label for="city" class="form-label small fw-semibold">City <span class="text-danger">*</span></label>
+                <select name="city" id="city" class="form-select form-select-sm" required>
+                    <option value="">- Select -</option>
+                    <?php if ($cities && mysqli_num_rows($cities)): mysqli_data_seek($cities, 0); while ($c = mysqli_fetch_assoc($cities)): ?>
+                    <option value="<?= htmlspecialchars($c['city']) ?>" <?= $listing['city']===$c['city']?'selected':'' ?>><?= htmlspecialchars(ucfirst($c['city'])) ?></option>
+                    <?php endwhile; endif; ?>
+
+                </select>
+                <div class="invalid-tooltip">Please select a city.</div>
+                <div class="d-flex gap-1 mt-1">
+                    <input type="text" id="newCity" class="form-control form-control-sm" placeholder="Add city..." style="font-size:0.75rem;">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="window.addNewCity()" style="font-size:0.7rem;white-space:nowrap;">Add</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="window.deleteCity()" style="font-size:0.7rem;white-space:nowrap;">Del</button>
                 </div>
             </div>
-            <div class="mt-3 d-flex gap-2">
+
+            <div class="col-md-3 position-relative">
+                <label for="area" class="form-label small fw-semibold">Area / Locality <span class="text-danger">*</span></label>
+                <select name="area" id="area" class="form-select form-select-sm" required>
+                    <option value="">- Select -</option>
+                    <?php if ($areas && mysqli_num_rows($areas)): mysqli_data_seek($areas, 0); while ($a = mysqli_fetch_assoc($areas)): ?>
+                    <option value="<?= htmlspecialchars($a['area']) ?>" data-city="<?= htmlspecialchars(mb_strtolower($a['city']??'')) ?>" <?= ($listing['area']??'')===$a['area']?'selected':'' ?>><?= htmlspecialchars(ucfirst($a['area'])) ?></option>
+                    <?php endwhile; endif; ?>
+                </select>
+                <div class="invalid-tooltip">Please select an area.</div>
+                <div class="d-flex gap-1 mt-1">
+                    <input type="text" id="newArea" class="form-control form-control-sm" placeholder="Add area..." style="font-size:0.75rem;">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="window.addNewArea()" style="font-size:0.7rem;white-space:nowrap;">Add</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="window.deleteArea()" style="font-size:0.7rem;white-space:nowrap;">Del</button>
+                </div>
+            </div>
+
+            <div class="col-md-3 position-relative">
+                <label for="available_sqft" class="form-label small fw-semibold">Available Leasable Area <span class="text-danger">*</span></label>
+                <select name="available_sqft" id="available_sqft" class="form-select form-select-sm" required>
+                    <option value="">- Select -</option>
+                    <option value="1000-5000" <?= ($listing['available_sqft'] ?? '') === '1000-5000' ? 'selected' : '' ?>>1000 - 5000 Sq.ft</option>
+                    <option value="5000-10000" <?= ($listing['available_sqft'] ?? '') === '5000-10000' ? 'selected' : '' ?>>5000 - 10000 Sq.ft</option>
+                    <option value="10000-20000" <?= ($listing['available_sqft'] ?? '') === '10000-20000' ? 'selected' : '' ?>>10000 - 20000 Sq.ft</option>
+                    <option value="20000-" <?= ($listing['available_sqft'] ?? '') === '20000-' ? 'selected' : '' ?>>20000+ Sq.ft</option>
+                </select>
+                <div class="invalid-tooltip">Please select an area range.</div>
+            </div>
+
+            <div class="col-md-3 position-relative">
+                <label for="total_area_sqft" class="form-label small fw-semibold">Total Building Leasable Area</label>
+                <input type="number" name="total_area_sqft" id="total_area_sqft" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['total_area_sqft'] ?? '') ?>" placeholder="e.g. 5000">
+            </div>
+
+            <div class="col-md-3 position-relative">
+                <label for="inventory_type" class="form-label small fw-semibold">Inventory Type</label>
+                <input type="text" name="inventory_type" id="inventory_type" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['inventory_type'] ?? '') ?>" placeholder="e.g. Ready to move in">
+            </div>
+
+            <div class="col-12 position-relative">
+                <label for="address" class="form-label small fw-semibold">Address <span class="text-danger">*</span></label>
+                <textarea name="address" id="address" class="form-control form-control-sm" rows="2" required placeholder="Full address"><?= htmlspecialchars($listing['address']??'') ?></textarea>
+                <div class="invalid-tooltip">Please enter an address.</div>
+            </div>
+
+            <div class="col-12 position-relative">
+                <label for="description" class="form-label small fw-semibold">Description</label>
+                <textarea name="description" id="description" class="form-control form-control-sm" rows="3" placeholder="Describe the property"><?= htmlspecialchars($listing['description']??'') ?></textarea>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Amenities</label>
+                <div class="row g-2" id="amenitiesContainer">
+                    <?php foreach ($amenityList as $amenity): ?>
+                    <div class="col-md-3 col-6">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input amenity-check" value="<?= htmlspecialchars($amenity) ?>" id="amenity_<?= preg_replace('/[^a-zA-Z0-9]/', '_', $amenity) ?>" <?= in_array($amenity, $amenities) ? 'checked' : '' ?>>
+                            <label class="form-check-label small" for="amenity_<?= preg_replace('/[^a-zA-Z0-9]/', '_', $amenity) ?>"><?= htmlspecialchars($amenity) ?></label>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <div class="col-12 position-relative">
+                <label for="seo_text" class="form-label small fw-semibold">SEO Text</label>
+                <textarea name="seo_text" id="seo_text" class="form-control form-control-sm" rows="3" placeholder="&lt;h3&gt;About this Workspace&lt;/h3&gt;"><?= $listing['seo_text'] ?? '' ?></textarea>
+                <small class="form-text text-muted">HTML allowed. Use ### for headings. Will be rendered on the public page.</small>
+            </div>
+
+            <div class="col-12">
+                <label for="images" class="form-label small fw-semibold">Images</label>
+                <input type="file" name="images[]" id="images" class="form-control form-control-sm" accept="image/*" multiple>
+                <?php if (!empty($images)): ?>
+                <div class="d-flex flex-wrap gap-2 mt-2" id="existingImagesContainer">
+                    <?php foreach ($images as $img):
+                        $imgPath = $_SERVER['DOCUMENT_ROOT'] . $img;
+                        $imgExists = file_exists($imgPath);
+                    ?>
+                    <div class="position-relative" data-src="<?= htmlspecialchars($img) ?>" style="width:70px;height:70px;">
+                        <?php if ($imgExists): ?>
+                        <img src="<?= htmlspecialchars($img) ?>" class="border" style="width:70px;height:70px;object-fit:cover;" loading="lazy" alt="Listing image">
+                        <?php else: ?>
+                        <div class="d-flex align-items-center justify-content-center border bg-light" style="width:70px;height:70px;"><i class="fa-solid fa-image text-muted"></i></div>
+                        <?php endif; ?>
+                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 p-0" style="width:18px;height:18px;font-size:10px;line-height:1;" onclick="removeExistingImage(this)">&times;</button>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <div class="col-md-6 position-relative">
+                <label for="price" class="form-label small fw-semibold">Price</label>
+                <input type="number" step="0.01" name="price" id="price" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price']??'') ?>" placeholder="e.g. 150000">
+            </div>
+
+            <div class="col-md-6 position-relative">
+                <label for="status" class="form-label small fw-semibold">Status</label>
+                <select name="status" id="status" class="form-select form-select-sm">
+                    <option value="draft" <?= $listing['status']==='draft'?'selected':'' ?>>Draft</option>
+                    <option value="published" <?= $listing['status']==='published'?'selected':'' ?>>Published</option>
+                    <option value="archived" <?= $listing['status']==='archived'?'selected':'' ?>>Archived</option>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <div class="form-check">
+                    <input type="checkbox" name="featured" value="1" class="form-check-input" id="featuredCheck" <?= $listing['featured']?'checked':'' ?>>
+                    <label class="form-check-label small" for="featuredCheck">Featured listing</label>
+                </div>
+            </div>
+
+            <div class="col-12 d-flex gap-2">
                 <button type="submit" class="btn btn-primary btn-sm"><?= $mode === 'add' ? 'Create Listing' : 'Update Listing' ?></button>
                 <a href="office-space.php" class="btn btn-outline-secondary btn-sm">Cancel</a>
             </div>
@@ -241,29 +242,43 @@ if ($mode === 'add' || $mode === 'edit'):
     $whereClause = !empty($conditions) ? ' WHERE ' . implode(' AND ', $conditions) : '';
 
     $countSql = "SELECT SUM(cnt) as total FROM ((SELECT COUNT(*) as cnt FROM furnished_offices $whereClause) UNION ALL (SELECT COUNT(*) as cnt FROM unfurnished_offices $whereClause)) combined";
+    $total = 0;
     $countStmt = mysqli_prepare($conn, $countSql);
-    $allCountParams = array_merge($params, $params);
-    $allCountTypes = str_repeat('s', count($allCountParams));
-    if (!empty($allCountParams)) {
-        mysqli_stmt_bind_param($countStmt, $allCountTypes, ...$allCountParams);
+    if ($countStmt) {
+        $allCountParams = array_merge($params, $params);
+        $allCountTypes = str_repeat('s', count($allCountParams));
+        if (!empty($allCountParams)) {
+            mysqli_stmt_bind_param($countStmt, $allCountTypes, ...$allCountParams);
+        }
+        mysqli_stmt_execute($countStmt);
+        $cResult = mysqli_stmt_get_result($countStmt);
+        if ($cResult) $total = (int)mysqli_fetch_assoc($cResult)['total'];
+        mysqli_stmt_close($countStmt);
     }
-    mysqli_stmt_execute($countStmt);
-    $total = (int)mysqli_fetch_assoc(mysqli_stmt_get_result($countStmt))['total'];
-    mysqli_stmt_close($countStmt);
 
     $columns = "id, title, slug, city, area, address, price, price_label, total_seats, total_area_sqft, available_sqft, min_inventory, inventory_type, office_space_type, amenities, images, featured, status, listing_code, created_at";
     $orderSql = " ORDER BY created_at DESC LIMIT $adminPerPage OFFSET $adminOffset";
-    $listSql = "(SELECT $columns, 'furnished' as listing_type_db FROM furnished_offices $whereClause) UNION ALL (SELECT $columns, 'unfurnished' as listing_type_db FROM unfurnished_offices $whereClause)$orderSql";
+    $unionSql = "SELECT $columns, 'furnished' as listing_type_db FROM furnished_offices $whereClause UNION ALL SELECT $columns, 'unfurnished' as listing_type_db FROM unfurnished_offices $whereClause";
+    $listSql = "SELECT t.*, (SELECT COUNT(*) FROM contacts c WHERE (c.listing_code != '' AND c.listing_code = t.listing_code) OR (c.office_id = t.id AND (c.listing_code IS NULL OR c.listing_code = ''))) as enq_cnt FROM ($unionSql) t $orderSql";
+    
+    $result = false;
+    $dbError = '';
     $listStmt = mysqli_prepare($conn, $listSql);
-    $allListParams = array_merge($params, $params);
-    $allListTypes = str_repeat('s', count($allListParams));
-    if (!empty($allListParams)) {
-        mysqli_stmt_bind_param($listStmt, $allListTypes, ...$allListParams);
+    if ($listStmt) {
+        $allListParams = array_merge($params, $params);
+        $allListTypes = str_repeat('s', count($allListParams));
+        if (!empty($allListParams)) {
+            mysqli_stmt_bind_param($listStmt, $allListTypes, ...$allListParams);
+        }
+        mysqli_stmt_execute($listStmt);
+        $result = mysqli_stmt_get_result($listStmt);
+        if (!$result) $dbError = mysqli_error($conn);
+    } else {
+        $dbError = mysqli_error($conn);
     }
-    mysqli_stmt_execute($listStmt);
-    $result = mysqli_stmt_get_result($listStmt);
 
-    $cities = mysqli_query($conn, "(SELECT DISTINCT city FROM furnished_offices WHERE city != '') UNION (SELECT DISTINCT city FROM unfurnished_offices WHERE city != '') ORDER BY city");
+    $cities = mysqli_query($conn, "SELECT city FROM (SELECT city COLLATE utf8mb4_unicode_ci AS city FROM listing_cities UNION SELECT DISTINCT city COLLATE utf8mb4_unicode_ci AS city FROM furnished_offices WHERE city != '' UNION SELECT DISTINCT city COLLATE utf8mb4_unicode_ci AS city FROM unfurnished_offices WHERE city != '') AS c ORDER BY city");
+    if (!$cities) $cities = false;
 
     function osMkUrl($extra) {
         $params = [];
@@ -352,45 +367,51 @@ if ($mode === 'add' || $mode === 'edit'):
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while ($row = mysqli_fetch_assoc($result)):
-                        $rowImages = json_decode($row['images'] ?? '[]', true);
-                        $enqCnt = os_enquiries_count($row['id']);
-                    ?>
-                    <tr>
-                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="<?= $row['id'] ?>" data-type="<?= $row['listing_type_db'] ?>"></td>
-                        <td class="text-muted"><?= $row['id'] ?></td>
-                        <td><code class="small"><?= htmlspecialchars($row['listing_code'] ?? '—') ?></code></td>
-                        <td class="fw-medium"><?= htmlspecialchars($row['title']) ?></td>
-                        <td><?= htmlspecialchars($row['city']) ?></td>
-                        <td><?= htmlspecialchars($row['area'] ?? '—') ?></td>
-                        <td><?= $row['total_area_sqft'] ? number_format($row['total_area_sqft']) : '—' ?></td>
-                        <td><?php
-                            $ts = $row['total_seats'] ?? 0;
-                            if ($ts <= 50) echo '10-50';
-                            elseif ($ts <= 100) echo '51-100';
-                            elseif ($ts <= 200) echo '101-200';
-                            else echo '200+';
-                        ?></td>
-                        <td><?= $row['price'] ? '₹' . number_format($row['price']) . '<small class="text-muted ms-1">' . ($row['office_space_type'] === 'lease' ? '/yr' : '/mo') . '</small>' : '—' ?></td>
-                        <td><span class="badge bg-<?= ($row['office_space_type'] ?? 'rent') === 'lease' ? 'info' : 'secondary' ?>"><?= htmlspecialchars(($row['office_space_type'] ?? 'rent')) ?></span></td>
-                        <td><span class="badge bg-<?= $row['listing_type_db'] === 'furnished' ? 'primary' : 'secondary' ?>"><?= htmlspecialchars(ucfirst($row['listing_type_db'] ?? '')) ?></span></td>
-                        <td><span class="badge bg-<?= $row['status'] === 'published' ? 'success' : ($row['status'] === 'draft' ? 'secondary' : 'warning text-dark') ?>"><?= $row['status'] ?></span></td>
-                        <td class="text-center">
-                            <?php if ($enqCnt > 0): ?>
-                            <a href="contacts.php?search=<?= urlencode($row['title']) ?>" class="badge bg-info text-decoration-none" title="View enquiries"><?= $enqCnt ?></a>
-                            <?php else: ?>
-                            <span class="text-muted">0</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <?php if ($row['status'] === 'published'): ?>
-                            <a href="/office_detail.php?slug=<?= htmlspecialchars($row['slug']) ?>" target="_blank" class="btn btn-sm btn-outline-secondary" title="View on site"><i class="fa-solid fa-eye"></i></a>
-                            <?php endif; ?>
-                            <a href="office-space.php?mode=edit&id=<?= $row['id'] ?>&type=<?= $row['listing_type_db'] ?>" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a>
-                            <a href="javascript:void(0)" onclick="confirmDelete(<?= $row['id'] ?>, '<?= $row['listing_type_db'] ?>', '<?= htmlspecialchars($row['title'], ENT_QUOTES) ?>')" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fa-solid fa-trash-can"></i></a>
-                        </td>
-                    </tr>
-                    <?php endwhile; ?>
+                    <?php if (!empty($dbError)): ?>
+                        <tr><td colspan="14" class="text-center text-danger py-4">Database Error: <?= htmlspecialchars($dbError) ?></td></tr>
+                    <?php elseif ($result && mysqli_num_rows($result) > 0): ?>
+                        <?php while ($row = mysqli_fetch_assoc($result)):
+                            $rowImages = json_decode($row['images'] ?? '[]', true);
+                            $enqCnt = (int)($row['enq_cnt'] ?? 0);
+                        ?>
+                        <tr>
+                            <td><input type="checkbox" class="form-check-input bulk-checkbox" value="<?= $row['id'] ?>" data-type="<?= $row['listing_type_db'] ?>"></td>
+                            <td class="text-muted"><?= $row['id'] ?></td>
+                            <td><code class="small"><?= htmlspecialchars($row['listing_code'] ?? '—') ?></code></td>
+                            <td class="fw-medium"><?= htmlspecialchars($row['title']) ?></td>
+                            <td><?= htmlspecialchars($row['city']) ?></td>
+                            <td><?= htmlspecialchars($row['area'] ?? '—') ?></td>
+                            <td><?= $row['total_area_sqft'] ? number_format($row['total_area_sqft']) : '—' ?></td>
+                            <td><?php
+                                $ts = $row['total_seats'] ?? 0;
+                                if ($ts <= 50) echo '10-50';
+                                elseif ($ts <= 100) echo '51-100';
+                                elseif ($ts <= 200) echo '101-200';
+                                else echo '200+';
+                            ?></td>
+                            <td><?= $row['price'] ? '₹' . number_format($row['price']) . '<small class="text-muted ms-1">' . ($row['office_space_type'] === 'lease' ? '/yr' : '/mo') . '</small>' : '—' ?></td>
+                            <td><span class="badge bg-<?= ($row['office_space_type'] ?? 'rent') === 'lease' ? 'info' : 'secondary' ?>"><?= htmlspecialchars(($row['office_space_type'] ?? 'rent')) ?></span></td>
+                            <td><span class="badge bg-<?= $row['listing_type_db'] === 'furnished' ? 'primary' : 'secondary' ?>"><?= htmlspecialchars(ucfirst($row['listing_type_db'] ?? '')) ?></span></td>
+                            <td><span class="badge bg-<?= $row['status'] === 'published' ? 'success' : ($row['status'] === 'draft' ? 'secondary' : 'warning text-dark') ?>"><?= $row['status'] ?></span></td>
+                            <td class="text-center">
+                                <?php if ($enqCnt > 0): ?>
+                                <a href="contacts.php?search=<?= urlencode($row['title']) ?>" class="badge bg-info text-decoration-none" title="View enquiries"><?= $enqCnt ?></a>
+                                <?php else: ?>
+                                <span class="text-muted">0</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($row['status'] === 'published'): ?>
+                                <a href="/office_detail.php?slug=<?= htmlspecialchars($row['slug']) ?>&type=<?= $row['listing_type_db'] ?>" target="_blank" class="btn btn-sm btn-outline-secondary" title="View on site"><i class="fa-solid fa-eye"></i></a>
+                                <?php endif; ?>
+                                <a href="office-space.php?mode=edit&id=<?= $row['id'] ?>&type=<?= $row['listing_type_db'] ?>" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a>
+                                <a href="javascript:void(0)" onclick="confirmDelete(<?= $row['id'] ?>, '<?= $row['listing_type_db'] ?>', '<?= htmlspecialchars($row['title'], ENT_QUOTES) ?>')" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fa-solid fa-trash-can"></i></a>
+                            </td>
+                        </tr>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr><td colspan="14" class="text-center text-muted py-4">No listings found.</td></tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>

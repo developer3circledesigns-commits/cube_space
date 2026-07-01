@@ -1,6 +1,23 @@
 <?php
 require_once __DIR__ . '/includes/bootstrap.php';
 mysqli_report(MYSQLI_REPORT_OFF);
+
+if (!function_exists('fmt_seats')) {
+    function fmt_seats($s) {
+        $s = (int)$s;
+        if ($s <= 50) return '10-50';
+        if ($s <= 100) return '51-100';
+        if ($s <= 200) return '101-200';
+        return '200+';
+    }
+}
+if (!function_exists('clean_min_inventory')) {
+    function clean_min_inventory($val) {
+        if (empty($val)) return '';
+        return trim(preg_replace('/\b(cabin|office|floor|seats?|people|persons?|none)\b\s*\+?\s*/i', '', $val));
+    }
+}
+
 $action = $_GET['action'] ?? '';
 if ($action === 'forgot_password' || $action === 'reset_password') {
     header('Content-Type: application/json');
@@ -78,14 +95,28 @@ if (!isset($conn) || !$conn) {
 }
 
 $listingTypeDb = '';
+$typeParam = isset($_GET['type']) ? trim($_GET['type']) : '';
 
-$stmt = mysqli_prepare($conn, "SELECT * FROM managed_offices WHERE slug = ? AND status = 'published'");
-mysqli_stmt_bind_param($stmt, 's', $slug);
-mysqli_stmt_execute($stmt);
-$officeResult = mysqli_stmt_get_result($stmt);
-$office = mysqli_fetch_assoc($officeResult);
-mysqli_stmt_close($stmt);
-if ($office) { $listingTypeDb = 'managed'; }
+if ($typeParam && in_array($typeParam, ['managed', 'furnished', 'unfurnished'])) {
+    $tableMap = ['managed' => 'managed_offices', 'furnished' => 'furnished_offices', 'unfurnished' => 'unfurnished_offices'];
+    $table = $tableMap[$typeParam];
+    $stmt = mysqli_prepare($conn, "SELECT * FROM $table WHERE slug = ? AND status = 'published'");
+    mysqli_stmt_bind_param($stmt, 's', $slug);
+    mysqli_stmt_execute($stmt);
+    $office = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+    mysqli_stmt_close($stmt);
+    if ($office) { $listingTypeDb = $typeParam; }
+}
+
+if (!$office) {
+    $stmt = mysqli_prepare($conn, "SELECT * FROM managed_offices WHERE slug = ? AND status = 'published'");
+    mysqli_stmt_bind_param($stmt, 's', $slug);
+    mysqli_stmt_execute($stmt);
+    $officeResult = mysqli_stmt_get_result($stmt);
+    $office = mysqli_fetch_assoc($officeResult);
+    mysqli_stmt_close($stmt);
+    if ($office) { $listingTypeDb = 'managed'; }
+}
 
 if (!$office) {
     $stmt = mysqli_prepare($conn, "SELECT * FROM furnished_offices WHERE slug = ? AND status = 'published'");
@@ -194,11 +225,11 @@ $officeLat = $office['latitude'] ?? null;
 $officeLng = $office['longitude'] ?? null;
 if ($officeLat && $officeLng) {
     $nearStmt = mysqli_prepare($conn,
-        "(SELECT id, title, slug, city, area, address, price, total_seats, images, featured, latitude, longitude FROM managed_offices WHERE status='published' AND slug != ? AND latitude IS NOT NULL)
+        "(SELECT id, title, slug, city, area, address, price, total_seats, images, featured, latitude, longitude, 'managed' as listing_type_db FROM managed_offices WHERE status='published' AND slug != ? AND latitude IS NOT NULL)
         UNION ALL
-        (SELECT id, title, slug, city, area, address, price, total_seats, images, featured, latitude, longitude FROM furnished_offices WHERE status='published' AND slug != ? AND latitude IS NOT NULL)
+        (SELECT id, title, slug, city, area, address, price, total_seats, images, featured, latitude, longitude, 'furnished' as listing_type_db FROM furnished_offices WHERE status='published' AND slug != ? AND latitude IS NOT NULL)
         UNION ALL
-        (SELECT id, title, slug, city, area, address, price, total_seats, images, featured, latitude, longitude FROM unfurnished_offices WHERE status='published' AND slug != ? AND latitude IS NOT NULL)
+        (SELECT id, title, slug, city, area, address, price, total_seats, images, featured, latitude, longitude, 'unfurnished' as listing_type_db FROM unfurnished_offices WHERE status='published' AND slug != ? AND latitude IS NOT NULL)
         ORDER BY (POW(latitude - ?, 2) + POW(longitude - ?, 2))
         LIMIT 6"
     );
@@ -224,7 +255,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <script>function imgErrorToPlaceholder(img){if(!img||!img.parentElement)return;img.parentElement.innerHTML='<div class=\"placeholder-img\"><i class=\"fa-solid fa-building\"></i></div>';}</script>
     <title><?php echo e($pageTitle); ?></title>
-    <meta name="description" content="View details for <?php echo e($officeName); ?> - managed office space in <?php echo e($officeCity); ?>. Check amenities, pricing, and availability.">
+    <meta name="description" content="View details for <?php echo e($officeName); ?> - <?php echo e($officeType); ?> in <?php echo e($officeCity); ?>. Check amenities, pricing, and availability.">
     <link rel="icon" href="favicon.ico" sizes="any">
     <link rel="icon" type="image/png" href="assets/images/favicon-32x32.png">
     <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
@@ -695,8 +726,8 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
             <!-- Breadcrumb -->
             <div class="breadcrumb">
                 <a href="index.php">Home</a><span class="sep">/</span>
-                <a href="index.php#solutions">Office Spaces</a><span class="sep">/</span>
-                <span><?php echo $officeArea; ?></span>
+                <a href="<?php echo $listingTypeDb === 'managed' ? 'managed_offices.php' : 'furnished_offices.php'; ?>"><?php echo $listingTypeDb === 'managed' ? 'Managed Offices' : 'Office Spaces'; ?></a><span class="sep">/</span>
+                <span><?php echo $officeArea ?: $officeCity; ?></span>
             </div>
 
             <!-- Image Gallery (first image left big, rest right grid) -->
@@ -782,22 +813,10 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
             <?php
             $totalSeats = (int)($office['total_seats'] ?? 0);
             $totalSqft = (int)($office['total_area_sqft'] ?? 0);
-            $availableSqft = (int)($office['available_sqft'] ?? 0);
+            $availableSqft = $office['available_sqft'] ?? '';
             $inventoryType = !empty($office['inventory_type']) ? $office['inventory_type'] : '';
             $minInventory = !empty($office['min_inventory']) ? $office['min_inventory'] : '';
             $isManaged = $listingTypeDb === 'managed';
-            function fmt_seats($s) {
-                $s = (int)$s;
-                if ($s <= 50) return '10-50';
-                if ($s <= 100) return '51-100';
-                if ($s <= 200) return '101-200';
-                return '200+';
-            }
-
-            function clean_min_inventory($val) {
-                if (empty($val)) return '';
-                return trim(preg_replace('/\b(cabin|office|floor|seats?|people|persons?|none)\b\s*\+?\s*/i', '', $val));
-            }
             ?>
             <div class="section" id="center-details">
                 <div class="section-title"><i class="fa-solid fa-circle-info"></i> Center Details</div>
@@ -837,7 +856,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                         <div class="cd-icon"><i class="fa-solid fa-ruler-combined"></i></div>
                         <div>
                             <div class="cd-label">Current Available Area On Rent</div>
-                            <div class="cd-value"><?php echo number_format($availableSqft); ?></div>
+                            <div class="cd-value"><?php echo htmlspecialchars($availableSqft); ?> Sq Ft.</div>
                         </div>
                     </div>
                     <?php endif; ?>
@@ -936,7 +955,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                 <p style="font-size:13px;color:#64748b;margin-bottom:16px;"><i class="fa-regular fa-compass"></i> Spaces closest to this location</p>
                 <div class="nearby-grid">
                     <?php foreach ($nearestOffices as $n): ?>
-                    <a href="office_detail.php?slug=<?php echo e($n['slug']); ?>" class="nearby-card" style="text-decoration:none;">
+                    <a href="office_detail.php?slug=<?php echo e($n['slug']); ?>&type=<?php echo e($n['listing_type_db']); ?>" class="nearby-card" style="text-decoration:none;">
                         <div class="nearby-card-img">
                             <img src="<?php echo e($n['first_image'] ?: 'https://images.unsplash.com/photo-1497366756111-5c12c1785e86?w=600'); ?>" alt="<?php echo e($n['title']); ?>" loading="lazy" onerror="imgErrorToPlaceholder(this)">
                         </div>

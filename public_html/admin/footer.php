@@ -97,27 +97,55 @@ function showAlertModal(message, type) {
     modal.show();
 }
 function confirmDelete(id, type, title) {
-    showConfirmDialog('Delete "' + title + '" (ID: ' + id + ')? This cannot be undone.', function() {
+    showConfirmDialog('Delete "' + title + '" (ID: ' + id + ')? This cannot be undone.', async function() {
         const fd = new FormData();
         fd.append('id', id);
         fd.append('listing_type', type);
-        const headers = {};
-        const token = getToken();
+        let headers = {};
+        let token = getToken();
         if (token) headers['Authorization'] = 'Bearer ' + token;
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         if (csrfMeta) headers['X-CSRF-Token'] = csrfMeta.content;
-        fetch('/admin/api/listing_crud.php?action=delete', { method: 'POST', headers: headers, body: fd })
-            .then(r => r.json()).then(d => { if (d.success) window.location.reload(); else showAlertModal(d.error, 'error'); });
+        let r = await fetch('/admin/api/listing_crud.php?action=delete', { method: 'POST', headers: headers, credentials: 'same-origin', body: fd });
+        if (r.status === 401) {
+            const refreshRes = await fetch('/admin/token_refresh.php', { method: 'POST', credentials: 'same-origin' });
+            if (refreshRes.ok) {
+                const refreshData = await refreshRes.json();
+                if (refreshData.access_token) {
+                    sessionStorage.setItem('admin_access_token', refreshData.access_token);
+                    headers['Authorization'] = 'Bearer ' + refreshData.access_token;
+                    r = await fetch('/admin/api/listing_crud.php?action=delete', { method: 'POST', headers: headers, credentials: 'same-origin', body: fd });
+                }
+            }
+        }
+        if (r.status === 401) { window.location.reload(); return; }
+        const d = await r.json();
+        if (d.success) window.location.reload(); else showAlertModal(d.error, 'error');
     });
 }
 function confirmDeleteContact(id) {
-    showConfirmDialog('Delete this contact submission?', function() {
+    showConfirmDialog('Delete this contact submission?', async function() {
         const fd = new FormData(); fd.append('id', id);
-        const headers = {};
-        const token = getToken();
+        let headers = {};
+        let token = getToken();
         if (token) headers['Authorization'] = 'Bearer ' + token;
-        fetch('/admin/api/contact_crud.php?action=delete', { method: 'POST', headers: headers, body: fd })
-            .then(r => r.json()).then(d => { if (d.success) window.location.href = 'contacts.php?deleted=1'; else showAlertModal(d.error, 'error'); });
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        if (csrfMeta) headers['X-CSRF-Token'] = csrfMeta.content;
+        let r = await fetch('/admin/api/contact_crud.php?action=delete', { method: 'POST', headers: headers, credentials: 'same-origin', body: fd });
+        if (r.status === 401) {
+            const refreshRes = await fetch('/admin/token_refresh.php', { method: 'POST', credentials: 'same-origin' });
+            if (refreshRes.ok) {
+                const refreshData = await refreshRes.json();
+                if (refreshData.access_token) {
+                    sessionStorage.setItem('admin_access_token', refreshData.access_token);
+                    headers['Authorization'] = 'Bearer ' + refreshData.access_token;
+                    r = await fetch('/admin/api/contact_crud.php?action=delete', { method: 'POST', headers: headers, credentials: 'same-origin', body: fd });
+                }
+            }
+        }
+        if (r.status === 401) { window.location.reload(); return; }
+        const d = await r.json();
+        if (d.success) window.location.href = 'contacts.php?deleted=1'; else showAlertModal(d.error, 'error');
     });
 }
 function toggleAllCheckboxes(master) {

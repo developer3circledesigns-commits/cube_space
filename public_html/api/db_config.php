@@ -42,6 +42,7 @@ if ($host === false || $user === false || $pass === false || $db === false) {
     die(json_encode(['error' => 'Server configuration error']));
 }
 
+mysqli_report(MYSQLI_REPORT_OFF);
 $conn = mysqli_connect($host, $user, $pass, $db, 3306);
 
 if (!$conn) {

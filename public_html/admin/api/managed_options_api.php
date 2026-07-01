@@ -43,9 +43,11 @@ if ($action === 'add') {
     }
     if ($city) {
         $stmt = mysqli_prepare($conn, "INSERT IGNORE INTO $table ($valueField, city) VALUES (?, ?)");
+        if (!$stmt) throw new Exception("Database error: " . mysqli_error($conn));
         mysqli_stmt_bind_param($stmt, 'ss', $value, $city);
     } else {
         $stmt = mysqli_prepare($conn, "INSERT IGNORE INTO $table ($valueField) VALUES (?)");
+        if (!$stmt) throw new Exception("Database error: " . mysqli_error($conn));
         mysqli_stmt_bind_param($stmt, 's', $value);
     }
     mysqli_stmt_execute($stmt);

@@ -21,9 +21,11 @@ function enquiries_count($office_id) {
     static $cache = [];
     if (isset($cache[$office_id])) return $cache[$office_id];
     $s = mysqli_prepare($conn, "SELECT COUNT(*) as cnt FROM contacts WHERE office_id = ?");
+    if (!$s) return 0;
     mysqli_stmt_bind_param($s, 'i', $office_id);
     mysqli_stmt_execute($s);
-    $cnt = (int)mysqli_fetch_assoc(mysqli_stmt_get_result($s))['cnt'];
+    $r = mysqli_stmt_get_result($s);
+    $cnt = $r ? (int)mysqli_fetch_assoc($r)['cnt'] : 0;
     $cache[$office_id] = $cnt;
     return $cnt;
 }
@@ -42,17 +44,21 @@ if ($mode === 'add' || $mode === 'edit'):
     $listing = ['title'=>'', 'listing_type'=>$type, 'description'=>'', 'city'=>'', 'area'=>'', 'address'=>'', 'price'=>'', 'price_label'=>'', 'total_seats'=>'', 'total_area_sqft'=>'', 'amenities'=>'[]', 'images'=>'[]', 'status'=>'published', 'featured'=>0, 'office_space_type'=>'rent', 'latitude'=>null, 'longitude'=>null, 'listing_code'=>'', 'slug'=>'', 'min_inventory'=>'', 'inventory_type'=>''];
     if ($mode === 'edit' && $editId) {
         $stmt = mysqli_prepare($conn, "SELECT * FROM $table WHERE id=?");
-        mysqli_stmt_bind_param($stmt, 'i', $editId);
-        mysqli_stmt_execute($stmt);
-        $r = mysqli_stmt_get_result($stmt);
-        $listing = mysqli_fetch_assoc($r);
-        mysqli_stmt_close($stmt);
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 'i', $editId);
+            mysqli_stmt_execute($stmt);
+            $r = mysqli_stmt_get_result($stmt);
+            $listing = mysqli_fetch_assoc($r);
+            mysqli_stmt_close($stmt);
+        }
         if (!$listing) { echo '<div class="alert alert-warning">Listing not found.</div>'; require_once __DIR__ . '/footer.php'; exit; }
     }
     $amenities = json_decode($listing['amenities'] ?? '[]', true);
     $images = json_decode($listing['images'] ?? '[]', true);
     $cities = mysqli_query($conn, "SELECT city FROM (SELECT city COLLATE utf8mb4_unicode_ci AS city FROM listing_cities UNION SELECT DISTINCT city COLLATE utf8mb4_unicode_ci AS city FROM $table WHERE city != '') AS c ORDER BY city");
+    if (!$cities) $cities = false;
     $areas = mysqli_query($conn, "SELECT area, city FROM (SELECT area COLLATE utf8mb4_unicode_ci AS area, city COLLATE utf8mb4_unicode_ci AS city FROM listing_areas UNION SELECT DISTINCT area COLLATE utf8mb4_unicode_ci AS area, city COLLATE utf8mb4_unicode_ci AS city FROM $table WHERE area != '' AND area IS NOT NULL) AS a ORDER BY area");
+    if (!$areas) $areas = false;
     $amenityList = ['WiFi','Air Conditioning','Power Backup','Parking','Security Guard','CCTV Surveillance','Elevator / Lift','Reception Area','Pantry / Cafeteria','Meeting Room','Visitor Parking','24/7 Access'];
 ?>
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -245,27 +251,43 @@ if ($mode === 'add' || $mode === 'edit'):
     }
     $whereClause = !empty($conditions) ? ' WHERE ' . implode(' AND ', $conditions) : '';
 
+    $total = 0;
     $totalStmt = !empty($params)
         ? mysqli_prepare($conn, "SELECT COUNT(*) as cnt FROM $table$whereClause")
         : null;
     if ($totalStmt) {
         mysqli_stmt_bind_param($totalStmt, $types, ...$params);
         mysqli_stmt_execute($totalStmt);
-        $total = (int)mysqli_fetch_assoc(mysqli_stmt_get_result($totalStmt))['cnt'];
+        $totalResult = mysqli_stmt_get_result($totalStmt);
+        if ($totalResult) $total = (int)mysqli_fetch_assoc($totalResult)['cnt'];
         mysqli_stmt_close($totalStmt);
     } else {
-        $total = (int)mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as cnt FROM $table"))['cnt'];
+        $countResult = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM $table");
+        if ($countResult) $total = (int)mysqli_fetch_assoc($countResult)['cnt'];
     }
     $orderSql = " ORDER BY created_at DESC LIMIT $adminPerPage OFFSET $adminOffset";
+    $result = false;
+    $dbError = '';
     if (!empty($params)) {
         $stmt = mysqli_prepare($conn, "SELECT * FROM $table$whereClause$orderSql");
-        mysqli_stmt_bind_param($stmt, $types, ...$params);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, $types, ...$params);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+            if (!$result) $dbError = mysqli_error($conn);
+        } else {
+            $dbError = mysqli_error($conn);
+        }
     } else {
-        $result = mysqli_query($conn, "SELECT * FROM $table$whereClause$orderSql");
+        $qResult = mysqli_query($conn, "SELECT * FROM $table$whereClause$orderSql");
+        if ($qResult) {
+            $result = $qResult;
+        } else {
+            $dbError = mysqli_error($conn);
+        }
     }
     $cities = mysqli_query($conn, "SELECT city FROM (SELECT city COLLATE utf8mb4_unicode_ci AS city FROM listing_cities UNION SELECT DISTINCT city COLLATE utf8mb4_unicode_ci AS city FROM $table WHERE city != '') AS c ORDER BY city");
+    if (!$cities) $cities = false;
 
     function mkUrl($extra) {
         $params = [];
@@ -343,45 +365,51 @@ if ($mode === 'add' || $mode === 'edit'):
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while ($row = mysqli_fetch_assoc($result)):
-                        $rowImages = json_decode($row['images'] ?? '[]', true);
-                        $enqCnt = enquiries_count($row['id']);
-                    ?>
-                    <tr>
-                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="<?= $row['id'] ?>" data-type="managed"></td>
-                        <td class="text-muted"><?= $row['id'] ?></td>
-                        <td><code class="small"><?= htmlspecialchars($row['listing_code'] ?? '—') ?></code></td>
-                        <td class="fw-medium"><?= htmlspecialchars($row['title']) ?></td>
-                        <td><?= htmlspecialchars($row['city']) ?></td>
-                        <td><?= htmlspecialchars($row['area'] ?? '—') ?></td>
-                        <td><?= $row['total_area_sqft'] ? number_format($row['total_area_sqft']) : '—' ?></td>
-                        <td><?php
-                            $ts = $row['total_seats'] ?? 0;
-                            if ($ts <= 50) echo '10-50';
-                            elseif ($ts <= 100) echo '51-100';
-                            elseif ($ts <= 200) echo '101-200';
-                            else echo '200+';
-                        ?></td>
-                        <td><?= $row['price'] ? '₹' . number_format($row['price']) . '<small class="text-muted ms-1">' . ($row['office_space_type'] === 'lease' ? '/yr' : '/mo') . '</small>' : '—' ?></td>
-                        <td><span class="badge bg-<?= ($row['office_space_type'] ?? 'rent') === 'lease' ? 'info' : 'secondary' ?>"><?= htmlspecialchars(($row['office_space_type'] ?? 'rent')) ?></span></td>
-                        <td><span class="badge bg-<?= $row['status'] === 'published' ? 'success' : ($row['status'] === 'draft' ? 'secondary' : 'warning text-dark') ?>"><?= $row['status'] ?></span></td>
-                        <td class="text-center">
-                            <?php if ($enqCnt > 0): ?>
-                            <a href="contacts.php?search=<?= urlencode($row['title']) ?>" class="badge bg-info text-decoration-none" title="View enquiries"><?= $enqCnt ?></a>
-                            <?php else: ?>
-                            <span class="text-muted">0</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <?php if ($row['status'] === 'published'): ?>
-                            <a href="/office_detail.php?slug=<?= htmlspecialchars($row['slug']) ?>" target="_blank" class="btn btn-sm btn-outline-secondary" title="View on site"><i class="fa-solid fa-eye"></i></a>
-                            <?php endif; ?>
-                            <a href="managed-office.php?mode=edit&id=<?= $row['id'] ?>" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a>
-                            <a href="office-details.php?office_id=<?= $row['id'] ?>&tab=extras" class="btn btn-sm btn-outline-secondary" title="Details"><i class="fa-solid fa-list-check"></i></a>
-                            <a href="javascript:void(0)" onclick="confirmDelete(<?= $row['id'] ?>, 'managed', '<?= htmlspecialchars($row['title'], ENT_QUOTES) ?>')" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fa-solid fa-trash-can"></i></a>
-                        </td>
-                    </tr>
-                    <?php endwhile; ?>
+                    <?php if (!empty($dbError)): ?>
+                        <tr><td colspan="13" class="text-center text-danger py-4">Database Error: <?= htmlspecialchars($dbError) ?></td></tr>
+                    <?php elseif ($result && mysqli_num_rows($result) > 0): ?>
+                        <?php while ($row = mysqli_fetch_assoc($result)):
+                            $rowImages = json_decode($row['images'] ?? '[]', true);
+                            $enqCnt = enquiries_count($row['id']);
+                        ?>
+                        <tr>
+                            <td><input type="checkbox" class="form-check-input bulk-checkbox" value="<?= $row['id'] ?>" data-type="managed"></td>
+                            <td class="text-muted"><?= $row['id'] ?></td>
+                            <td><code class="small"><?= htmlspecialchars($row['listing_code'] ?? '—') ?></code></td>
+                            <td class="fw-medium"><?= htmlspecialchars($row['title']) ?></td>
+                            <td><?= htmlspecialchars($row['city']) ?></td>
+                            <td><?= htmlspecialchars($row['area'] ?? '—') ?></td>
+                            <td><?= $row['total_area_sqft'] ? number_format($row['total_area_sqft']) : '—' ?></td>
+                            <td><?php
+                                $ts = $row['total_seats'] ?? 0;
+                                if ($ts <= 50) echo '10-50';
+                                elseif ($ts <= 100) echo '51-100';
+                                elseif ($ts <= 200) echo '101-200';
+                                else echo '200+';
+                            ?></td>
+                            <td><?= $row['price'] ? '₹' . number_format($row['price']) . '<small class="text-muted ms-1">' . ($row['office_space_type'] === 'lease' ? '/yr' : '/mo') . '</small>' : '—' ?></td>
+                            <td><span class="badge bg-<?= ($row['office_space_type'] ?? 'rent') === 'lease' ? 'info' : 'secondary' ?>"><?= htmlspecialchars(($row['office_space_type'] ?? 'rent')) ?></span></td>
+                            <td><span class="badge bg-<?= $row['status'] === 'published' ? 'success' : ($row['status'] === 'draft' ? 'secondary' : 'warning text-dark') ?>"><?= $row['status'] ?></span></td>
+                            <td class="text-center">
+                                <?php if ($enqCnt > 0): ?>
+                                <a href="contacts.php?search=<?= urlencode($row['title']) ?>" class="badge bg-info text-decoration-none" title="View enquiries"><?= $enqCnt ?></a>
+                                <?php else: ?>
+                                <span class="text-muted">0</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($row['status'] === 'published'): ?>
+                                <a href="/office_detail.php?slug=<?= htmlspecialchars($row['slug']) ?>&type=managed" target="_blank" class="btn btn-sm btn-outline-secondary" title="View on site"><i class="fa-solid fa-eye"></i></a>
+                                <?php endif; ?>
+                                <a href="managed-office.php?mode=edit&id=<?= $row['id'] ?>" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a>
+                                <a href="office-details.php?office_id=<?= $row['id'] ?>&tab=extras" class="btn btn-sm btn-outline-secondary" title="Details"><i class="fa-solid fa-list-check"></i></a>
+                                <a href="javascript:void(0)" onclick="confirmDelete(<?= $row['id'] ?>, 'managed', '<?= htmlspecialchars($row['title'], ENT_QUOTES) ?>')" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fa-solid fa-trash-can"></i></a>
+                            </td>
+                        </tr>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr><td colspan="13" class="text-center text-muted py-4">No listings found.</td></tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>

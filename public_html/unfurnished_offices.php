@@ -2039,7 +2039,7 @@ if (isset($conn) && $conn) {
                     </div>` : '';
 
                 html += `
-                        <div class="card office-card flex-lg-row" data-slug="${escHtml(o.slug)}" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
+                        <div class="card office-card flex-lg-row" data-slug="${escHtml(o.slug)}" data-listing-type="unfurnished" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
                             <div class="card-img-top office-card-img">
                                 ${carouselHtml}
                                 ${imgCount}
@@ -2073,14 +2073,14 @@ if (isset($conn) && $conn) {
                 card.addEventListener('click', function(e) {
                     if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
                         .target.closest('.btn-get-price') || e.target.closest('.description-toggle')) return;
-                    navigateTo('office_detail.php?slug=' + this.dataset.slug);
+                    navigateTo('office_detail.php?slug=' + this.dataset.slug + '&type=' + this.dataset.listingType);
                 });
                 card.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
                         if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
                             .target.closest('.btn-get-price')) return;
-                        navigateTo('office_detail.php?slug=' + this.dataset.slug);
+                        navigateTo('office_detail.php?slug=' + this.dataset.slug + '&type=' + this.dataset.listingType);
                     }
                 });
             });
@@ -2196,7 +2196,7 @@ if (isset($conn) && $conn) {
                     </div>` : '';
 
                 html += `
-                                <div class="card office-card" data-slug="${escHtml(o.slug)}" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
+                                <div class="card office-card" data-slug="${escHtml(o.slug)}" data-listing-type="unfurnished" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
                                     <div class="card-img-top office-card-img position-relative overflow-hidden">
                                         <span class="badge-nearby"><i class="fa-regular fa-compass"></i> Nearby</span>
                                         ${carouselHtml}
@@ -2233,14 +2233,14 @@ if (isset($conn) && $conn) {
                 card.addEventListener('click', function(e) {
                     if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
                         .target.closest('.btn-get-price') || e.target.closest('.description-toggle')) return;
-                    navigateTo('office_detail.php?slug=' + this.dataset.slug);
+                    navigateTo('office_detail.php?slug=' + this.dataset.slug + '&type=' + this.dataset.listingType);
                 });
                 card.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
                         if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
                             .target.closest('.btn-get-price')) return;
-                        navigateTo('office_detail.php?slug=' + this.dataset.slug);
+                        navigateTo('office_detail.php?slug=' + this.dataset.slug + '&type=' + this.dataset.listingType);
                     }
                 });
             });

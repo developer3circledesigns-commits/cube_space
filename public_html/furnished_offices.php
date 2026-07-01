@@ -64,6 +64,8 @@ $subheading = 'Furnished and unfurnished office spaces across prime locations. F
 
 $totalCount = 0;
 $areas = [];
+$cities = [];
+$cityAreas = [];
 
 if (isset($conn) && $conn) {
     $countRes = mysqli_query($conn, "SELECT SUM(cnt) as total FROM ((SELECT COUNT(*) as cnt FROM furnished_offices WHERE status='published') UNION ALL (SELECT COUNT(*) as cnt FROM unfurnished_offices WHERE status='published')) t");
@@ -71,6 +73,13 @@ if (isset($conn) && $conn) {
 
     $aRes = mysqli_query($conn, "(SELECT DISTINCT area FROM furnished_offices WHERE status='published' AND area IS NOT NULL AND area != '') UNION (SELECT DISTINCT area FROM unfurnished_offices WHERE status='published' AND area IS NOT NULL AND area != '') ORDER BY area");
     if ($aRes) while ($r = mysqli_fetch_assoc($aRes)) { $areas[] = $r['area']; }
+
+    $cRes = mysqli_query($conn, "(SELECT DISTINCT city FROM furnished_offices WHERE status='published' AND city IS NOT NULL AND city != '') UNION (SELECT DISTINCT city FROM unfurnished_offices WHERE status='published' AND city IS NOT NULL AND city != '') ORDER BY city");
+    if ($cRes) while ($r = mysqli_fetch_assoc($cRes)) { $cities[] = $r['city']; }
+
+    $caRes = mysqli_query($conn, "(SELECT city, area FROM furnished_offices WHERE status='published' AND city IS NOT NULL AND city != '' AND area IS NOT NULL AND area != '') UNION (SELECT city, area FROM unfurnished_offices WHERE status='published' AND city IS NOT NULL AND city != '' AND area IS NOT NULL AND area != '') ORDER BY city, area");
+    if ($caRes) while ($r = mysqli_fetch_assoc($caRes)) { $cityAreas[$r['city']][] = $r['area']; }
+    $cityAreas['__all__'] = $areas;
 }
 ?>
 <!DOCTYPE html>
@@ -1470,8 +1479,9 @@ if (isset($conn) && $conn) {
             <span class="text-muted" style="font-size: 1.1rem; line-height: 1; flex-shrink: 0;">|</span>
             <select class="form-select form-select-sm filter-select filter-city-select" id="filterCity" aria-label="Filter by City">
                 <option value="">All Cities</option>
-                <option value="chennai" selected>Chennai</option>
-                <option value="bangalore">Bangalore</option>
+                <?php foreach ($cities as $c): ?>
+                    <option value="<?= htmlspecialchars($c) ?>"><?= htmlspecialchars(ucfirst($c)) ?></option>
+                <?php endforeach; ?>
             </select>
             <select class="form-select form-select-sm filter-select filter-locality-select" id="filterLocality" aria-label="Filter by Locality">
                 <option value="">All Locations</option>
@@ -1481,11 +1491,10 @@ if (isset($conn) && $conn) {
             </select>
             <select class="form-select form-select-sm filter-select filter-sqft-select" id="filterSqft" aria-label="Filter by Square Feet">
                 <option value="">All Sq Ft</option>
-                <option value="0-1000">0 - 1000</option>
-                <option value="1000-2000">1000 - 2000</option>
-                <option value="2000-5000">2000 - 5000</option>
+                <option value="1000-5000">1000 - 5000</option>
                 <option value="5000-10000">5000 - 10000</option>
-                <option value="10000-">10000+</option>
+                <option value="10000-20000">10000 - 20000</option>
+                <option value="20000-">20000+</option>
             </select>
         </div>
 
@@ -1501,6 +1510,7 @@ if (isset($conn) && $conn) {
                     <?php foreach (['Guindy', 'Pallavaram – Thoraipakkam Radial Road', 'OMR', 'Taramani', 'Perungudi', 'Thoraipakkam', 'Sholinganallur', 'Navalur','Velachery','Nungambakkam','T.Nagar'] as $loc): ?>
                         <button class="btn btn-sm locality-chip" data-area="<?= htmlspecialchars($loc) ?>" role="tab" aria-selected="false"><?= htmlspecialchars($loc) ?></button>
                     <?php endforeach; ?>
+                    <button class="btn btn-sm locality-chip active" data-area="" role="tab" aria-selected="true">All</button>
                 </div>
                 <button class="scroll-btn scroll-right" type="button" aria-label="Scroll right" onclick="scrollLocalities(1)"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
@@ -1677,6 +1687,7 @@ if (isset($conn) && $conn) {
         //  GLOBALS
         // ============================================================
         let currentPage = 1;
+        var cityAreas = <?= json_encode($cityAreas) ?>;
 
 
         // ============================================================
@@ -1846,8 +1857,8 @@ if (isset($conn) && $conn) {
 
         function removeFilter(key) {
             if (key === 'product') document.getElementById('filterProduct').value = 'commercial';
-            else if (key === 'city') document.getElementById('filterCity').value = '';
-            else if (key === 'locality') { document.getElementById('filterLocality').value = '';
+            else if (key === 'city') { document.getElementById('filterCity').value = '';
+                updateLocationDropdown(); } else if (key === 'locality') { document.getElementById('filterLocality').value = '';
                 updateChipsFromDropdown(); } else if (key === 'sqft') document.getElementById('filterSqft').value = '';
             currentPage = 1;
             loadListings();
@@ -1856,6 +1867,7 @@ if (isset($conn) && $conn) {
         function clearFilters() {
             document.getElementById('filterProduct').value = 'commercial';
             document.getElementById('filterCity').value = '';
+            updateLocationDropdown();
             document.getElementById('filterLocality').value = '';
             document.getElementById('filterSqft').value = '';
             document.querySelectorAll('.locality-chip').forEach(c => c.classList.remove('active'));
@@ -1876,6 +1888,27 @@ if (isset($conn) && $conn) {
                 if (allChip) { allChip.classList.add('active');
                     allChip.setAttribute('aria-selected', 'true'); }
             }
+        }
+
+        function updateLocationDropdown() {
+            var city = document.getElementById('filterCity').value;
+            var locSelect = document.getElementById('filterLocality');
+            var currentVal = locSelect.value;
+            while (locSelect.options.length > 1) {
+                locSelect.remove(1);
+            }
+            var areas = city && cityAreas[city] ? cityAreas[city] : (cityAreas['__all__'] || []);
+            areas.forEach(function(area) {
+                var opt = document.createElement('option');
+                opt.value = area;
+                opt.textContent = area.charAt(0).toUpperCase() + area.slice(1);
+                locSelect.appendChild(opt);
+            });
+            var exists = false;
+            for (var i = 0; i < locSelect.options.length; i++) {
+                if (locSelect.options[i].value === currentVal) { exists = true; break; }
+            }
+            if (!exists) locSelect.value = '';
         }
 
         // ============================================================
@@ -2048,7 +2081,7 @@ if (isset($conn) && $conn) {
                     </div>` : '';
 
                 html += `
-                        <div class="card office-card flex-lg-row" data-slug="${escHtml(o.slug)}" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
+                        <div class="card office-card flex-lg-row" data-slug="${escHtml(o.slug)}" data-listing-type="${escHtml(o.listing_type_db)}" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
                             <div class="card-img-top office-card-img">
                                 ${carouselHtml}
                                 ${imgCount}
@@ -2082,14 +2115,14 @@ if (isset($conn) && $conn) {
                 card.addEventListener('click', function(e) {
                     if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
                         .target.closest('.btn-get-price') || e.target.closest('.description-toggle')) return;
-                    navigateTo('office_detail.php?slug=' + this.dataset.slug);
+                    navigateTo('office_detail.php?slug=' + this.dataset.slug + '&type=' + this.dataset.listingType);
                 });
                 card.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
                         if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
                             .target.closest('.btn-get-price')) return;
-                        navigateTo('office_detail.php?slug=' + this.dataset.slug);
+                        navigateTo('office_detail.php?slug=' + this.dataset.slug + '&type=' + this.dataset.listingType);
                     }
                 });
             });
@@ -2205,7 +2238,7 @@ if (isset($conn) && $conn) {
                     </div>` : '';
 
                 html += `
-                                <div class="card office-card" data-slug="${escHtml(o.slug)}" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
+                                <div class="card office-card" data-slug="${escHtml(o.slug)}" data-listing-type="${escHtml(o.listing_type_db)}" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
                                     <div class="card-img-top office-card-img position-relative overflow-hidden">
                                         <span class="badge-nearby"><i class="fa-regular fa-compass"></i> Nearby</span>
                                         ${carouselHtml}
@@ -2242,14 +2275,14 @@ if (isset($conn) && $conn) {
                 card.addEventListener('click', function(e) {
                     if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
                         .target.closest('.btn-get-price') || e.target.closest('.description-toggle')) return;
-                    navigateTo('office_detail.php?slug=' + this.dataset.slug);
+                    navigateTo('office_detail.php?slug=' + this.dataset.slug + '&type=' + this.dataset.listingType);
                 });
                 card.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
                         if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
                             .target.closest('.btn-get-price')) return;
-                        navigateTo('office_detail.php?slug=' + this.dataset.slug);
+                        navigateTo('office_detail.php?slug=' + this.dataset.slug + '&type=' + this.dataset.listingType);
                     }
                 });
             });
@@ -2287,7 +2320,7 @@ if (isset($conn) && $conn) {
                     }
                     const cityEl = document.getElementById('filterCity');
                     document.getElementById('pageCity').textContent = cityEl.value ? ucfirst(cityEl.value) :
-                        'Chennai';
+                        'All Cities';
 
                     const start = data.total === 0 ? 0 : (data.page - 1) * data.limit + 1;
                     const end = Math.min(data.page * data.limit, data.total);
@@ -2424,6 +2457,7 @@ if (isset($conn) && $conn) {
                     return;
                 }
                 currentPage = 1;
+                if (el.id === 'filterCity') updateLocationDropdown();
                 if (el.id === 'filterLocality') updateChipsFromDropdown();
                 loadListings();
             });
@@ -2467,9 +2501,8 @@ if (isset($conn) && $conn) {
         // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
             const cityEl = document.getElementById('filterCity');
-            if (cityEl && !cityEl.value) {
-                cityEl.value = 'chennai';
-            }
+            updateLocationDropdown();
+            // Don't force a default city - show all listings
             if (typeof CubeRealtime !== 'undefined') {
                 CubeRealtime.init({ interval: 20000 });
                 CubeRealtime.on('listing_updated', function() {

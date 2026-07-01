@@ -77,19 +77,19 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
     <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken) ?>">
     <meta name="access-token" content="<?= htmlspecialchars($jsAccessToken) ?>">
     <?php include dirname(__DIR__) . '/includes/head-meta.php'; ?>
-    <link rel="icon" href="<?= htmlspecialchars('../favicon.ico', ENT_QUOTES, 'UTF-8') ?>" sizes="any">
+    <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="<?= htmlspecialchars('../assets/css/admin.css', ENT_QUOTES, 'UTF-8') ?>?v=6">
+    <link rel="stylesheet" href="/assets/css/admin.css?v=6">
 </head>
 <body>
 <div class="d-flex" style="min-height: 100vh;">
     <aside class="admin-sidebar d-none d-md-flex">
         <div class="sidebar-header">
-            <img src="../assets/images/final-logo.png" alt="CubeSpace" loading="lazy">
+            <img src="/assets/images/final-logo.png" alt="CubeSpace" loading="lazy">
             <span>Admin</span>
         </div>
         <nav class="nav flex-column flex-grow-1 overflow-auto pt-2">
@@ -111,7 +111,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
     <div class="offcanvas offcanvas-start text-bg-dark admin-offcanvas" tabindex="-1" id="adminOffcanvas" aria-label="Admin Navigation">
         <div class="offcanvas-header">
-            <span class="fw-bold"><img src="../assets/images/final-logo.png" alt="CubeSpace" style="height: 28px;" class="me-2" loading="lazy">Admin</span>
+            <span class="fw-bold"><img src="/assets/images/final-logo.png" alt="CubeSpace" style="height: 28px;" class="me-2" loading="lazy">Admin</span>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body">

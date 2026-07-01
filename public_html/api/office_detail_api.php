@@ -50,15 +50,30 @@ if ($cached) {
 // Fetch Office
 // ============================================================
 $listingTypeDb = '';
+$typeParam = isset($_GET['type']) ? trim($_GET['type']) : '';
 
-$stmt = mysqli_prepare($conn, "SELECT * FROM managed_offices WHERE slug = ? AND status = 'published'");
-if (!$stmt) { http_response_code(500); echo json_encode(['error' => 'Database error']); exit; }
-mysqli_stmt_bind_param($stmt, 's', $slug);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$office = mysqli_fetch_assoc($result);
-mysqli_stmt_close($stmt);
-if ($office) { $listingTypeDb = 'managed'; }
+if ($typeParam && in_array($typeParam, ['managed', 'furnished', 'unfurnished'])) {
+    $tableMap = ['managed' => 'managed_offices', 'furnished' => 'furnished_offices', 'unfurnished' => 'unfurnished_offices'];
+    $table = $tableMap[$typeParam];
+    $stmt = mysqli_prepare($conn, "SELECT * FROM $table WHERE slug = ? AND status = 'published'");
+    if (!$stmt) { http_response_code(500); echo json_encode(['error' => 'Database error']); exit; }
+    mysqli_stmt_bind_param($stmt, 's', $slug);
+    mysqli_stmt_execute($stmt);
+    $office = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+    mysqli_stmt_close($stmt);
+    if ($office) { $listingTypeDb = $typeParam; }
+}
+
+if (!$office) {
+    $stmt = mysqli_prepare($conn, "SELECT * FROM managed_offices WHERE slug = ? AND status = 'published'");
+    if (!$stmt) { http_response_code(500); echo json_encode(['error' => 'Database error']); exit; }
+    mysqli_stmt_bind_param($stmt, 's', $slug);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $office = mysqli_fetch_assoc($result);
+    mysqli_stmt_close($stmt);
+    if ($office) { $listingTypeDb = 'managed'; }
+}
 
 if (!$office) {
     $stmt = mysqli_prepare($conn, "SELECT * FROM furnished_offices WHERE slug = ? AND status = 'published'");
