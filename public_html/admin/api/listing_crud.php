@@ -140,7 +140,13 @@ if ($action === 'create' || $action === 'update') {
         if (is_array($_POST['amenities'])) {
             $amenities = $_POST['amenities'];
         } else {
-            $amenities = array_map('trim', explode(',', $_POST['amenities']));
+            $raw = trim($_POST['amenities']);
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                $amenities = $decoded;
+            } else {
+                $amenities = array_map('trim', explode(',', $raw));
+            }
         }
     }
     $amenitiesJson = json_encode($amenities);
@@ -221,14 +227,18 @@ if ($action === 'create' || $action === 'update') {
                     $listingType, $listingCode
                 );
             } else {
+                $minInventory = trim($_POST['min_inventory'] ?? '');
+                $inventoryType = trim($_POST['inventory_type'] ?? '');
                 $stmt = mysqli_prepare($conn,
-                    "INSERT INTO $table (title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, total_area_sqft, amenities, images, status, featured, feature_highlights, seo_text, office_space_type, listing_type, listing_code)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    "INSERT INTO $table (title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, total_area_sqft, min_inventory, inventory_type, amenities, images, status, featured, feature_highlights, seo_text, office_space_type, listing_type, listing_code)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 );
-                mysqli_stmt_bind_param($stmt, 'ssssssddsssisssisssss',
+                mysqli_stmt_bind_param($stmt, 'ssssssddsssssssssisssss',
                     $title, $slug, $description, $city, $area, $address,
                     $latitude, $longitude,
-                    $price, $priceLabel, $totalSeats, $totalAreaSqft, $amenitiesJson, $imagesJson,
+                    $price, $priceLabel, $totalSeats, $totalAreaSqft,
+                    $minInventory, $inventoryType,
+                    $amenitiesJson, $imagesJson,
                     $status, $featured, $featureHighlightsJson, $seoText, $officeSpaceType,
                     $listingType, $listingCode
                 );
@@ -274,13 +284,17 @@ if ($action === 'create' || $action === 'update') {
                     $listingType, $id
                 );
             } else {
+                $minInventory = trim($_POST['min_inventory'] ?? '');
+                $inventoryType = trim($_POST['inventory_type'] ?? '');
                 $stmt = mysqli_prepare($conn,
-                    "UPDATE $table SET title=?, slug=?, description=?, city=?, area=?, address=?, latitude=?, longitude=?, price=?, price_label=?, total_seats=?, total_area_sqft=?, amenities=?, images=?, status=?, featured=?, feature_highlights=?, seo_text=?, office_space_type=?, listing_type=?, updated_at=NOW() WHERE id=?"
+                    "UPDATE $table SET title=?, slug=?, description=?, city=?, area=?, address=?, latitude=?, longitude=?, price=?, price_label=?, total_seats=?, total_area_sqft=?, min_inventory=?, inventory_type=?, amenities=?, images=?, status=?, featured=?, feature_highlights=?, seo_text=?, office_space_type=?, listing_type=?, updated_at=NOW() WHERE id=?"
                 );
-                mysqli_stmt_bind_param($stmt, 'ssssssddsssisssissssi',
+                mysqli_stmt_bind_param($stmt, 'ssssssddsssssssssissssi',
                     $title, $slug, $description, $city, $area, $address,
                     $latitude, $longitude,
-                    $price, $priceLabel, $totalSeats, $totalAreaSqft, $amenitiesJson, $imagesJson,
+                    $price, $priceLabel, $totalSeats, $totalAreaSqft,
+                    $minInventory, $inventoryType,
+                    $amenitiesJson, $imagesJson,
                     $status, $featured, $featureHighlightsJson, $seoText, $officeSpaceType,
                     $listingType, $id
                 );

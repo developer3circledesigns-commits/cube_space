@@ -44,3 +44,24 @@
     </div>
 
 </footer>
+
+<script>
+(function(){
+    var base = (document.querySelector('meta[name="app-base"]') || {}).content || '';
+    var url = base + '/api/track_visit.php';
+    var page = (window.location.pathname || '').split('/').pop() || 'index';
+    var name = page.replace(/\.php$/i,'');
+    var activity = name.charAt(0).toUpperCase() + name.slice(1);
+    activity = activity.replace(/[-_]/g,' ');
+    var fd = new FormData();
+    fd.append('url', window.location.href);
+    fd.append('activity', activity);
+    if (navigator.sendBeacon) {
+        navigator.sendBeacon(url, fd);
+    } else {
+        var x = new XMLHttpRequest();
+        x.open('POST', url, true);
+        x.send(fd);
+    }
+})();
+</script>

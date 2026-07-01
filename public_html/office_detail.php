@@ -679,7 +679,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
         <div class="nav-workspace-info">
             <div>
                 <div class="nav-ws-price">₹<?php echo format_number($officePrice); ?><?php echo $pricePeriod; ?></div>
-                    <div class="nav-ws-seats"><?php echo (int)$officeSeats; ?> Seats</div>
+                    <div class="nav-ws-seats"><?php echo fmt_seats((int)$officeSeats); ?> Seats</div>
             </div>
             <button class="nav-ws-cta" onclick="scrollToForm()">Get Price</button>
         </div>
@@ -736,7 +736,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
             <!-- Workspace Header -->
             <div class="ws-header">
                 <div class="ws-type"><?php echo e($officeType); ?></div>
-                <h1 class="ws-name"><?php echo $officeName; ?></h1>
+                <h1 class="ws-name"><?php echo $officeName; ?> <?php if (!empty($office['listing_code'])): ?><code class="small text-muted fw-normal" style="font-size:0.6em;"><?php echo $office['listing_code']; ?></code><?php endif; ?></h1>
                 <div class="ws-location">
                     <i class="fa-solid fa-location-dot"></i>
                     <?php echo $officeAddress; ?>
@@ -783,9 +783,21 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
             $totalSeats = (int)($office['total_seats'] ?? 0);
             $totalSqft = (int)($office['total_area_sqft'] ?? 0);
             $availableSqft = (int)($office['available_sqft'] ?? 0);
-            $furnishingStatus = !empty($office['inventory_type']) ? $office['inventory_type'] : '-';
-            $minInventory = !empty($office['min_inventory']) ? $office['min_inventory'] : '-';
+            $inventoryType = !empty($office['inventory_type']) ? $office['inventory_type'] : '';
+            $minInventory = !empty($office['min_inventory']) ? $office['min_inventory'] : '';
             $isManaged = $listingTypeDb === 'managed';
+            function fmt_seats($s) {
+                $s = (int)$s;
+                if ($s <= 50) return '10-50';
+                if ($s <= 100) return '51-100';
+                if ($s <= 200) return '101-200';
+                return '200+';
+            }
+
+            function clean_min_inventory($val) {
+                if (empty($val)) return '';
+                return trim(preg_replace('/\b(cabin|office|floor|seats?|people|persons?|none)\b\s*\+?\s*/i', '', $val));
+            }
             ?>
             <div class="section" id="center-details">
                 <div class="section-title"><i class="fa-solid fa-circle-info"></i> Center Details</div>
@@ -795,47 +807,49 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                         <div class="cd-icon"><i class="fa-solid fa-people-group"></i></div>
                         <div>
                             <div class="cd-label">Current Available Seats</div>
-                            <div class="cd-value"><?php echo $totalSeats; ?> Seats</div>
+                            <div class="cd-value"><?php echo fmt_seats($totalSeats); ?> Seats</div>
                         </div>
                     </div>
                     <div class="cd-item">
-                        <div class="cd-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                        <div class="cd-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
                         <div>
-                            <div class="cd-label">Move-in</div>
-                            <div class="cd-value">Immediate</div>
+                            <div class="cd-label">Min Inventory</div>
+                            <div class="cd-value"><?php echo htmlspecialchars(clean_min_inventory($minInventory) ?: '-'); ?></div>
+                        </div>
+                    </div>
+                    <div class="cd-item">
+                        <div class="cd-icon"><i class="fa-solid fa-circle-check" style="color:#166534;"></i></div>
+                        <div>
+                            <div class="cd-label">Status</div>
+                            <div class="cd-value" style="color:#166534;">Ready to move in</div>
                         </div>
                     </div>
                     <?php else: ?>
                     <div class="cd-item">
-                        <div class="cd-icon"><i class="fa-solid fa-vector-square"></i></div>
+                        <div class="cd-icon"><i class="fa-solid fa-building"></i></div>
                         <div>
-                            <div class="cd-label">Total Area</div>
-                            <div class="cd-value"><?php echo $totalSqft ? number_format($totalSqft) . ' sqft' : '-'; ?></div>
+                            <div class="cd-label">Total Building Leasable Area</div>
+                            <div class="cd-value"><?php echo $totalSqft ? number_format($totalSqft) . ' Sq Ft.' : '-'; ?></div>
                         </div>
                     </div>
                     <?php if ($availableSqft): ?>
                     <div class="cd-item">
-                        <div class="cd-icon"><i class="fa-solid fa-chart-area"></i></div>
+                        <div class="cd-icon"><i class="fa-solid fa-ruler-combined"></i></div>
                         <div>
-                            <div class="cd-label">Available Area</div>
-                            <div class="cd-value"><?php echo number_format($availableSqft) . ' sqft'; ?></div>
+                            <div class="cd-label">Current Available Area On Rent</div>
+                            <div class="cd-value"><?php echo number_format($availableSqft); ?></div>
                         </div>
                     </div>
                     <?php endif; ?>
+                    <?php if ($inventoryType): ?>
                     <div class="cd-item">
-                        <div class="cd-icon"><i class="fa-solid fa-couch"></i></div>
+                        <div class="cd-icon"><i class="fa-solid <?php echo $inventoryType === 'Ready to move in' ? 'fa-circle-check' : 'fa-clock'; ?>" style="color:<?php echo $inventoryType === 'Ready to move in' ? '#166534' : '#92400e'; ?>;"></i></div>
                         <div>
-                            <div class="cd-label">Furnishing Status</div>
-                            <div class="cd-value"><?php echo htmlspecialchars($furnishingStatus); ?></div>
+                            <div class="cd-label">Status</div>
+                            <div class="cd-value" style="color:<?php echo $inventoryType === 'Ready to move in' ? '#166534' : '#92400e'; ?>;"><?php echo $inventoryType === 'Ready to move in' ? 'Ready to move in' : 'Processing'; ?></div>
                         </div>
                     </div>
-                    <div class="cd-item">
-                        <div class="cd-icon"><i class="fa-solid fa-warehouse"></i></div>
-                        <div>
-                            <div class="cd-label">Min Inventory</div>
-                            <div class="cd-value"><?php echo htmlspecialchars((string)$minInventory); ?></div>
-                        </div>
-                    </div>
+                    <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -907,8 +921,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
             <div class="section">
                 <div class="seo-text">
                     <?php
-                    $seoContent = htmlspecialchars($officeSeoText, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                    $seoContent = preg_replace('/### (.+)/', '<h3>$1</h3>', $seoContent);
+                    $seoContent = preg_replace('/### (.+)/', '<h3>$1</h3>', $officeSeoText);
                     $seoContent = preg_replace('/## (.+)/', '<h3>$1</h3>', $seoContent);
                     $seoContent = nl2br($seoContent);
                     echo $seoContent;
@@ -931,7 +944,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                             <div class="nearby-card-title"><?php echo e($n['title']); ?></div>
                             <div class="nearby-card-address"><?php echo e($n['area'] ?: $n['city']); ?></div>
                             <span class="nearby-card-price">₹<?php echo format_number($n['price'] ?? 0); ?></span>
-                            <span class="nearby-card-seats"><?php echo (int)$n['total_seats']; ?> seats</span>
+                            <span class="nearby-card-seats"><?php echo fmt_seats((int)$n['total_seats']); ?> seats</span>
                         </div>
                     </a>
                     <?php endforeach; ?>
@@ -1009,7 +1022,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
 <div class="bottom-sticky" id="bottomSticky">
     <div class="bs-left">
         <div class="bs-price">₹<?php echo format_number($officePrice); ?><?php echo $pricePeriod; ?></div>
-        <div class="bs-seats"><?php echo (int)$officeSeats; ?> Seats</div>
+        <div class="bs-seats"><?php echo fmt_seats((int)$officeSeats); ?> Seats</div>
     </div>
     <div class="bs-right">
         <button class="btn-call-sidebar" onclick="window.open('tel:+919962200015')"><i class="fa-solid fa-phone"></i> Call</button>
@@ -1022,7 +1035,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
     <div class="mob-bar-top">
         <div>
             <div class="mob-bar-price">₹<?php echo format_number($officePrice); ?><?php echo $pricePeriod; ?></div>
-            <div class="mob-bar-seats"><?php echo (int)$officeSeats; ?> Seats | <?php echo htmlspecialchars($officeMoveIn); ?></div>
+            <div class="mob-bar-seats"><?php echo fmt_seats((int)$officeSeats); ?> Seats | <?php echo htmlspecialchars($officeMoveIn); ?></div>
         </div>
     </div>
     <div class="mob-bar-actions">

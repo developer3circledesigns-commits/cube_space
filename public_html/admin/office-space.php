@@ -166,7 +166,7 @@ if ($mode === 'add' || $mode === 'edit'):
                 </div>
                 <div class="col-md-6">
                     <label for="feature_highlights" class="form-label small fw-semibold">Feature Highlights (one per line)</label>
-                    <textarea name="feature_highlights" id="feature_highlights" class="form-control form-control-sm" rows="2" placeholder="Fully Furnished\u000a24/7 Power Backup"><?= htmlspecialchars(os_fmt_feature_highlights($listing['feature_highlights'] ?? '[]')) ?></textarea>
+                    <textarea name="feature_highlights" id="feature_highlights" class="form-control form-control-sm" rows="2" placeholder="e.g. Fully Furnished, 24/7 Power Backup"><?= htmlspecialchars(os_fmt_feature_highlights($listing['feature_highlights'] ?? '[]')) ?></textarea>
                 </div>
                 <div class="col-12">
                     <label for="seo_text" class="form-label small fw-semibold">SEO Text</label>
@@ -364,7 +364,13 @@ if ($mode === 'add' || $mode === 'edit'):
                         <td><?= htmlspecialchars($row['city']) ?></td>
                         <td><?= htmlspecialchars($row['area'] ?? '—') ?></td>
                         <td><?= $row['total_area_sqft'] ? number_format($row['total_area_sqft']) : '—' ?></td>
-                        <td><?= $row['total_seats'] ?? '—' ?></td>
+                        <td><?php
+                            $ts = $row['total_seats'] ?? 0;
+                            if ($ts <= 50) echo '10-50';
+                            elseif ($ts <= 100) echo '51-100';
+                            elseif ($ts <= 200) echo '101-200';
+                            else echo '200+';
+                        ?></td>
                         <td><?= $row['price'] ? '₹' . number_format($row['price']) . '<small class="text-muted ms-1">' . ($row['office_space_type'] === 'lease' ? '/yr' : '/mo') . '</small>' : '—' ?></td>
                         <td><span class="badge bg-<?= ($row['office_space_type'] ?? 'rent') === 'lease' ? 'info' : 'secondary' ?>"><?= htmlspecialchars(($row['office_space_type'] ?? 'rent')) ?></span></td>
                         <td><span class="badge bg-<?= $row['listing_type_db'] === 'furnished' ? 'primary' : 'secondary' ?>"><?= htmlspecialchars(ucfirst($row['listing_type_db'] ?? '')) ?></span></td>

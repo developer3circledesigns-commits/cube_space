@@ -75,7 +75,6 @@ if (isset($conn) && $conn) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <?php include __DIR__ . '/includes/head-meta.php'; ?>
@@ -2021,9 +2020,8 @@ if (isset($conn) && $conn) {
 
                 let statsHtml = '';
                 const statItems = [
-                    { icon: 'fa-building', value: o.total_area_sqft ? 'Total Building Leasable Area ' + o.total_area_sqft + ' sqft' : null },
                     { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Current Available Area On Rent ' + o.available_sqft: null },
-                    
+                    { icon: 'fa-building', value: o.total_area_sqft ? 'Total Building Leasable Area ' + o.total_area_sqft + ' Sq Ft.' : null },
 
                 ];
                 statItems.forEach(s => {
@@ -2056,14 +2054,14 @@ if (isset($conn) && $conn) {
                                 ${imgCount}
                             </div>
                             <div class="card-body d-flex flex-column">
-                                <h5 class="property-name">${escHtml(o.title)}</h5>
+                                <h5 class="property-name">${escHtml(o.title)} ${o.listing_code ? '<code class="small text-muted fw-normal">' + escHtml(o.listing_code) + '</code>' : ''}</h5>
                                 <p class="property-address"><i class="fa-solid fa-location-dot"></i> <span>${escHtml(address)}</span></p>
                                 ${descHtml}
                                 ${statsHtml ? '<div class="stats-row">' + statsHtml + '</div>' : ''}
                                 <div class="card-footer-row mt-auto">
                                     <div class="card-price">
                                         <span class="price-label" style="font-weight:bold; color:#212529;">
-    Quoted Rent 
+    Quoted Price 
     <span style="font-weight:normal; text-transform:none;">(Negotiable)</span>
 </span>
                                         ${price}
@@ -2179,8 +2177,9 @@ if (isset($conn) && $conn) {
                 const address = o.address || o.area || o.city || '';
                 let statsHtml = '';
                 const statItems = [
-                    { icon: 'fa-building', value: o.total_area_sqft ? 'Total Building Leasable Area ' + o.total_area_sqft + ' Sq Ft.' : null },
                     { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Current Available Area On Rent ' + o.available_sqft + ' Sq Ft.' : null },
+                    { icon: 'fa-building', value: o.total_area_sqft ? 'Total Building Leasable Area ' + o.total_area_sqft + ' Sq Ft.' : null },
+
                 ];
                 statItems.forEach(s => {
                     if (s.value) {
@@ -2214,13 +2213,13 @@ if (isset($conn) && $conn) {
                                     </div>
                                     <div class="card-body d-flex flex-column">
                                         ${distanceHtml}
-                                        <h5 class="property-name">${escHtml(o.title)}</h5>
+                                        <h5 class="property-name">${escHtml(o.title)} ${o.listing_code ? '<code class="small text-muted fw-normal">' + escHtml(o.listing_code) + '</code>' : ''}</h5>
                                         <p class="property-address"><i class="fa-solid fa-location-dot"></i> <span>${escHtml(address)}</span></p>
                                         ${descHtml}
                                         ${statsHtml ? '<div class="stats-row">' + statsHtml + '</div>' : ''}
                                         <div class="card-footer-row mt-auto">
                                             <div class="card-price">
-                                                <span class="price-label">Quoted Rent</span>
+                                                <span class="price-label">Quoted price</span>
                                                 ${price}
                                             </div>
                                             <div class="card-actions">

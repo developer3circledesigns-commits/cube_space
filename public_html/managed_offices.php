@@ -1481,7 +1481,7 @@ if (isset($conn) && $conn) {
                 <option value="10-50">10-50</option>
                 <option value="51-100">51-100</option>
                 <option value="101-200">101-200</option>
-                <option value="200-">200+</option>
+                <option value="200-9999">200+</option>
             </select>
         </div>
 
@@ -1497,6 +1497,7 @@ if (isset($conn) && $conn) {
                     <?php foreach (['Guindy', 'Pallavaram – Thoraipakkam Radial Road', 'OMR', 'Taramani', 'Perungudi', 'Thoraipakkam', 'Sholinganallur', 'Navalur','Velachery','Nungambakkam','T.Nagar'] as $loc): ?>
                         <button class="btn btn-sm locality-chip" data-area="<?= htmlspecialchars($loc) ?>" role="tab" aria-selected="false"><?= htmlspecialchars($loc) ?></button>
                     <?php endforeach; ?>
+                    <button class="btn btn-sm locality-chip active" data-area="" role="tab" aria-selected="true">All</button>
                 </div>
                 <button class="scroll-btn scroll-right" type="button" aria-label="Scroll right" onclick="scrollLocalities(1)"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
@@ -1690,6 +1691,14 @@ if (isset($conn) && $conn) {
             return str.charAt(0).toUpperCase() + str.slice(1);
         }
 
+        function formatSeats(s) {
+            s = parseInt(s);
+            if (s <= 50) return '10-50';
+            if (s <= 100) return '51-100';
+            if (s <= 200) return '101-200';
+            return '200+';
+        }
+
         function toggleDescription(id) {
             const p = document.getElementById(id);
             if (!p) return;
@@ -1850,9 +1859,9 @@ if (isset($conn) && $conn) {
             document.getElementById('filterCity').value = '';
             document.getElementById('filterLocality').value = '';
             document.getElementById('filterSeats').value = '';
-            document.querySelectorAll('.locality-chip').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.locality-chip').forEach(c => { c.classList.remove('active'); c.setAttribute('aria-selected', 'false'); });
             const allChip = document.querySelector('.locality-chip[data-area=""]');
-            if (allChip) allChip.classList.add('active');
+            if (allChip) { allChip.classList.add('active'); allChip.setAttribute('aria-selected', 'true'); }
             currentPage = 1;
             loadListings();
         }
@@ -2012,7 +2021,7 @@ if (isset($conn) && $conn) {
 
                 let statsHtml = '';
                 const statItems = [
-                    { icon: 'fa-users', value: o.total_seats ? 'Current Available Seats ' + o.total_seats : null },
+                    { icon: 'fa-users', value: o.total_seats ? 'Current Available Seats ' + formatSeats(o.total_seats) : null },
                     { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + String(o.min_inventory).replace(/\b(cabin|office|floor|seats?|people|persons?|none)\b\s*\+?\s*/gi, '').trim() : null },
                 ];
                 statItems.forEach(s => {
@@ -2042,7 +2051,7 @@ if (isset($conn) && $conn) {
                                 ${imgCount}
                             </div>
                             <div class="card-body d-flex flex-column">
-                                <h5 class="property-name">${escHtml(o.title)}</h5>
+                                <h5 class="property-name">${escHtml(o.title)} ${o.listing_code ? '<code class="small text-muted fw-normal">' + escHtml(o.listing_code) + '</code>' : ''}</h5>
                                 <p class="property-address"><i class="fa-solid fa-location-dot"></i> <span>${escHtml(address)}</span></p>
                                 ${descHtml}
                                 ${statsHtml ? '<div class="stats-row">' + statsHtml + '</div>' : ''}
@@ -2166,7 +2175,7 @@ if (isset($conn) && $conn) {
                 const address = o.address || o.area || o.city || '';
                 let statsHtml = '';
                 const statItems = [
-                    { icon: 'fa-users', value: o.total_seats ? 'Available seating capacity ' + o.total_seats : null },
+                    { icon: 'fa-users', value: o.total_seats ? 'Available seating capacity ' + formatSeats(o.total_seats) : null },
                     { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + String(o.min_inventory).replace(/\b(cabin|office|floor|seats?|people|persons?|none)\b\s*\+?\s*/gi, '').trim() : null },
                 ];
                 statItems.forEach(s => {
@@ -2198,7 +2207,7 @@ if (isset($conn) && $conn) {
                                     </div>
                                     <div class="card-body d-flex flex-column">
                                         ${distanceHtml}
-                                        <h5 class="property-name">${escHtml(o.title)}</h5>
+                                        <h5 class="property-name">${escHtml(o.title)} ${o.listing_code ? '<code class="small text-muted fw-normal">' + escHtml(o.listing_code) + '</code>' : ''}</h5>
                                         <p class="property-address"><i class="fa-solid fa-location-dot"></i> <span>${escHtml(address)}</span></p>
                                         ${descHtml}
                                         ${statsHtml ? '<div class="stats-row">' + statsHtml + '</div>' : ''}
@@ -2272,7 +2281,7 @@ if (isset($conn) && $conn) {
                     }
                     const cityEl = document.getElementById('filterCity');
                     document.getElementById('pageCity').textContent = cityEl.value ? ucfirst(cityEl.value) :
-                        'Chennai';
+                        'All Cities';
 
                     const start = data.total === 0 ? 0 : (data.page - 1) * data.limit + 1;
                     const end = Math.min(data.page * data.limit, data.total);

@@ -84,7 +84,7 @@ $allOffices = mysqli_query($conn, "SELECT id, title, slug FROM managed_offices W
         <form id="extrasForm" onsubmit="saveExtras(event)">
             <div class="mb-2">
                 <label for="extrasHighlights" class="form-label small">Feature Highlights (one per line)</label>
-                <textarea name="feature_highlights" class="form-control form-control-sm" id="extrasHighlights" rows="4" placeholder="Fully Furnished\u000a24/7 Power Backup"></textarea>
+                <textarea name="feature_highlights" class="form-control form-control-sm" id="extrasHighlights" rows="4" placeholder="e.g. Fully Furnished, 24/7 Power Backup"></textarea>
             </div>
             <div class="mb-2">
                 <label for="extrasSeo" class="form-label small">SEO Text (HTML allowed)</label>

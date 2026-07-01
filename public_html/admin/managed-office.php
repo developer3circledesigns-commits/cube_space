@@ -17,6 +17,7 @@ function fmt_feature_highlights($val) {
 
 function enquiries_count($office_id) {
     global $conn;
+    if (!isset($conn) || !$conn) return 0;
     static $cache = [];
     if (isset($cache[$office_id])) return $cache[$office_id];
     $s = mysqli_prepare($conn, "SELECT COUNT(*) as cnt FROM contacts WHERE office_id = ?");
@@ -38,7 +39,7 @@ $searchQuery = trim($_GET['search'] ?? '');
 
 if ($mode === 'add' || $mode === 'edit'):
     $editId = (int)($_GET['id'] ?? 0);
-    $listing = ['title'=>'', 'listing_type'=>$type, 'description'=>'', 'city'=>'', 'area'=>'', 'address'=>'', 'price'=>'', 'price_label'=>'', 'total_seats'=>'', 'total_area_sqft'=>'', 'amenities'=>'[]', 'images'=>'[]', 'status'=>'draft', 'featured'=>0, 'office_space_type'=>'rent', 'latitude'=>null, 'longitude'=>null, 'listing_code'=>'', 'slug'=>''];
+    $listing = ['title'=>'', 'listing_type'=>$type, 'description'=>'', 'city'=>'', 'area'=>'', 'address'=>'', 'price'=>'', 'price_label'=>'', 'total_seats'=>'', 'total_area_sqft'=>'', 'amenities'=>'[]', 'images'=>'[]', 'status'=>'published', 'featured'=>0, 'office_space_type'=>'rent', 'latitude'=>null, 'longitude'=>null, 'listing_code'=>'', 'slug'=>'', 'min_inventory'=>'', 'inventory_type'=>''];
     if ($mode === 'edit' && $editId) {
         $stmt = mysqli_prepare($conn, "SELECT * FROM $table WHERE id=?");
         mysqli_stmt_bind_param($stmt, 'i', $editId);
@@ -50,7 +51,9 @@ if ($mode === 'add' || $mode === 'edit'):
     }
     $amenities = json_decode($listing['amenities'] ?? '[]', true);
     $images = json_decode($listing['images'] ?? '[]', true);
-    $cities = mysqli_query($conn, "SELECT DISTINCT city FROM $table WHERE city != '' ORDER BY city");
+    $cities = mysqli_query($conn, "SELECT city FROM (SELECT city COLLATE utf8mb4_unicode_ci AS city FROM listing_cities UNION SELECT DISTINCT city COLLATE utf8mb4_unicode_ci AS city FROM $table WHERE city != '') AS c ORDER BY city");
+    $areas = mysqli_query($conn, "SELECT area, city FROM (SELECT area COLLATE utf8mb4_unicode_ci AS area, city COLLATE utf8mb4_unicode_ci AS city FROM listing_areas UNION SELECT DISTINCT area COLLATE utf8mb4_unicode_ci AS area, city COLLATE utf8mb4_unicode_ci AS city FROM $table WHERE area != '' AND area IS NOT NULL) AS a ORDER BY area");
+    $amenityList = ['WiFi','Air Conditioning','Power Backup','Parking','Security Guard','CCTV Surveillance','Elevator / Lift','Reception Area','Pantry / Cafeteria','Meeting Room','Visitor Parking','24/7 Access'];
 ?>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold mb-0"><?= $mode === 'add' ? 'Add' : 'Edit' ?> <?= $typeLabel ?></h4>
@@ -64,118 +67,144 @@ if ($mode === 'add' || $mode === 'edit'):
             <?php if ($listing['slug']): ?><span class="ms-3 text-muted">Slug:</span> <code><?= htmlspecialchars($listing['slug']) ?></code><?php endif; ?>
         </div>
         <?php endif; ?>
-        <form id="listingForm" enctype="multipart/form-data" novalidate>
+        <form id="listingForm" class="row g-3 needs-validation" enctype="multipart/form-data" novalidate>
             <input type="hidden" name="id" value="<?= $editId ?>">
             <input type="hidden" name="listing_type" value="<?= $type ?>">
             <input type="hidden" name="existing_images" id="existingImages" value='<?= htmlspecialchars(json_encode($images)) ?>'>
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label for="title" class="form-label small fw-semibold">Title <span class="text-danger">*</span></label>
-                    <input type="text" name="title" id="title" class="form-control form-control-sm" required value="<?= htmlspecialchars($listing['title']) ?>" placeholder="e.g. DLF Downtown">
-                </div>
-                <div class="col-md-3">
-                    <label for="city" class="form-label small fw-semibold">City <span class="text-danger">*</span></label>
-                    <select name="city" id="city" class="form-select form-select-sm" required>
-                        <option value="">- Select -</option>
-                        <?php if ($cities): mysqli_data_seek($cities, 0); while ($c = mysqli_fetch_assoc($cities)): ?>
-                        <option value="<?= htmlspecialchars($c['city']) ?>" <?= $listing['city']===$c['city']?'selected':'' ?>><?= htmlspecialchars(ucfirst($c['city'])) ?></option>
-                        <?php endwhile; endif; ?>
-                        <option value="chennai" <?= $listing['city']==='chennai'?'selected':'' ?>>Chennai</option>
-                        <option value="bangalore" <?= $listing['city']==='bangalore'?'selected':'' ?>>Bangalore</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label for="area" class="form-label small fw-semibold">Area / Locality <span class="text-danger">*</span></label>
-                    <input type="text" name="area" id="area" class="form-control form-control-sm" required value="<?= htmlspecialchars($listing['area']??'') ?>" placeholder="e.g. OMR">
-                </div>
-                <div class="col-md-3">
-                    <label for="total_seats" class="form-label small fw-semibold">Total Seats</label>
-                    <input type="number" name="total_seats" id="total_seats" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['total_seats']??'') ?>" placeholder="e.g. 50">
-                </div>
-                <div class="col-md-3">
-                    <label for="total_area_sqft" class="form-label small fw-semibold">Area (sq.ft) <span class="text-danger">*</span></label>
-                    <input type="number" name="total_area_sqft" id="total_area_sqft" class="form-control form-control-sm" required value="<?= htmlspecialchars($listing['total_area_sqft']??'') ?>" placeholder="e.g. 2000">
-                </div>
-                <div class="col-md-3">
-                    <label for="price" class="form-label small fw-semibold">Price</label>
-                    <input type="number" step="0.01" name="price" id="price" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price']??'') ?>" placeholder="e.g. 150000">
-                </div>
-                <div class="col-md-3">
-                    <label for="price_label" class="form-label small fw-semibold">Price Label</label>
-                    <input type="text" name="price_label" id="price_label" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price_label']??'') ?>" placeholder="e.g. ₹1.5 Lakhs/mo">
-                </div>
-                <div class="col-md-3">
-                    <label for="officeSpaceType" class="form-label small fw-semibold">Office Space Type</label>
-                    <select name="office_space_type" class="form-select form-select-sm" id="officeSpaceType">
-                        <option value="rent" <?= ($listing['office_space_type'] ?? 'rent') === 'rent' ? 'selected' : '' ?>>Rent (Monthly)</option>
-                        <option value="lease" <?= ($listing['office_space_type'] ?? 'rent') === 'lease' ? 'selected' : '' ?>>Lease (Yearly)</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label for="latitude" class="form-label small fw-semibold">Latitude</label>
-                    <input type="number" step="any" name="latitude" id="latitude" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['latitude'] ?? '') ?>" placeholder="e.g. 12.9716">
-                </div>
-                <div class="col-md-3">
-                    <label for="longitude" class="form-label small fw-semibold">Longitude</label>
-                    <input type="number" step="any" name="longitude" id="longitude" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['longitude'] ?? '') ?>" placeholder="e.g. 77.6412">
-                </div>
-                <div class="col-md-3">
-                    <label for="status" class="form-label small fw-semibold">Status</label>
-                    <select name="status" id="status" class="form-select form-select-sm">
-                        <option value="draft" <?= $listing['status']==='draft'?'selected':'' ?>>Draft</option>
-                        <option value="published" <?= $listing['status']==='published'?'selected':'' ?>>Published</option>
-                        <option value="archived" <?= $listing['status']==='archived'?'selected':'' ?>>Archived</option>
-                    </select>
-                </div>
-                <div class="col-12">
-                    <label for="address" class="form-label small fw-semibold">Address <span class="text-danger">*</span></label>
-                    <textarea name="address" id="address" class="form-control form-control-sm" rows="2" required placeholder="Full address"><?= htmlspecialchars($listing['address']??'') ?></textarea>
-                </div>
-                <div class="col-12">
-                    <label for="description" class="form-label small fw-semibold">Description</label>
-                    <textarea name="description" id="description" class="form-control form-control-sm" rows="3" placeholder="Describe the property"><?= htmlspecialchars($listing['description']??'') ?></textarea>
-                </div>
-                <div class="col-md-6">
-                    <label for="amenities" class="form-label small fw-semibold">Amenities (comma separated)</label>
-                    <input type="text" name="amenities" id="amenities" class="form-control form-control-sm" value="<?= htmlspecialchars(implode(', ', $amenities)) ?>" placeholder="WiFi, AC, Parking">
-                </div>
-                <div class="col-md-6">
-                    <label for="feature_highlights" class="form-label small fw-semibold">Feature Highlights (one per line)</label>
-                    <textarea name="feature_highlights" id="feature_highlights" class="form-control form-control-sm" rows="2" placeholder="Fully Furnished\u000a24/7 Power Backup"><?= htmlspecialchars(fmt_feature_highlights($listing['feature_highlights'] ?? '[]')) ?></textarea>
-                </div>
-                <div class="col-12">
-                    <label for="seo_text" class="form-label small fw-semibold">SEO Text</label>
-                    <textarea name="seo_text" id="seo_text" class="form-control form-control-sm" rows="3" placeholder="<h3>About this Workspace</h3>"><?= htmlspecialchars($listing['seo_text'] ?? '') ?></textarea>
-                </div>
-                <div class="col-12">
-                    <label for="images" class="form-label small fw-semibold">Images</label>
-                    <input type="file" name="images[]" id="images" class="form-control form-control-sm" accept="image/*" multiple>
-                    <?php if (!empty($images)): ?>
-                    <div class="d-flex flex-wrap gap-2 mt-2" id="existingImagesContainer">
-                        <?php foreach ($images as $img):
-                            $imgPath = $_SERVER['DOCUMENT_ROOT'] . $img;
-                            $imgExists = file_exists($imgPath);
-                        ?>
-                        <div class="position-relative" data-src="<?= htmlspecialchars($img) ?>">
-                            <?php if ($imgExists): ?>
-                            <img src="<?= htmlspecialchars($img) ?>" class="border" style="width: 70px; height: 40px; object-fit: cover;" loading="lazy" alt="Listing image">
-                            <?php else: ?>
-                            <div class="d-flex align-items-center justify-content-center border bg-light" style="width:70px;height:70px;"><i class="fa-solid fa-image text-muted"></i></div>
-                            <?php endif; ?>
-                            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0" style="font-size: 10px; line-height: 1; padding: 1px 5px;" onclick="removeExistingImage(this)">&times;</button>
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
-                    <?php endif; ?>
-                </div>
-                <div class="col-12">
-                    <div class="form-check">
-                        <input type="checkbox" name="featured" value="1" class="form-check-input" id="featuredCheck" <?= $listing['featured']?'checked':'' ?>>
-                        <label class="form-check-label small" for="featuredCheck">Featured listing</label>
-                    </div>
+            <input type="hidden" name="amenities" id="amenitiesInput" value="<?= htmlspecialchars($listing['amenities'] ?? '[]') ?>">
+            <input type="hidden" name="office_space_type" value="rent">
+
+            <div class="col-md-6 position-relative">
+                <label for="title" class="form-label small fw-semibold">Title <span class="text-danger">*</span></label>
+                <input type="text" name="title" id="title" class="form-control form-control-sm" required value="<?= htmlspecialchars($listing['title']) ?>" placeholder="e.g. DLF Downtown">
+                <div class="valid-tooltip">Looks good!</div>
+                <div class="invalid-tooltip">Please enter a title.</div>
+            </div>
+
+            <div class="col-md-3 position-relative">
+                <label for="city" class="form-label small fw-semibold">City <span class="text-danger">*</span></label>
+                <select name="city" id="city" class="form-select form-select-sm" required>
+                    <option value="">- Select -</option>
+                    <?php if ($cities && mysqli_num_rows($cities)): mysqli_data_seek($cities, 0); while ($c = mysqli_fetch_assoc($cities)): ?>
+                    <option value="<?= htmlspecialchars($c['city']) ?>" <?= $listing['city']===$c['city']?'selected':'' ?>><?= htmlspecialchars(ucfirst($c['city'])) ?></option>
+                    <?php endwhile; endif; ?>
+                </select>
+                <div class="invalid-tooltip">Please select a city.</div>
+                <div class="d-flex gap-1 mt-1">
+                    <input type="text" id="newCity" class="form-control form-control-sm" placeholder="Add city..." style="font-size:0.75rem;">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="window.addNewCity()" style="font-size:0.7rem;white-space:nowrap;">Add</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="window.deleteCity()" style="font-size:0.7rem;white-space:nowrap;">Del</button>
                 </div>
             </div>
-            <div class="mt-3 d-flex gap-2">
+
+            <div class="col-md-3 position-relative">
+                <label for="area" class="form-label small fw-semibold">Area / Locality <span class="text-danger">*</span></label>
+                <select name="area" id="area" class="form-select form-select-sm" required>
+                    <option value="">- Select -</option>
+                    <?php if ($areas && mysqli_num_rows($areas)): mysqli_data_seek($areas, 0); while ($a = mysqli_fetch_assoc($areas)): ?>
+                    <option value="<?= htmlspecialchars($a['area']) ?>" data-city="<?= htmlspecialchars(mb_strtolower($a['city']??'')) ?>" <?= ($listing['area']??'')===$a['area']?'selected':'' ?>><?= htmlspecialchars(ucfirst($a['area'])) ?></option>
+                    <?php endwhile; endif; ?>
+                </select>
+                <div class="invalid-tooltip">Please select an area.</div>
+                <div class="d-flex gap-1 mt-1">
+                    <input type="text" id="newArea" class="form-control form-control-sm" placeholder="Add area..." style="font-size:0.75rem;">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="window.addNewArea()" style="font-size:0.7rem;white-space:nowrap;">Add</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="window.deleteArea()" style="font-size:0.7rem;white-space:nowrap;">Del</button>
+                </div>
+            </div>
+
+            <div class="col-md-3 position-relative">
+                <label for="total_seats" class="form-label small fw-semibold">Available Seats <span class="text-danger">*</span></label>
+                <select name="total_seats" id="total_seats" class="form-select form-select-sm" required>
+                    <option value="">- Select -</option>
+                    <option value="50" <?= $listing['total_seats']=='50'?'selected':'' ?>>10-50 Seats</option>
+                    <option value="100" <?= $listing['total_seats']=='100'?'selected':'' ?>>51-100 Seats</option>
+                    <option value="200" <?= $listing['total_seats']=='200'?'selected':'' ?>>101-200 Seats</option>
+                    <option value="500" <?= $listing['total_seats']=='500'?'selected':'' ?>>200+ Seats</option>
+                </select>
+                <div class="invalid-tooltip">Please select seats range.</div>
+            </div>
+
+            <div class="col-md-3 position-relative">
+                <label for="min_inventory" class="form-label small fw-semibold">Minimum Inventory</label>
+                <input type="text" name="min_inventory" id="min_inventory" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['min_inventory']??'') ?>" placeholder="e.g. 5 seats">
+            </div>
+
+            <div class="col-12 position-relative">
+                <label for="address" class="form-label small fw-semibold">Address <span class="text-danger">*</span></label>
+                <textarea name="address" id="address" class="form-control form-control-sm" rows="2" required placeholder="Full address"><?= htmlspecialchars($listing['address']??'') ?></textarea>
+                <div class="invalid-tooltip">Please enter an address.</div>
+            </div>
+
+            <div class="col-12 position-relative">
+                <label for="description" class="form-label small fw-semibold">Description</label>
+                <textarea name="description" id="description" class="form-control form-control-sm" rows="3" placeholder="Describe the property"><?= htmlspecialchars($listing['description']??'') ?></textarea>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Amenities</label>
+                <div class="row g-2" id="amenitiesContainer">
+                    <?php foreach ($amenityList as $amenity): ?>
+                    <div class="col-md-3 col-6">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input amenity-check" value="<?= htmlspecialchars($amenity) ?>" id="amenity_<?= preg_replace('/[^a-zA-Z0-9]/', '_', $amenity) ?>" <?= in_array($amenity, $amenities) ? 'checked' : '' ?>>
+                            <label class="form-check-label small" for="amenity_<?= preg_replace('/[^a-zA-Z0-9]/', '_', $amenity) ?>"><?= htmlspecialchars($amenity) ?></label>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <div class="col-12 position-relative">
+                <label for="seo_text" class="form-label small fw-semibold">SEO Text</label>
+                <textarea name="seo_text" id="seo_text" class="form-control form-control-sm" rows="3" placeholder="&lt;h3&gt;About this Workspace&lt;/h3&gt;"><?= $listing['seo_text'] ?? '' ?></textarea>
+                <small class="form-text text-muted">HTML allowed. Use ### for headings. Will be rendered on the public page.</small>
+            </div>
+
+            <div class="col-12">
+                <label for="images" class="form-label small fw-semibold">Images</label>
+                <input type="file" name="images[]" id="images" class="form-control form-control-sm" accept="image/*" multiple>
+                <?php if (!empty($images)): ?>
+                <div class="d-flex flex-wrap gap-2 mt-2" id="existingImagesContainer">
+                    <?php foreach ($images as $img):
+                        $imgPath = $_SERVER['DOCUMENT_ROOT'] . $img;
+                        $imgExists = file_exists($imgPath);
+                    ?>
+                    <div class="position-relative" data-src="<?= htmlspecialchars($img) ?>" style="width:70px;height:70px;">
+                        <?php if ($imgExists): ?>
+                        <img src="<?= htmlspecialchars($img) ?>" class="border" style="width:70px;height:70px;object-fit:cover;" loading="lazy" alt="Listing image">
+                        <?php else: ?>
+                        <div class="d-flex align-items-center justify-content-center border bg-light" style="width:70px;height:70px;"><i class="fa-solid fa-image text-muted"></i></div>
+                        <?php endif; ?>
+                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 p-0" style="width:18px;height:18px;font-size:10px;line-height:1;" onclick="removeExistingImage(this)">&times;</button>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <div class="col-md-6 position-relative">
+                <label for="price" class="form-label small fw-semibold">Price</label>
+                <input type="number" step="0.01" name="price" id="price" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price']??'') ?>" placeholder="e.g. 150000">
+            </div>
+
+            <div class="col-md-6 position-relative">
+                <label for="status" class="form-label small fw-semibold">Status</label>
+                <select name="status" id="status" class="form-select form-select-sm">
+                    <option value="draft" <?= $listing['status']==='draft'?'selected':'' ?>>Draft</option>
+                    <option value="published" <?= $listing['status']==='published'?'selected':'' ?>>Published</option>
+                    <option value="archived" <?= $listing['status']==='archived'?'selected':'' ?>>Archived</option>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <div class="form-check">
+                    <input type="checkbox" name="featured" value="1" class="form-check-input" id="featuredCheck" <?= $listing['featured']?'checked':'' ?>>
+                    <label class="form-check-label small" for="featuredCheck">Featured listing</label>
+                </div>
+            </div>
+
+            <div class="col-12 d-flex gap-2">
                 <button type="submit" class="btn btn-primary btn-sm"><?= $mode === 'add' ? 'Create Listing' : 'Update Listing' ?></button>
                 <a href="managed-office.php" class="btn btn-outline-secondary btn-sm">Cancel</a>
             </div>
@@ -236,7 +265,7 @@ if ($mode === 'add' || $mode === 'edit'):
     } else {
         $result = mysqli_query($conn, "SELECT * FROM $table$whereClause$orderSql");
     }
-    $cities = mysqli_query($conn, "SELECT DISTINCT city FROM $table WHERE city != '' ORDER BY city");
+    $cities = mysqli_query($conn, "SELECT city FROM (SELECT city COLLATE utf8mb4_unicode_ci AS city FROM listing_cities UNION SELECT DISTINCT city COLLATE utf8mb4_unicode_ci AS city FROM $table WHERE city != '') AS c ORDER BY city");
 
     function mkUrl($extra) {
         $params = [];
@@ -265,43 +294,33 @@ if ($mode === 'add' || $mode === 'edit'):
     </div>
 </div>
 <div class="row g-2 mb-3">
-    <div class="col-md-5">
-        <form method="get" class="d-flex gap-2">
-            <input type="search" name="search" class="form-control form-control-sm" placeholder="Search by title, city, area, address..." value="<?= htmlspecialchars($searchQuery) ?>">
-            <button type="submit" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-search"></i></button>
-            <?php if ($searchQuery): ?>
-            <a href="<?= mkUrl(['search'=>'']) ?>" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-times"></i></a>
-            <?php endif; ?>
-        </form>
-    </div>
-    <div class="col-md-7">
+    <div class="col-md-12">
         <div class="d-flex gap-2 flex-wrap align-items-center">
             <span class="small text-muted">Filter:</span>
             <a href="<?= mkUrl(['status'=>'','city'=>'','featured'=>'']) ?>" class="btn btn-sm <?= !$statusFilter && !$cityFilter && !$featuredFilter ? 'btn-primary' : 'btn-outline-primary' ?>">All</a>
             <a href="<?= mkUrl(['status'=>'draft']) ?>" class="btn btn-sm <?= $statusFilter === 'draft' ? 'btn-primary' : 'btn-outline-primary' ?>">Draft</a>
             <a href="<?= mkUrl(['status'=>'published']) ?>" class="btn btn-sm <?= $statusFilter === 'published' ? 'btn-primary' : 'btn-outline-primary' ?>">Published</a>
             <a href="<?= mkUrl(['status'=>'archived']) ?>" class="btn btn-sm <?= $statusFilter === 'archived' ? 'btn-primary' : 'btn-outline-primary' ?>">Archived</a>
-            <?php if ($cities): mysqli_data_seek($cities, 0); while ($c = mysqli_fetch_assoc($cities)): ?>
+            <?php if ($cities && mysqli_num_rows($cities)): mysqli_data_seek($cities, 0); while ($c = mysqli_fetch_assoc($cities)): ?>
             <a href="<?= mkUrl(['city'=>$c['city']]) ?>" class="btn btn-sm <?= $cityFilter === $c['city'] ? 'btn-primary' : 'btn-outline-primary' ?>"><?= htmlspecialchars(ucfirst($c['city'])) ?></a>
             <?php endwhile; endif; ?>
             <a href="<?= mkUrl(['featured'=>'yes']) ?>" class="btn btn-sm <?= $featuredFilter === 'yes' ? 'btn-primary' : 'btn-outline-primary' ?>"><i class="fa-solid fa-star me-1"></i>Featured</a>
+            <a href="<?= mkUrl(['featured'=>'no']) ?>" class="btn btn-sm <?= $featuredFilter === 'no' ? 'btn-primary' : 'btn-outline-primary' ?>"><i class="fa-solid fa-star-half-stroke me-1"></i>Unfeatured</a>
         </div>
     </div>
 </div>
-<div class="bulk-bar">
-    <select id="bulkActionSelect" class="form-select form-select-sm" aria-label="Bulk actions">
+<?php if (isset($_GET['deleted'])): ?><div class="alert alert-success py-2">Listing deleted.</div><?php endif; ?>
+<?php if (isset($_GET['saved'])): ?><div class="alert alert-success py-2">Listing saved.</div><?php endif; ?>
+<div class="bulk-bar d-flex align-items-center gap-2 mb-2 p-2 bg-light">
+    <select id="bulkActionSelect" class="form-select form-select-sm" aria-label="Bulk actions" style="width:auto;">
         <option value="">-- Bulk Actions --</option>
         <option value="delete">Delete Selected</option>
         <option value="status-draft">Mark as Draft</option>
         <option value="status-published">Mark as Published</option>
-        <option value="status-archived">Mark as Archived</option>
-        <option value="featured-1">Mark as Featured</option>
-        <option value="featured-0">Mark as Unfeatured</option>
+
     </select>
     <button class="btn btn-sm btn-secondary" onclick="applyBulkAction()">Apply</button>
 </div>
-<?php if (isset($_GET['deleted'])): ?><div class="alert alert-success py-2">Listing deleted.</div><?php endif; ?>
-<?php if (isset($_GET['saved'])): ?><div class="alert alert-success py-2">Listing saved.</div><?php endif; ?>
 <div class="admin-card">
     <div class="table-wrap">
         <div class="table-responsive">
@@ -329,14 +348,20 @@ if ($mode === 'add' || $mode === 'edit'):
                         $enqCnt = enquiries_count($row['id']);
                     ?>
                     <tr>
-                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="<?= $row['id'] ?>"></td>
+                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="<?= $row['id'] ?>" data-type="managed"></td>
                         <td class="text-muted"><?= $row['id'] ?></td>
                         <td><code class="small"><?= htmlspecialchars($row['listing_code'] ?? '—') ?></code></td>
                         <td class="fw-medium"><?= htmlspecialchars($row['title']) ?></td>
                         <td><?= htmlspecialchars($row['city']) ?></td>
                         <td><?= htmlspecialchars($row['area'] ?? '—') ?></td>
                         <td><?= $row['total_area_sqft'] ? number_format($row['total_area_sqft']) : '—' ?></td>
-                        <td><?= $row['total_seats'] ?? '—' ?></td>
+                        <td><?php
+                            $ts = $row['total_seats'] ?? 0;
+                            if ($ts <= 50) echo '10-50';
+                            elseif ($ts <= 100) echo '51-100';
+                            elseif ($ts <= 200) echo '101-200';
+                            else echo '200+';
+                        ?></td>
                         <td><?= $row['price'] ? '₹' . number_format($row['price']) . '<small class="text-muted ms-1">' . ($row['office_space_type'] === 'lease' ? '/yr' : '/mo') . '</small>' : '—' ?></td>
                         <td><span class="badge bg-<?= ($row['office_space_type'] ?? 'rent') === 'lease' ? 'info' : 'secondary' ?>"><?= htmlspecialchars(($row['office_space_type'] ?? 'rent')) ?></span></td>
                         <td><span class="badge bg-<?= $row['status'] === 'published' ? 'success' : ($row['status'] === 'draft' ? 'secondary' : 'warning text-dark') ?>"><?= $row['status'] ?></span></td>

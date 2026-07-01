@@ -104,6 +104,8 @@ function confirmDelete(id, type, title) {
         const headers = {};
         const token = getToken();
         if (token) headers['Authorization'] = 'Bearer ' + token;
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        if (csrfMeta) headers['X-CSRF-Token'] = csrfMeta.content;
         fetch('/admin/api/listing_crud.php?action=delete', { method: 'POST', headers: headers, body: fd })
             .then(r => r.json()).then(d => { if (d.success) window.location.reload(); else showAlertModal(d.error, 'error'); });
     });
@@ -157,12 +159,165 @@ function removeExistingImage(btn) {
         } catch(e) {}
     }
 }
+async function addNewCity() {
+    var input = document.getElementById('newCity');
+    var select = document.getElementById('city');
+    if (!input || !select) return;
+    var val = input.value.trim();
+    if (!val) return;
+    var lower = val.toLowerCase();
+    for (var i = 0; i < select.options.length; i++) {
+        if (select.options[i].value.toLowerCase() === lower) { select.value = lower; input.value = ''; return; }
+    }
+    var ok = await postOption('city', lower);
+    if (!ok) return;
+    var opt = document.createElement('option');
+    opt.value = lower;
+    opt.text = val.charAt(0).toUpperCase() + val.slice(1);
+    select.add(opt);
+    select.value = lower;
+    input.value = '';
+}
+async function addNewArea() {
+    var input = document.getElementById('newArea');
+    var select = document.getElementById('area');
+    var citySelect = document.getElementById('city');
+    if (!input || !select) return;
+    var val = input.value.trim();
+    if (!val) return;
+    var lower = val.toLowerCase();
+    for (var i = 0; i < select.options.length; i++) {
+        if (select.options[i].value.toLowerCase() === lower) { select.value = lower; input.value = ''; return; }
+    }
+    var selectedCity = citySelect ? citySelect.value : '';
+    if (!selectedCity) { showAlertModal('Select a city first before adding an area.', 'info'); return; }
+    var ok = await postOption('area', lower, selectedCity);
+    if (!ok) return;
+    var opt = document.createElement('option');
+    opt.value = lower;
+    opt.text = val.charAt(0).toUpperCase() + val.slice(1);
+    opt.setAttribute('data-city', selectedCity);
+    select.add(opt);
+    select.value = lower;
+    input.value = '';
+}
+async function deleteCity() {
+    var select = document.getElementById('city');
+    if (!select || !select.value) return;
+    var val = select.value;
+    var ok = await deleteOption('city', val);
+    if (!ok) return;
+    for (var i = 0; i < select.options.length; i++) {
+        if (select.options[i].value === val && i > 0) {
+            select.remove(i);
+            select.value = '';
+            break;
+        }
+    }
+}
+async function deleteArea() {
+    var select = document.getElementById('area');
+    if (!select || !select.value) return;
+    var val = select.value;
+    var ok = await deleteOption('area', val);
+    if (!ok) return;
+    for (var i = 0; i < select.options.length; i++) {
+        if (select.options[i].value === val && i > 0) {
+            select.remove(i);
+            select.value = '';
+            break;
+        }
+    }
+}
+async function postOption(type, value, city) {
+    var fd = new FormData();
+    fd.append('type', type);
+    fd.append('value', value);
+    if (city) fd.append('city', city);
+    var headers = { 'Authorization': 'Bearer ' + getToken() };
+    var csrf = document.querySelector('meta[name="csrf-token"]');
+    if (csrf) headers['X-CSRF-Token'] = csrf.content;
+    try {
+        var r = await fetch('/admin/api/managed_options_api.php?action=add', { method: 'POST', headers: headers, body: fd });
+        var d = await r.json();
+        if (!d.success) { showAlertModal(d.error || 'Failed to add ' + type, 'error'); return false; }
+        return true;
+    } catch (err) {
+        showAlertModal('Error: ' + err.message, 'error'); return false;
+    }
+}
+async function deleteOption(type, value) {
+    var fd = new FormData();
+    fd.append('type', type);
+    fd.append('value', value);
+    var headers = { 'Authorization': 'Bearer ' + getToken() };
+    var csrf = document.querySelector('meta[name="csrf-token"]');
+    if (csrf) headers['X-CSRF-Token'] = csrf.content;
+    try {
+        var r = await fetch('/admin/api/managed_options_api.php?action=delete', { method: 'POST', headers: headers, body: fd });
+        var d = await r.json();
+        if (!d.success) { showAlertModal(d.error || 'Failed to delete ' + type, 'error'); return false; }
+        return true;
+    } catch (err) {
+        showAlertModal('Error: ' + err.message, 'error'); return false;
+    }
+}
 var lsToken = localStorage.getItem('admin_access_token');
 if (lsToken && !getToken()) { sessionStorage.setItem('admin_access_token', lsToken); }
 localStorage.removeItem('admin_access_token');
 document.querySelectorAll('#listingForm').forEach(function(form) {
-    form.addEventListener('submit', handleListingForm);
+    form.addEventListener('submit', function(e) {
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+            form.classList.add('was-validated');
+            return;
+        }
+        form.classList.add('was-validated');
+        handleListingForm(e);
+    });
 });
+document.querySelectorAll('.amenity-check').forEach(function(cb) {
+    cb.addEventListener('change', syncAmenities);
+});
+function syncAmenities() {
+    var checked = [];
+    document.querySelectorAll('.amenity-check:checked').forEach(function(cb) { checked.push(cb.value); });
+    var input = document.getElementById('amenitiesInput');
+    if (input) input.value = JSON.stringify(checked);
+}
+syncAmenities();
+function filterAreasByCity(city) {
+    var select = document.getElementById('area');
+    if (!select) return;
+    var currentVal = select.value;
+    select.value = '';
+    for (var i = 0; i < select.options.length; i++) {
+        var opt = select.options[i];
+        if (!opt.value) continue;
+        var optCity = opt.getAttribute('data-city') || '';
+        var show = !city || optCity === city || optCity === '';
+        opt.style.display = show ? '' : 'none';
+    }
+    if (currentVal) {
+        for (var i = 0; i < select.options.length; i++) {
+            if (select.options[i].value === currentVal && select.options[i].style.display !== 'none') {
+                select.value = currentVal; break;
+            }
+        }
+    }
+}
+document.addEventListener('change', function(e) {
+    if (e.target.id === 'city') filterAreasByCity(e.target.value);
+});
+document.addEventListener('DOMContentLoaded', function() {
+    var citySel = document.getElementById('city');
+    if (citySel && citySel.value) filterAreasByCity(citySel.value);
+});
+(function() {
+    var citySel = document.getElementById('city');
+    if (citySel && citySel.value) filterAreasByCity(citySel.value);
+})();
 function handleListingForm(e) {
     e.preventDefault();
     const form = e.target;
@@ -209,8 +364,9 @@ function handleListingForm(e) {
                 result.className = 'alert alert-success mt-2';
                 result.textContent = d.message;
                 setTimeout(function() {
-                    const page = window.location.pathname.split('/').pop().replace('.php', '');
-                    window.location.href = page + '.php?saved=1';
+                    var qs = window.location.search.replace(/[?&]?(mode|id)=[^&]*/g, '').replace(/^&/, '');
+                    var page = window.location.pathname.split('/').pop().replace('.php', '');
+                    window.location.href = page + '.php' + (qs ? '?' + qs : '') + (qs ? '&' : '?') + 'saved=1';
                 }, 1000);
             } else {
                 result.className = 'alert alert-danger mt-2';
