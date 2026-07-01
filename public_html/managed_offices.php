@@ -2055,7 +2055,7 @@ if (isset($conn) && $conn) {
                 let statsHtml = '';
                 const statItems = [
                     { icon: 'fa-users', value: o.total_seats ? 'Current Available Seats ' + formatSeats(o.total_seats) : null },
-                    { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + String(o.min_inventory).replace(/\b(cabin|office|floor|seats?|people|persons?|none)\b\s*\+?\s*/gi, '').trim() : null},
+                    { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + String(o.min_inventory).replace(/\b(cabin|office|floor|seats?|people|persons?|none)\b\s*\+?\s*/gi, '').trim() + ' Seats' : null},
                 ];
                 statItems.forEach(s => {
                     if (s.value) {
@@ -2091,7 +2091,7 @@ if (isset($conn) && $conn) {
                                 <div class="card-footer-row mt-auto">
                                     <div class="card-price">
                                         <span class="price-label" style="font-weight:bold; color:#212529;">
-    Quoted Price 
+    Quoted Rent
     <span style="font-weight:normal; text-transform:none;">(Negotiable)</span>
 </span>
                                         ${price}
@@ -2209,7 +2209,7 @@ if (isset($conn) && $conn) {
                 let statsHtml = '';
                 const statItems = [
                     { icon: 'fa-users', value: o.total_seats ? 'Available seating capacity ' + formatSeats(o.total_seats) : null },
-                    { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + String(o.min_inventory).replace(/\b(cabin|office|floor|seats?|people|persons?|none)\b\s*\+?\s*/gi, '').trim() : null },
+                    { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + String(o.min_inventory).replace(/\b(cabin|office|floor|seats?|people|persons?|none)\b\s*\+?\s*/gi, '').trim() + ' Seats' : null },
                 ];
                 statItems.forEach(s => {
                     if (s.value) {
@@ -2246,7 +2246,7 @@ if (isset($conn) && $conn) {
                                         ${statsHtml ? '<div class="stats-row">' + statsHtml + '</div>' : ''}
                                         <div class="card-footer-row mt-auto">
                                             <div class="card-price">
-                                                <span class="price-label">Quoted price</span>
+                                                <span class="price-label">Quoted Rent</span>
                                                 ${price}
                                             </div>
                                             <div class="card-actions">

@@ -185,14 +185,7 @@ if ($mode === 'add' || $mode === 'edit'):
                 <input type="number" step="0.01" name="price" id="price" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price']??'') ?>" placeholder="e.g. 150000">
             </div>
 
-            <div class="col-md-6 position-relative">
-                <label for="status" class="form-label small fw-semibold">Status</label>
-                <select name="status" id="status" class="form-select form-select-sm">
-                    <option value="draft" <?= $listing['status']==='draft'?'selected':'' ?>>Draft</option>
-                    <option value="published" <?= $listing['status']==='published'?'selected':'' ?>>Published</option>
-                    <option value="archived" <?= $listing['status']==='archived'?'selected':'' ?>>Archived</option>
-                </select>
-            </div>
+            <input type="hidden" name="status" value="published">
 
             <div class="col-12">
                 <div class="form-check">
@@ -360,7 +353,6 @@ if ($mode === 'add' || $mode === 'edit'):
                         <th scope="col">Seats</th>
                         <th scope="col">Price</th>
                         <th scope="col">Type</th>
-                        <th scope="col">Furnishing</th>
                         <th scope="col">Status</th>
                         <th scope="col">Enq.</th>
                         <th scope="col">Actions</th>
@@ -368,7 +360,7 @@ if ($mode === 'add' || $mode === 'edit'):
                 </thead>
                 <tbody>
                     <?php if (!empty($dbError)): ?>
-                        <tr><td colspan="14" class="text-center text-danger py-4">Database Error: <?= htmlspecialchars($dbError) ?></td></tr>
+                        <tr><td colspan="13" class="text-center text-danger py-4">Database Error: <?= htmlspecialchars($dbError) ?></td></tr>
                     <?php elseif ($result && mysqli_num_rows($result) > 0): ?>
                         <?php while ($row = mysqli_fetch_assoc($result)):
                             $rowImages = json_decode($row['images'] ?? '[]', true);
@@ -389,9 +381,8 @@ if ($mode === 'add' || $mode === 'edit'):
                                 elseif ($ts <= 200) echo '101-200';
                                 else echo '200+';
                             ?></td>
-                            <td><?= $row['price'] ? '₹' . number_format($row['price']) . '<small class="text-muted ms-1">' . ($row['office_space_type'] === 'lease' ? '/yr' : '/mo') . '</small>' : '—' ?></td>
+                            <td><?= $row['price'] ? '₹' . number_format($row['price']) . '<small class="text-muted ms-1">Sq Ft / Month</small>' : '—' ?></td>
                             <td><span class="badge bg-<?= ($row['office_space_type'] ?? 'rent') === 'lease' ? 'info' : 'secondary' ?>"><?= htmlspecialchars(($row['office_space_type'] ?? 'rent')) ?></span></td>
-                            <td><span class="badge bg-<?= $row['listing_type_db'] === 'furnished' ? 'primary' : 'secondary' ?>"><?= htmlspecialchars(ucfirst($row['listing_type_db'] ?? '')) ?></span></td>
                             <td><span class="badge bg-<?= $row['status'] === 'published' ? 'success' : ($row['status'] === 'draft' ? 'secondary' : 'warning text-dark') ?>"><?= $row['status'] ?></span></td>
                             <td class="text-center">
                                 <?php if ($enqCnt > 0): ?>
@@ -410,7 +401,7 @@ if ($mode === 'add' || $mode === 'edit'):
                         </tr>
                         <?php endwhile; ?>
                     <?php else: ?>
-                        <tr><td colspan="14" class="text-center text-muted py-4">No listings found.</td></tr>
+                        <tr><td colspan="13" class="text-center text-muted py-4">No listings found.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>

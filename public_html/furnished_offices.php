@@ -2068,7 +2068,7 @@ if (isset($conn) && $conn) {
                     statsHtml += `<span class="stat-item inv-badge ${isReady ? 'inv-ready' : 'inv-processing'}"><i class="fa-solid ${isReady ? 'fa-circle-check' : 'fa-clock'}"></i> <span class="stat-value">${isReady ? 'Ready to move in' : 'Processing'}</span></span>`;
                 }
 
-                const period = o.office_space_type === 'lease' ? 'seat / year' : 'seat / month';
+                const period = o.office_space_type === 'lease' ? 'Sq Ft / Month' : 'Sq Ft / Month';
                 const price = o.price != null ?
                     `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span> <span class="period">${period}</span>` :
                     `<span class="contact-price">Contact for Price</span>`;

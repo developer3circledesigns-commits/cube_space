@@ -194,14 +194,7 @@ if ($mode === 'add' || $mode === 'edit'):
                 <input type="number" step="0.01" name="price" id="price" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price']??'') ?>" placeholder="e.g. 150000">
             </div>
 
-            <div class="col-md-6 position-relative">
-                <label for="status" class="form-label small fw-semibold">Status</label>
-                <select name="status" id="status" class="form-select form-select-sm">
-                    <option value="draft" <?= $listing['status']==='draft'?'selected':'' ?>>Draft</option>
-                    <option value="published" <?= $listing['status']==='published'?'selected':'' ?>>Published</option>
-                    <option value="archived" <?= $listing['status']==='archived'?'selected':'' ?>>Archived</option>
-                </select>
-            </div>
+            <input type="hidden" name="status" value="published">
 
             <div class="col-12">
                 <div class="form-check">
