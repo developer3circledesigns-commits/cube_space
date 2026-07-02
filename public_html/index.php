@@ -254,28 +254,6 @@ if ($action === 'forgot_password' || $action === 'reset_password') {
             evt.currentTarget.classList.add('active');
         }
 
-        function toggleMenu() {
-            const nav = document.getElementById("mobileNav");
-            nav.classList.toggle("active");
-            const icon = document.querySelector(".mobile-menu i");
-            if (icon) {
-                icon.classList.toggle("fa-bars");
-                icon.classList.toggle("fa-times");
-            }
-        }
-
-        // Close mobile menu on link click
-        document.querySelectorAll('.mobile-nav a').forEach(function(link) {
-            link.addEventListener('click', function() {
-                document.getElementById("mobileNav").classList.remove("active");
-                const icon = document.querySelector(".mobile-menu i");
-                if (icon) {
-                    icon.classList.remove("fa-times");
-                    icon.classList.add("fa-bars");
-                }
-            });
-        });
-
         // Duplicate logos for infinite scroll
         var track = document.getElementById('logoTrack');
         if (track) {

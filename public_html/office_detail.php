@@ -1094,29 +1094,6 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
         img.parentElement.innerHTML = '<div class="placeholder-img"><i class="fa-solid fa-building"></i></div>';
     }
 
-    function toggleMenu() {
-        const nav = document.getElementById("mobileNav");
-        nav.classList.toggle("active");
-        const icon = document.querySelector(".mobile-menu i");
-        if (icon) {
-            icon.classList.toggle("fa-bars");
-            icon.classList.toggle("fa-times");
-        }
-    }
-
-    // Close mobile menu on link click
-    document.querySelectorAll('.mobile-nav a').forEach(function(link) {
-        link.addEventListener('click', function() {
-            document.getElementById("mobileNav").classList.remove("active");
-            const icon = document.querySelector(".mobile-menu i");
-            if (icon) {
-                icon.classList.remove("fa-times");
-                icon.classList.add("fa-bars");
-            }
-    
-
-});
-    });
 </script>
 <script>
 const officeImages = <?php echo json_encode(array_map('htmlspecialchars', $images)); ?>;

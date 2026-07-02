@@ -87,4 +87,124 @@
             return;
         }
     }, true);
+
+    var isMobileMql = window.matchMedia('(max-width: 992px)');
+
+    function isMobileView() {
+        return isMobileMql.matches;
+    }
+
+    function toggleBodyScroll(lock) {
+        if (lock) {
+            var scrollY = window.scrollY;
+            document.body.style.top = -scrollY + 'px';
+            document.body.classList.add('mobile-nav-open');
+            document.body.dataset.scrollY = scrollY;
+        } else {
+            document.body.classList.remove('mobile-nav-open');
+            var scrollY = parseInt(document.body.dataset.scrollY || '0');
+            document.body.style.top = '';
+            window.scrollTo(0, scrollY);
+        }
+    }
+
+    function openMobileNav(button, nav) {
+        nav.classList.add('active');
+        nav.style.maxHeight = nav.scrollHeight + 'px';
+        button.setAttribute('aria-expanded', 'true');
+        var icon = button.querySelector('i');
+        if (icon) {
+            icon.classList.remove('fa-bars');
+            icon.classList.add('fa-times');
+        }
+        toggleBodyScroll(true);
+    }
+
+    function closeMobileNav(button, nav) {
+        nav.classList.remove('active');
+        nav.style.maxHeight = '0';
+        button.setAttribute('aria-expanded', 'false');
+        var icon = button.querySelector('i');
+        if (icon) {
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+        }
+        toggleBodyScroll(false);
+    }
+
+    function closeAllMegaMenus() {
+        document.querySelectorAll('.mega-parent.mega-open').forEach(function(p) {
+            p.classList.remove('mega-open');
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var nav = document.getElementById('mobileNav');
+        var button = document.querySelector('.mobile-menu');
+        if (!nav || !button) return;
+
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (nav.classList.contains('active')) {
+                closeMobileNav(button, nav);
+            } else {
+                openMobileNav(button, nav);
+            }
+        });
+
+        nav.addEventListener('click', function(e) {
+            var link = e.target.closest('a');
+            if (link && isMobileView()) {
+                closeMobileNav(button, nav);
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && nav.classList.contains('active')) {
+                closeMobileNav(button, nav);
+                button.focus();
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!nav.classList.contains('active')) return;
+            if (!isMobileView()) return;
+            var navbar = document.querySelector('.site-navbar');
+            if (navbar && !navbar.contains(e.target)) {
+                closeMobileNav(button, nav);
+            }
+        });
+    });
+
+    var desktopMql = window.matchMedia('(min-width: 993px)');
+    desktopMql.addEventListener('change', function(e) {
+        if (e.matches) {
+            var nav = document.getElementById('mobileNav');
+            var button = document.querySelector('.mobile-menu');
+            if (nav && nav.classList.contains('active')) {
+                closeMobileNav(button, nav);
+            }
+            document.body.classList.remove('mobile-nav-open');
+            document.body.style.top = '';
+        }
+    });
+
+    if (window.matchMedia('(hover: none), (pointer: coarse)').matches) {
+        document.addEventListener('click', function(e) {
+            var parent = e.target.closest('.mega-parent');
+            if (parent) {
+                var link = e.target.closest('a');
+                if (link && link.parentElement === parent) {
+                    e.preventDefault();
+                    var wasOpen = parent.classList.contains('mega-open');
+                    closeAllMegaMenus();
+                    if (!wasOpen) {
+                        parent.classList.add('mega-open');
+                    }
+                }
+            } else {
+                closeAllMegaMenus();
+            }
+        });
+    }
 })();

@@ -120,16 +120,19 @@ body {
     gap: 30px;
 }
 .mega-parent:hover .mega-menu,
-.mega-parent:focus-within .mega-menu {
+.mega-parent:focus-within .mega-menu,
+.mega-parent.mega-open .mega-menu {
     opacity: 1;
     visibility: visible;
 }
 .nav-chevron {
     font-size: 11px;
     margin-left: 5px;
+    display: inline-block;
     transition: transform 0.3s ease;
 }
-.mega-parent:hover .nav-chevron {
+.mega-parent:hover .nav-chevron,
+.mega-parent.mega-open .nav-chevron {
     transform: rotate(180deg);
 }
 .nav-mobile-icon {
@@ -303,9 +306,14 @@ body {
     display: none;
     font-size: 30px;
     cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    outline: none;
+    color: inherit;
+    line-height: 1;
 }
 .mobile-nav {
-    display: none;
     position: absolute;
     top: 100%;
     left: 0;
@@ -314,9 +322,12 @@ body {
     list-style: none;
     box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
     z-index: 1000;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
 }
 .mobile-nav.active {
-    display: block;
+    max-height: none;
 }
 .mobile-nav li {
     border-bottom: 1px solid #eee;
@@ -329,11 +340,17 @@ body {
     color: #111827;
     text-decoration: none;
     font-weight: 600;
+    transition: background 0.2s, color 0.2s;
 }
 .mobile-nav li a:hover,
 .mobile-nav li a.active {
     background: #f8fafc;
     color: #0d4ab4;
+}
+body.mobile-nav-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
 }
 
 /* =========================
@@ -779,8 +796,18 @@ body {
 /* =========================
    RESPONSIVE
 ========================= */
-@media (min-width: 992px) {
-    .mobile-nav { display: none !important; }
+@media (min-width: 993px) {
+    .mobile-nav { max-height: 0 !important; overflow: hidden !important; visibility: hidden !important; }
+}
+@media (min-width: 993px) and (max-width: 1199px) {
+    .nav-container { gap: 16px; padding: 8px 20px; }
+    .menu { gap: 16px; }
+    .menu li a { font-size: 13px; }
+    .mega-menu { min-width: 560px; }
+    .mega-container { max-width: 560px; padding: 0 24px; }
+    .mega-item { padding: 14px; }
+    .mega-content h4 { font-size: 14px; }
+    .mega-content p { font-size: 13px; }
 }
 @media (max-width: 1200px) {
     .hero h1 { font-size: 54px; }

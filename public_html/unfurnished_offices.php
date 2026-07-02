@@ -2489,27 +2489,6 @@ if (isset($conn) && $conn) {
     <script src="assets/js/main.js"></script>
     <script src="assets/js/forms.js"></script>
     <script>
-        function toggleMenu() {
-            const nav = document.getElementById("mobileNav");
-            nav.classList.toggle("active");
-            const icon = document.querySelector(".mobile-menu i");
-            if (icon) {
-                icon.classList.toggle("fa-bars");
-                icon.classList.toggle("fa-times");
-            }
-        }
-
-        // Close mobile menu on link click
-        document.querySelectorAll('.mobile-nav a').forEach(function(link) {
-            link.addEventListener('click', function() {
-                document.getElementById("mobileNav").classList.remove("active");
-                const icon = document.querySelector(".mobile-menu i");
-                if (icon) {
-                    icon.classList.add("fa-bars");
-                    icon.classList.remove("fa-times");
-                }
-            });
-        });
     </script>
 
 <div class="modal fade" id="alertModal" tabindex="-1">

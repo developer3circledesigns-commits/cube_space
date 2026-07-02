@@ -76,6 +76,11 @@
     Realtime.poll = function() {
         var url = Realtime.adminMode ? Realtime.adminUrl : Realtime.publicUrl;
 
+        // SSE doesn't work behind HTTP/2 reverse proxies — fall back to polling
+        if (Realtime.adminMode) {
+            Realtime.pollFallback();
+            return;
+        }
         if (typeof EventSource !== 'undefined') {
             if (Realtime.eventSource) {
                 try { Realtime.eventSource.close(); } catch (e) {}

@@ -199,6 +199,9 @@ if ($action === 'create' || $action === 'update') {
             default       => 'LST',
         };
         $maxRes = mysqli_query($conn, "SELECT MAX(CAST(SUBSTRING(listing_code, 4) AS UNSIGNED)) as max_num FROM $table WHERE listing_code LIKE '{$prefix}%'");
+        if (!$maxRes) {
+            throw new Exception('Failed to generate listing code: ' . mysqli_error($conn));
+        }
         $maxRow = mysqli_fetch_assoc($maxRes);
         $nextNum = (int)($maxRow['max_num'] ?? 0) + 1;
         $listingCode = $prefix . str_pad((string)$nextNum, 3, '0', STR_PAD_LEFT);
@@ -214,10 +217,13 @@ if ($action === 'create' || $action === 'update') {
                     "INSERT INTO $table (title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, total_area_sqft, available_sqft, min_inventory, inventory_type, amenities, images, status, featured, feature_highlights, seo_text, office_space_type, listing_type, listing_code)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 );
+                if (!$stmt) {
+                    throw new Exception('Column mismatch in furnished_offices table: ' . mysqli_error($conn));
+                }
                 $availableSqft = trim($_POST['available_sqft'] ?? '');
                 $minInventory = trim($_POST['min_inventory'] ?? '');
                 $inventoryType = trim($_POST['inventory_type'] ?? '');
-                mysqli_stmt_bind_param($stmt, 'ssssssddsssisssssssissss',
+                mysqli_stmt_bind_param($stmt, 'ssssssddsssissssssssssss',
                     $title, $slug, $description, $city, $area, $address,
                     $latitude, $longitude,
                     $price, $priceLabel, $totalSeats, $totalAreaSqft,
@@ -233,6 +239,9 @@ if ($action === 'create' || $action === 'update') {
                     "INSERT INTO $table (title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, total_area_sqft, min_inventory, inventory_type, amenities, images, status, featured, feature_highlights, seo_text, office_space_type, listing_type, listing_code)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 );
+                if (!$stmt) {
+                    throw new Exception('Column mismatch in ' . $table . ' table: ' . mysqli_error($conn));
+                }
                 mysqli_stmt_bind_param($stmt, 'ssssssddsssssssssisssss',
                     $title, $slug, $description, $city, $area, $address,
                     $latitude, $longitude,
@@ -244,7 +253,7 @@ if ($action === 'create' || $action === 'update') {
                 );
             }
             if (!mysqli_stmt_execute($stmt)) {
-                throw new Exception('Failed to insert listing');
+                throw new Exception('Failed to insert listing: ' . mysqli_stmt_error($stmt));
             }
             $newId = mysqli_insert_id($conn);
             log_activity($conn, 'create', $table, $newId, ['title' => $title, 'type' => $listingType]);
