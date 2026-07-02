@@ -37,6 +37,9 @@ RUN echo "Listen 8080" >> /etc/apache2/ports.conf
 # Fix Apache runtime directory issue
 RUN mkdir -p /var/run/apache2 && chown www-data:www-data /var/run/apache2
 
+# Ensure temp directory exists and is writable
+RUN mkdir -p /tmp && chmod 1777 /tmp
+
 # Create entrypoint script to ensure Apache environment is set
 RUN echo '#!/bin/bash\nset -e\nsource /etc/apache2/envvars\nexec "$@"' > /tmp/docker-entrypoint.sh && chmod +x /tmp/docker-entrypoint.sh
 

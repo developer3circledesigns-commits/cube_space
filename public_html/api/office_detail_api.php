@@ -47,54 +47,40 @@ if ($cached) {
 }
 
 // ============================================================
-// Fetch Office
+// Fetch Office (single UNION query instead of 4 sequential queries)
 // ============================================================
 $listingTypeDb = '';
 $typeParam = isset($_GET['type']) ? trim($_GET['type']) : '';
 
+$office = null;
 if ($typeParam && in_array($typeParam, ['managed', 'furnished', 'unfurnished'])) {
     $tableMap = ['managed' => 'managed_offices', 'furnished' => 'furnished_offices', 'unfurnished' => 'unfurnished_offices'];
     $table = $tableMap[$typeParam];
-    $stmt = mysqli_prepare($conn, "SELECT * FROM $table WHERE slug = ? AND status = 'published'");
+    $stmt = mysqli_prepare($conn, "SELECT *, ? as listing_type_db FROM $table WHERE slug = ? AND status = 'published'");
     if (!$stmt) { http_response_code(500); echo json_encode(['error' => 'Database error']); exit; }
-    mysqli_stmt_bind_param($stmt, 's', $slug);
+    mysqli_stmt_bind_param($stmt, 'ss', $typeParam, $slug);
     mysqli_stmt_execute($stmt);
     $office = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
     mysqli_stmt_close($stmt);
-    if ($office) { $listingTypeDb = $typeParam; }
 }
 
 if (!$office) {
-    $stmt = mysqli_prepare($conn, "SELECT * FROM managed_offices WHERE slug = ? AND status = 'published'");
+    $unionSql = "(SELECT *, 'managed' as listing_type_db FROM managed_offices WHERE slug = ? AND status = 'published')
+                 UNION ALL
+                 (SELECT *, 'furnished' as listing_type_db FROM furnished_offices WHERE slug = ? AND status = 'published')
+                 UNION ALL
+                 (SELECT *, 'unfurnished' as listing_type_db FROM unfurnished_offices WHERE slug = ? AND status = 'published')
+                 LIMIT 1";
+    $stmt = mysqli_prepare($conn, $unionSql);
     if (!$stmt) { http_response_code(500); echo json_encode(['error' => 'Database error']); exit; }
-    mysqli_stmt_bind_param($stmt, 's', $slug);
+    mysqli_stmt_bind_param($stmt, 'sss', $slug, $slug, $slug);
     mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $office = mysqli_fetch_assoc($result);
+    $office = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
     mysqli_stmt_close($stmt);
-    if ($office) { $listingTypeDb = 'managed'; }
 }
 
-if (!$office) {
-    $stmt = mysqli_prepare($conn, "SELECT * FROM furnished_offices WHERE slug = ? AND status = 'published'");
-    if (!$stmt) { http_response_code(500); echo json_encode(['error' => 'Database error']); exit; }
-    mysqli_stmt_bind_param($stmt, 's', $slug);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $office = mysqli_fetch_assoc($result);
-    mysqli_stmt_close($stmt);
-    if ($office) { $listingTypeDb = 'furnished'; }
-}
-
-if (!$office) {
-    $stmt = mysqli_prepare($conn, "SELECT * FROM unfurnished_offices WHERE slug = ? AND status = 'published'");
-    if (!$stmt) { http_response_code(500); echo json_encode(['error' => 'Database error']); exit; }
-    mysqli_stmt_bind_param($stmt, 's', $slug);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $office = mysqli_fetch_assoc($result);
-    mysqli_stmt_close($stmt);
-    if ($office) { $listingTypeDb = 'unfurnished'; }
+if ($office) {
+    $listingTypeDb = $office['listing_type_db'];
 }
 
 if (!$office) {
@@ -114,15 +100,10 @@ foreach (['amenities', 'images', 'feature_highlights'] as $field) {
     }
 }
 
-// Filter out non-existent local images
+// Filter out empty images
 if (is_array($office['images'] ?? null)) {
     $office['images'] = array_values(array_filter($office['images'], function($image) {
-        if (!is_string($image) || trim($image) === '') return false;
-        if (parse_url($image, PHP_URL_HOST) || parse_url($image, PHP_URL_SCHEME)) return true;
-        $path = parse_url($image, PHP_URL_PATH);
-        if (!$path) return true;
-        if ($path[0] !== '/') $path = '/' . $path;
-        return file_exists(__DIR__ . '/..' . $path);
+        return is_string($image) && trim($image) !== '';
     }));
 }
 

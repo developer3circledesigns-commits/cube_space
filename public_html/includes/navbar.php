@@ -15,7 +15,7 @@ if (!function_exists('isActive')) {
 <nav class="site-navbar">
     <div class="nav-container">
         <a href="index.php" class="logo" aria-label="CubeSpace Home">
-            <img src="assets/images/final-logo.png" alt="CubeSpace">
+            <img src="assets/images/final-logo.png" alt="CubeSpace" width="180" height="52">
         </a>
         <ul class="menu">
             <li><a href="index.php"<?= isActive('index.php') ?>>Home</a></li>

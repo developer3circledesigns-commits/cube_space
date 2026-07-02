@@ -13,7 +13,16 @@ if (!$username) {
 }
 
 $rateLimitKey = 'forgot_pwd_' . $_SERVER['REMOTE_ADDR'];
-$rateLimitFile = sys_get_temp_dir() . '/' . md5($rateLimitKey);
+$tempDir = sys_get_temp_dir();
+// Force Windows temp directory on Windows systems
+if (DIRECTORY_SEPARATOR === '\\') {
+    $tempDir = getenv('TEMP') ?: getenv('TMP') ?: 'C:\\Windows\\Temp';
+}
+// Ensure temp directory exists and is writable
+if (!is_dir($tempDir)) {
+    @mkdir($tempDir, 0777, true);
+}
+$rateLimitFile = $tempDir . DIRECTORY_SEPARATOR . md5($rateLimitKey);
 $rateLimitPeriod = 300;
 $rateLimitMax = 5;
 $now = time();

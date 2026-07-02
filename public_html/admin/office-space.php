@@ -205,13 +205,12 @@ if ($mode === 'add' || $mode === 'edit'):
 <?php else:
     $statusFilter = $_GET['status'] ?? '';
     $cityFilter = $_GET['city'] ?? '';
-    $featuredFilter = $_GET['featured'] ?? '';
 
     $conditions = [];
     $params = [];
     $types = '';
 
-    if ($statusFilter && in_array($statusFilter, ['draft','published','archived'])) {
+    if ($statusFilter && in_array($statusFilter, ['draft','published'])) {
         $conditions[] = "status = ?";
         $params[] = $statusFilter;
         $types .= 's';
@@ -220,11 +219,6 @@ if ($mode === 'add' || $mode === 'edit'):
         $conditions[] = "city = ?";
         $params[] = $cityFilter;
         $types .= 's';
-    }
-    if ($featuredFilter === 'yes') {
-        $conditions[] = "featured = 1";
-    } elseif ($featuredFilter === 'no') {
-        $conditions[] = "featured = 0";
     }
     if ($searchQuery) {
         $conditions[] = "(title LIKE ? OR city LIKE ? OR area LIKE ? OR address LIKE ?)";
@@ -275,7 +269,7 @@ if ($mode === 'add' || $mode === 'edit'):
 
     function osMkUrl($extra) {
         $params = [];
-        foreach (['status','city','featured','search'] as $k) {
+        foreach (['status','city','search'] as $k) {
             $v = $_GET[$k] ?? '';
             if ($v && !isset($extra[$k])) $params[] = urlencode($k) . '=' . urlencode($v);
         }
@@ -286,7 +280,7 @@ if ($mode === 'add' || $mode === 'edit'):
     }
 
     $exportUrl = 'api/listing_crud.php?action=export&listing_type=office-space';
-    foreach (['status','city','featured','search'] as $k) {
+    foreach (['status','city','search'] as $k) {
         $v = $_GET[$k] ?? '';
         if ($v) $exportUrl .= '&' . urlencode($k) . '=' . urlencode($v);
     }
@@ -312,14 +306,12 @@ if ($mode === 'add' || $mode === 'edit'):
     <div class="col-md-7">
         <div class="d-flex gap-2 flex-wrap align-items-center">
             <span class="small text-muted">Filter:</span>
-            <a href="<?= osMkUrl(['status'=>'','city'=>'','featured'=>'']) ?>" class="btn btn-sm <?= !$statusFilter && !$cityFilter && !$featuredFilter ? 'btn-primary' : 'btn-outline-primary' ?>">All</a>
+            <a href="<?= osMkUrl(['status'=>'','city'=>'']) ?>" class="btn btn-sm <?= !$statusFilter && !$cityFilter ? 'btn-primary' : 'btn-outline-primary' ?>">All</a>
             <a href="<?= osMkUrl(['status'=>'draft']) ?>" class="btn btn-sm <?= $statusFilter === 'draft' ? 'btn-primary' : 'btn-outline-primary' ?>">Draft</a>
             <a href="<?= osMkUrl(['status'=>'published']) ?>" class="btn btn-sm <?= $statusFilter === 'published' ? 'btn-primary' : 'btn-outline-primary' ?>">Published</a>
-            <a href="<?= osMkUrl(['status'=>'archived']) ?>" class="btn btn-sm <?= $statusFilter === 'archived' ? 'btn-primary' : 'btn-outline-primary' ?>">Archived</a>
             <?php if ($cities): mysqli_data_seek($cities, 0); while ($c = mysqli_fetch_assoc($cities)): ?>
             <a href="<?= osMkUrl(['city'=>$c['city']]) ?>" class="btn btn-sm <?= $cityFilter === $c['city'] ? 'btn-primary' : 'btn-outline-primary' ?>"><?= htmlspecialchars(ucfirst($c['city'])) ?></a>
             <?php endwhile; endif; ?>
-            <a href="<?= osMkUrl(['featured'=>'yes']) ?>" class="btn btn-sm <?= $featuredFilter === 'yes' ? 'btn-primary' : 'btn-outline-primary' ?>"><i class="fa-solid fa-star me-1"></i>Featured</a>
         </div>
     </div>
 </div>
@@ -329,9 +321,6 @@ if ($mode === 'add' || $mode === 'edit'):
         <option value="delete">Delete Selected</option>
         <option value="status-draft">Mark as Draft</option>
         <option value="status-published">Mark as Published</option>
-        <option value="status-archived">Mark as Archived</option>
-        <option value="featured-1">Mark as Featured</option>
-        <option value="featured-0">Mark as Unfeatured</option>
     </select>
     <button class="btn btn-sm btn-secondary" onclick="applyBulkAction()">Apply</button>
 </div>
@@ -383,7 +372,7 @@ if ($mode === 'add' || $mode === 'edit'):
                             ?></td>
                             <td><?= $row['price'] ? '₹' . number_format($row['price']) . '<small class="text-muted ms-1">Sq Ft / Month</small>' : '—' ?></td>
                             <td><span class="badge bg-<?= ($row['office_space_type'] ?? 'rent') === 'lease' ? 'info' : 'secondary' ?>"><?= htmlspecialchars(($row['office_space_type'] ?? 'rent')) ?></span></td>
-                            <td><span class="badge bg-<?= $row['status'] === 'published' ? 'success' : ($row['status'] === 'draft' ? 'secondary' : 'warning text-dark') ?>"><?= $row['status'] ?></span></td>
+                            <td><span class="badge bg-<?= $row['status'] === 'published' ? 'success' : 'secondary' ?>"><?= $row['status'] ?></span></td>
                             <td class="text-center">
                                 <?php if ($enqCnt > 0): ?>
                                 <a href="contacts.php?search=<?= urlencode($row['title']) ?>" class="badge bg-info text-decoration-none" title="View enquiries"><?= $enqCnt ?></a>
@@ -410,7 +399,7 @@ if ($mode === 'add' || $mode === 'edit'):
 </div>
 <?php if ($total > $adminPerPage):
 $pagParams = [];
-foreach (['status','city','featured','search'] as $k) {
+foreach (['status','city','search'] as $k) {
     $v = $_GET[$k] ?? '';
     if ($v) $pagParams[] = urlencode($k) . '=' . urlencode($v);
 }

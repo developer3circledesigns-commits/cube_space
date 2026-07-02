@@ -61,6 +61,9 @@ set_error_handler(function ($severity, $message, $file, $line) {
     if (in_array($severity, [E_DEPRECATED, E_USER_DEPRECATED], true)) {
         return false;
     }
+    if (!(error_reporting() & $severity)) {
+        return false;
+    }
     throw new \ErrorException($message, 0, $severity, $file, $line);
 });
 try {
@@ -144,7 +147,7 @@ if (!$office) {
     echo '<link rel="icon" href="favicon.ico" sizes="any">';
     echo '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
     echo '<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">';
-    echo '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">';
+    echo '<link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" as="style" onload="this.rel=\'stylesheet\'"><noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>';
     echo '<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Roboto",sans-serif;background:#fff;color:#212121;display:flex;align-items:center;justify-content:center;min-height:100vh}.not-found{text-align:center;padding:40px}.not-found i{font-size:64px;color:#0d4ab4;margin-bottom:20px}.not-found h1{font-size:32px;font-weight:700;color:#111827;margin-bottom:12px}.not-found p{font-size:16px;color:#64748b;margin-bottom:24px}.not-found a{display:inline-block;padding:12px 28px;background:#0d4ab4;color:#fff;text-decoration:none;border-radius:8px;font-weight:600}.not-found a:hover{background:#083891}</style></head><body>';
     echo '<div class="not-found"><i class="fa-solid fa-building-circle-xmark"></i><h1>Workspace Not Found</h1><p>The workspace you are looking for does not exist or has been removed.</p><a href="managed_offices.php">Browse Workspaces</a></div>';
     echo '</body></html>';
@@ -260,9 +263,12 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
     <link rel="icon" type="image/png" href="assets/images/favicon-32x32.png">
     <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" href="assets/css/style.css?v=6" as="style">
     <link rel="stylesheet" href="assets/css/style.css?v=6">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"></noscript>
     <meta name="access-token" content="">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }

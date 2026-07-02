@@ -61,9 +61,13 @@ if ($action === 'forgot_password' || $action === 'reset_password') {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" href="assets/images/hero.jpg" as="image">
+    <link rel="preload" href="assets/css/style.css?v=5" as="style">
     <link rel="stylesheet" href="assets/css/style.css?v=5">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"></noscript>
     <style>
         .hero h1 {
             font-size: 45px;
@@ -135,7 +139,7 @@ if ($action === 'forgot_password' || $action === 'reset_password') {
         <div class="about-container">
 
             <div class="about-image">
-                <img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200" alt="Modern Office Workspace" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200" alt="Modern Office Workspace" loading="lazy" width="600" height="450">
                 <div class="experience-box">
                     <span>Serving Clients since</span>
                     <h3>2013</h3>
@@ -209,22 +213,22 @@ if ($action === 'forgot_password' || $action === 'reset_password') {
 
             <div class="logo-slider">
                 <div class="logo-track" id="logoTrack">
-                    <div class="logo-item"><img src="assets/logos/1.png" alt="Client logo"></div>
-                    <div class="logo-item"><img src="assets/logos/2.png" alt="Client logo"></div>
-                    <div class="logo-item"><img src="assets/logos/3.png" alt="Client logo"></div>
-                    <div class="logo-item"><img src="assets/logos/4.png" alt="Client logo"></div>
-                    <div class="logo-item"><img src="assets/logos/5.png" alt="Client logo"></div>
-                    <div class="logo-item"><img src="assets/logos/6.png" alt="Client logo"></div>
-                    <div class="logo-item"><img src="assets/logos/7.png" alt="Client logo"></div>
-                    <div class="logo-item"><img src="assets/logos/8.png" alt="Client logo"></div>
-                    <div class="logo-item"><img src="assets/logos/9.png" alt="Client logo"></div>
-                    <div class="logo-item"><img src="assets/logos/10.png" alt="Client logo"></div>
-                    <div class="logo-item"><img src="assets/logos/11.png" alt="Client logo"></div>
-                    <div class="logo-item"><img src="assets/logos/12.png" alt="Client logo"></div>
-                    <div class="logo-item"><img src="assets/logos/13.png" alt="Client logo"></div>
-                    <div class="logo-item"><img src="assets/logos/14.png" alt="Client logo"></div>
-                    <div class="logo-item"><img src="assets/logos/15.png" alt="Client logo"></div>
-                    <div class="logo-item"><img src="assets/logos/16.png" alt="Client logo"></div>
+                    <div class="logo-item"><img src="assets/logos/1.png" alt="Client logo" width="130" height="60"></div>
+                    <div class="logo-item"><img src="assets/logos/2.png" alt="Client logo" width="130" height="60"></div>
+                    <div class="logo-item"><img src="assets/logos/3.png" alt="Client logo" width="130" height="60"></div>
+                    <div class="logo-item"><img src="assets/logos/4.png" alt="Client logo" width="130" height="60"></div>
+                    <div class="logo-item"><img src="assets/logos/5.png" alt="Client logo" width="130" height="60"></div>
+                    <div class="logo-item"><img src="assets/logos/6.png" alt="Client logo" width="130" height="60"></div>
+                    <div class="logo-item"><img src="assets/logos/7.png" alt="Client logo" width="130" height="60"></div>
+                    <div class="logo-item"><img src="assets/logos/8.png" alt="Client logo" width="130" height="60"></div>
+                    <div class="logo-item"><img src="assets/logos/9.png" alt="Client logo" width="130" height="60"></div>
+                    <div class="logo-item"><img src="assets/logos/10.png" alt="Client logo" width="130" height="60"></div>
+                    <div class="logo-item"><img src="assets/logos/11.png" alt="Client logo" width="130" height="60"></div>
+                    <div class="logo-item"><img src="assets/logos/12.png" alt="Client logo" width="130" height="60"></div>
+                    <div class="logo-item"><img src="assets/logos/13.png" alt="Client logo" width="130" height="60"></div>
+                    <div class="logo-item"><img src="assets/logos/14.png" alt="Client logo" width="130" height="60"></div>
+                    <div class="logo-item"><img src="assets/logos/15.png" alt="Client logo" width="130" height="60"></div>
+                    <div class="logo-item"><img src="assets/logos/16.png" alt="Client logo" width="130" height="60"></div>
                 </div>
             </div>
 

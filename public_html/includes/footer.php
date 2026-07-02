@@ -3,7 +3,7 @@
     <div class="footer-container">
 
         <div class="footer-col">
-            <img src="assets/images/final-logo.png" class="footer-logo" alt="CubeSpace">
+            <img src="assets/images/final-logo.png" class="footer-logo" alt="CubeSpace" width="180" height="72">
             <p>Cube Spaces helps businesses discover premium office, managed office and commercial leasing solutions across Chennai and other business locations.</p>
         </div>
 

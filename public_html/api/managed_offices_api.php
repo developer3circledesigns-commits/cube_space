@@ -3,6 +3,9 @@ set_error_handler(function ($severity, $message, $file, $line) {
     if (in_array($severity, [E_DEPRECATED, E_USER_DEPRECATED], true)) {
         return false;
     }
+    if (!(error_reporting() & $severity)) {
+        return false;
+    }
     throw new \ErrorException($message, 0, $severity, $file, $line);
 });
 try {
@@ -30,28 +33,8 @@ function decode_existing_listing_images($imagesJson) {
     if (!is_array($images)) {
         return [];
     }
-
     return array_values(array_filter($images, function($image) {
-        if (!is_string($image) || trim($image) === '') {
-            return false;
-        }
-
-        $host = parse_url($image, PHP_URL_HOST);
-        $scheme = parse_url($image, PHP_URL_SCHEME);
-        if ($host || $scheme) {
-            return true;
-        }
-
-        $path = parse_url($image, PHP_URL_PATH);
-        if (!$path) {
-            return true;
-        }
-
-        if ($path[0] !== '/') {
-            $path = '/' . $path;
-        }
-
-        return file_exists(__DIR__ . '/..' . $path);
+        return is_string($image) && trim($image) !== '';
     }));
 }
 
@@ -311,22 +294,57 @@ if ($action === 'list') {
         $offices[] = $row;
     }
 
-    // Facets — combined into 2 queries instead of 5
+    // Facets — apply same filters as main query for accurate counts
     $facets = [];
 
-    $cityRes = mysqli_query($conn, "SELECT city, COUNT(*) as cnt FROM managed_offices WHERE status='published' GROUP BY city ORDER BY cnt DESC");
-    while ($r = mysqli_fetch_assoc($cityRes)) {
-        $facets['cities'][] = $r;
+    $facetWhere = ["status='published'"];
+    $facetParams = [];
+    $facetTypes = '';
+
+    if ($search) {
+        $facetWhere[] = "(title LIKE ? OR area LIKE ? OR city LIKE ? OR address LIKE ?)";
+        $s = "%$search%";
+        $facetParams = array_merge($facetParams, [$s, $s, $s, $s]);
+        $facetTypes .= 'ssss';
+    }
+    if ($listing_type && in_array($listing_type, ['managed', 'commercial'])) {
+        if ($listing_type === 'managed') {
+            $facetWhere[] = "(listing_type = ? OR listing_type IS NULL)";
+        } else {
+            $facetWhere[] = "listing_type = ?";
+        }
+        $facetParams[] = $listing_type;
+        $facetTypes .= 's';
+    }
+    if ($area) {
+        $facetWhere[] = "area = ?";
+        $facetParams[] = $area;
+        $facetTypes .= 's';
+    }
+    if ($minSeats !== '') {
+        $facetWhere[] = "total_seats >= ?";
+        $facetParams[] = (int)$minSeats;
+        $facetTypes .= 'i';
+    }
+    if ($maxSeats !== '') {
+        $facetWhere[] = "total_seats <= ?";
+        $facetParams[] = (int)$maxSeats;
+        $facetTypes .= 'i';
+    }
+    if ($needsPriceFilter) {
+        if ($minPrice !== '') {
+            $facetWhere[] = "price >= ?";
+            $facetParams[] = (float)$minPrice;
+            $facetTypes .= 'd';
+        }
+        if ($maxPrice !== '') {
+            $facetWhere[] = "price <= ?";
+            $facetParams[] = (float)$maxPrice;
+            $facetTypes .= 'd';
+        }
     }
 
-    $areaParams = [];
-    $areaTypes = '';
-    $areaFilterSql = '';
-    if ($city) {
-        $areaFilterSql = "AND city = ?";
-        $areaParams[] = $city;
-        $areaTypes = 's';
-    }
+    $facetWhereClause = implode(' AND ', $facetWhere);
 
     $facetStmt = mysqli_prepare($conn,
         "SELECT
@@ -335,10 +353,10 @@ if ($action === 'list') {
             MIN(price) as min_price,
             MAX(price) as max_price
          FROM managed_offices
-         WHERE status='published' $areaFilterSql"
+         WHERE $facetWhereClause"
     );
-    if (!empty($areaParams)) {
-        mysqli_stmt_bind_param($facetStmt, $areaTypes, ...$areaParams);
+    if (!empty($facetParams)) {
+        mysqli_stmt_bind_param($facetStmt, $facetTypes, ...$facetParams);
     }
     mysqli_stmt_execute($facetStmt);
     $facetRow = mysqli_fetch_assoc(mysqli_stmt_get_result($facetStmt));
@@ -346,12 +364,26 @@ if ($action === 'list') {
     $facets['price_range'] = ['min_price' => $facetRow['min_price'], 'max_price' => $facetRow['max_price']];
     $featuredCount = (int)($facetRow['featured_count'] ?? 0);
 
-    // Area facets (separate query since it's dynamic)
-    $areaStmt = mysqli_prepare($conn,
-        "SELECT area, COUNT(*) as cnt FROM managed_offices WHERE status='published' $areaFilterSql AND area IS NOT NULL GROUP BY area ORDER BY cnt DESC"
+    // City list facet (no city filter — shows all cities matching other criteria)
+    $cityStmt = mysqli_prepare($conn,
+        "SELECT city, COUNT(*) as cnt FROM managed_offices WHERE $facetWhereClause GROUP BY city ORDER BY cnt DESC"
     );
-    if (!empty($areaParams)) {
-        mysqli_stmt_bind_param($areaStmt, $areaTypes, ...$areaParams);
+    if (!empty($facetParams)) {
+        mysqli_stmt_bind_param($cityStmt, $facetTypes, ...$facetParams);
+    }
+    mysqli_stmt_execute($cityStmt);
+    $cityResult = mysqli_stmt_get_result($cityStmt);
+    while ($r = mysqli_fetch_assoc($cityResult)) {
+        $facets['cities'][] = $r;
+    }
+    mysqli_stmt_close($cityStmt);
+
+    // Area facet
+    $areaStmt = mysqli_prepare($conn,
+        "SELECT area, COUNT(*) as cnt FROM managed_offices WHERE $facetWhereClause AND area IS NOT NULL GROUP BY area ORDER BY cnt DESC"
+    );
+    if (!empty($facetParams)) {
+        mysqli_stmt_bind_param($areaStmt, $facetTypes, ...$facetParams);
     }
     mysqli_stmt_execute($areaStmt);
     $areaResult = mysqli_stmt_get_result($areaStmt);

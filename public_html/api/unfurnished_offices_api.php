@@ -3,6 +3,9 @@ set_error_handler(function ($severity, $message, $file, $line) {
     if (in_array($severity, [E_DEPRECATED, E_USER_DEPRECATED], true)) {
         return false;
     }
+    if (!(error_reporting() & $severity)) {
+        return false;
+    }
     throw new \ErrorException($message, 0, $severity, $file, $line);
 });
 try {
@@ -30,28 +33,8 @@ function decode_existing_listing_images($imagesJson) {
     if (!is_array($images)) {
         return [];
     }
-
     return array_values(array_filter($images, function($image) {
-        if (!is_string($image) || trim($image) === '') {
-            return false;
-        }
-
-        $host = parse_url($image, PHP_URL_HOST);
-        $scheme = parse_url($image, PHP_URL_SCHEME);
-        if ($host || $scheme) {
-            return true;
-        }
-
-        $path = parse_url($image, PHP_URL_PATH);
-        if (!$path) {
-            return true;
-        }
-
-        if ($path[0] !== '/') {
-            $path = '/' . $path;
-        }
-
-        return file_exists(__DIR__ . '/..' . $path);
+        return is_string($image) && trim($image) !== '';
     }));
 }
 

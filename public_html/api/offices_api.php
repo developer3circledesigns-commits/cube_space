@@ -3,6 +3,9 @@ set_error_handler(function ($severity, $message, $file, $line) {
     if (in_array($severity, [E_DEPRECATED, E_USER_DEPRECATED], true)) {
         return false;
     }
+    if (!(error_reporting() & $severity)) {
+        return false;
+    }
     throw new \ErrorException($message, 0, $severity, $file, $line);
 });
 try {
@@ -30,28 +33,8 @@ function decode_existing_listing_images($imagesJson) {
     if (!is_array($images)) {
         return [];
     }
-
     return array_values(array_filter($images, function($image) {
-        if (!is_string($image) || trim($image) === '') {
-            return false;
-        }
-
-        $host = parse_url($image, PHP_URL_HOST);
-        $scheme = parse_url($image, PHP_URL_SCHEME);
-        if ($host || $scheme) {
-            return true;
-        }
-
-        $path = parse_url($image, PHP_URL_PATH);
-        if (!$path) {
-            return true;
-        }
-
-        if ($path[0] !== '/') {
-            $path = '/' . $path;
-        }
-
-        return file_exists(__DIR__ . '/..' . $path);
+        return is_string($image) && trim($image) !== '';
     }));
 }
 
@@ -324,6 +307,56 @@ if ($action === 'list') {
 
     $facets = [];
 
+    $facetWhere = ["status='published'"];
+    $facetParams = [];
+    $facetTypes = '';
+
+    if ($search) {
+        $facetWhere[] = "(title LIKE ? OR area LIKE ? OR city LIKE ? OR address LIKE ?)";
+        $s = "%$search%";
+        $facetParams = array_merge($facetParams, [$s, $s, $s, $s]);
+        $facetTypes .= 'ssss';
+    }
+    if ($area) {
+        $facetWhere[] = "area = ?";
+        $facetParams[] = $area;
+        $facetTypes .= 's';
+    }
+    if ($minSeats !== '') {
+        $facetWhere[] = "total_seats >= ?";
+        $facetParams[] = (int)$minSeats;
+        $facetTypes .= 'i';
+    }
+    if ($maxSeats !== '') {
+        $facetWhere[] = "total_seats <= ?";
+        $facetParams[] = (int)$maxSeats;
+        $facetTypes .= 'i';
+    }
+    if ($minSqft !== '') {
+        $facetWhere[] = "total_area_sqft >= ?";
+        $facetParams[] = (int)$minSqft;
+        $facetTypes .= 'i';
+    }
+    if ($maxSqft !== '') {
+        $facetWhere[] = "total_area_sqft <= ?";
+        $facetParams[] = (int)$maxSqft;
+        $facetTypes .= 'i';
+    }
+    if ($needsPriceFilter) {
+        if ($minPrice !== '') {
+            $facetWhere[] = "price >= ?";
+            $facetParams[] = (float)$minPrice;
+            $facetTypes .= 'd';
+        }
+        if ($maxPrice !== '') {
+            $facetWhere[] = "price <= ?";
+            $facetParams[] = (float)$maxPrice;
+            $facetTypes .= 'd';
+        }
+    }
+
+    $facetWhereClause = implode(' AND ', $facetWhere);
+
     $cityRes = mysqli_query($conn, "(SELECT city, COUNT(*) as cnt FROM furnished_offices WHERE status='published' GROUP BY city) UNION ALL (SELECT city, COUNT(*) as cnt FROM unfurnished_offices WHERE status='published' GROUP BY city)");
     $cityCounts = [];
     while ($r = mysqli_fetch_assoc($cityRes)) {
@@ -332,15 +365,6 @@ if ($action === 'list') {
     arsort($cityCounts);
     foreach ($cityCounts as $cityName => $cnt) {
         $facets['cities'][] = ['city' => $cityName, 'cnt' => $cnt];
-    }
-
-    $areaParams = [];
-    $areaTypes = '';
-    $areaFilterSql = '';
-    if ($city) {
-        $areaFilterSql = "AND city = ?";
-        $areaParams[] = $city;
-        $areaTypes = 's';
     }
 
     $facetStmt = mysqli_prepare($conn,
@@ -356,7 +380,7 @@ if ($action === 'list') {
                  MIN(price) as min_price,
                  MAX(price) as max_price
               FROM furnished_offices
-              WHERE status='published' $areaFilterSql)
+              WHERE $facetWhereClause)
              UNION ALL
              (SELECT
                  COUNT(*) as cnt,
@@ -364,13 +388,13 @@ if ($action === 'list') {
                  MIN(price) as min_price,
                  MAX(price) as max_price
               FROM unfurnished_offices
-              WHERE status='published' $areaFilterSql)
+              WHERE $facetWhereClause)
          ) combined_facets"
     );
-    $allAreaParams = array_merge($areaParams, $areaParams);
-    $allAreaTypes = $areaTypes . $areaTypes;
-    if (!empty($allAreaParams)) {
-        mysqli_stmt_bind_param($facetStmt, $allAreaTypes, ...$allAreaParams);
+    $allParams = array_merge($facetParams, $facetParams);
+    $allTypes = $facetTypes . $facetTypes;
+    if (!empty($allParams)) {
+        mysqli_stmt_bind_param($facetStmt, $allTypes, ...$allParams);
     }
     mysqli_stmt_execute($facetStmt);
     $facetRow = mysqli_fetch_assoc(mysqli_stmt_get_result($facetStmt));
@@ -379,15 +403,15 @@ if ($action === 'list') {
     $featuredCount = (int)($facetRow['featured_count'] ?? 0);
 
     $areaStmt = mysqli_prepare($conn,
-        "(SELECT area, COUNT(*) as cnt FROM furnished_offices WHERE status='published' $areaFilterSql AND area IS NOT NULL GROUP BY area)
+        "(SELECT area, COUNT(*) as cnt FROM furnished_offices WHERE $facetWhereClause AND area IS NOT NULL GROUP BY area)
          UNION ALL
-         (SELECT area, COUNT(*) as cnt FROM unfurnished_offices WHERE status='published' $areaFilterSql AND area IS NOT NULL GROUP BY area)
+         (SELECT area, COUNT(*) as cnt FROM unfurnished_offices WHERE $facetWhereClause AND area IS NOT NULL GROUP BY area)
          ORDER BY cnt DESC"
     );
-    $allAreaParams = array_merge($areaParams, $areaParams);
-    $allAreaTypes = $areaTypes . $areaTypes;
-    if (!empty($allAreaParams)) {
-        mysqli_stmt_bind_param($areaStmt, $allAreaTypes, ...$allAreaParams);
+    $allParams = array_merge($facetParams, $facetParams);
+    $allTypes = $facetTypes . $facetTypes;
+    if (!empty($allParams)) {
+        mysqli_stmt_bind_param($areaStmt, $allTypes, ...$allParams);
     }
     mysqli_stmt_execute($areaStmt);
     $areaResult = mysqli_stmt_get_result($areaStmt);

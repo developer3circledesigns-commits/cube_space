@@ -96,8 +96,7 @@ try {
 
     if (mysqli_stmt_execute($stmt)) {
         $newId = mysqli_insert_id($conn);
-        $mail = new \CubeSpace\EmailService();
-        $mail->notifyAdminNewContact([
+        $contactData = [
             'name' => $name,
             'phone' => $phone,
             'email' => $email,
@@ -105,9 +104,36 @@ try {
             'company' => $company,
             'seats' => $seats,
             'message' => $message,
-        ]);
+        ];
+
         publish_event('contact_created', 'contact', $newId, "$name - $interest");
-        echo json_encode(['success' => true, 'message' => 'Thank you! We will get back to you shortly.', 'data' => null, 'errors' => null]);
+
+        // Send response immediately, then send email in background
+        $response = json_encode(['success' => true, 'message' => 'Thank you! We will get back to you shortly.', 'data' => null, 'errors' => null]);
+
+        // Close DB connection early so background process doesn't keep it
+        mysqli_stmt_close($stmt);
+        mysqli_close($conn);
+        $conn = null;
+
+        // Flush response to client before potentially slow email sending
+        echo $response;
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        } else {
+            if (ob_get_level()) { ob_end_flush(); }
+            flush();
+        }
+
+        // Send email in background after response is sent
+        try {
+            $mail = new \CubeSpace\EmailService();
+            $mail->notifyAdminNewContact($contactData);
+        } catch (\Throwable $e) {
+            error_log('CubeSpace background email error: ' . $e->getMessage());
+        }
+
+        exit;
     } else {
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Failed to save your request. Please try again.', 'data' => null, 'errors' => null]);

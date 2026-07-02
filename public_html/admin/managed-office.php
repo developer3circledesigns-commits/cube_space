@@ -214,14 +214,13 @@ if ($mode === 'add' || $mode === 'edit'):
 <?php else:
     $statusFilter = $_GET['status'] ?? '';
     $cityFilter = $_GET['city'] ?? '';
-    $featuredFilter = $_GET['featured'] ?? '';
 
     $where = [];
     $params = [];
     $types = '';
     $conditions = [];
 
-    if ($statusFilter && in_array($statusFilter, ['draft','published','archived'])) {
+    if ($statusFilter && in_array($statusFilter, ['draft','published'])) {
         $conditions[] = "status = ?";
         $params[] = $statusFilter;
         $types .= 's';
@@ -230,11 +229,6 @@ if ($mode === 'add' || $mode === 'edit'):
         $conditions[] = "city = ?";
         $params[] = $cityFilter;
         $types .= 's';
-    }
-    if ($featuredFilter === 'yes') {
-        $conditions[] = "featured = 1";
-    } elseif ($featuredFilter === 'no') {
-        $conditions[] = "featured = 0";
     }
     if ($searchQuery) {
         $conditions[] = "(title LIKE ? OR city LIKE ? OR area LIKE ? OR address LIKE ?)";
@@ -284,7 +278,7 @@ if ($mode === 'add' || $mode === 'edit'):
 
     function mkUrl($extra) {
         $params = [];
-        foreach (['status','city','featured','search'] as $k) {
+        foreach (['status','city','search'] as $k) {
             $v = $_GET[$k] ?? '';
             if ($v && !isset($extra[$k])) $params[] = urlencode($k) . '=' . urlencode($v);
         }
@@ -295,7 +289,7 @@ if ($mode === 'add' || $mode === 'edit'):
     }
 
     $exportUrl = 'api/listing_crud.php?action=export&listing_type=managed';
-    foreach (['status','city','featured','search'] as $k) {
+    foreach (['status','city','search'] as $k) {
         $v = $_GET[$k] ?? '';
         if ($v) $exportUrl .= '&' . urlencode($k) . '=' . urlencode($v);
     }
@@ -309,18 +303,24 @@ if ($mode === 'add' || $mode === 'edit'):
     </div>
 </div>
 <div class="row g-2 mb-3">
-    <div class="col-md-12">
+    <div class="col-md-5">
+        <form method="get" class="d-flex gap-2">
+            <input type="search" name="search" class="form-control form-control-sm" placeholder="Search by title, city, area, address..." value="<?= htmlspecialchars($searchQuery) ?>">
+            <button type="submit" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-search"></i></button>
+            <?php if ($searchQuery): ?>
+            <a href="<?= mkUrl(['search'=>'']) ?>" class="btn btn-sm btn-outline-secondary">&times;</a>
+            <?php endif; ?>
+        </form>
+    </div>
+    <div class="col-md-7">
         <div class="d-flex gap-2 flex-wrap align-items-center">
             <span class="small text-muted">Filter:</span>
-            <a href="<?= mkUrl(['status'=>'','city'=>'','featured'=>'']) ?>" class="btn btn-sm <?= !$statusFilter && !$cityFilter && !$featuredFilter ? 'btn-primary' : 'btn-outline-primary' ?>">All</a>
+            <a href="<?= mkUrl(['status'=>'','city'=>'']) ?>" class="btn btn-sm <?= !$statusFilter && !$cityFilter ? 'btn-primary' : 'btn-outline-primary' ?>">All</a>
             <a href="<?= mkUrl(['status'=>'draft']) ?>" class="btn btn-sm <?= $statusFilter === 'draft' ? 'btn-primary' : 'btn-outline-primary' ?>">Draft</a>
             <a href="<?= mkUrl(['status'=>'published']) ?>" class="btn btn-sm <?= $statusFilter === 'published' ? 'btn-primary' : 'btn-outline-primary' ?>">Published</a>
-            <a href="<?= mkUrl(['status'=>'archived']) ?>" class="btn btn-sm <?= $statusFilter === 'archived' ? 'btn-primary' : 'btn-outline-primary' ?>">Archived</a>
             <?php if ($cities && mysqli_num_rows($cities)): mysqli_data_seek($cities, 0); while ($c = mysqli_fetch_assoc($cities)): ?>
             <a href="<?= mkUrl(['city'=>$c['city']]) ?>" class="btn btn-sm <?= $cityFilter === $c['city'] ? 'btn-primary' : 'btn-outline-primary' ?>"><?= htmlspecialchars(ucfirst($c['city'])) ?></a>
             <?php endwhile; endif; ?>
-            <a href="<?= mkUrl(['featured'=>'yes']) ?>" class="btn btn-sm <?= $featuredFilter === 'yes' ? 'btn-primary' : 'btn-outline-primary' ?>"><i class="fa-solid fa-star me-1"></i>Featured</a>
-            <a href="<?= mkUrl(['featured'=>'no']) ?>" class="btn btn-sm <?= $featuredFilter === 'no' ? 'btn-primary' : 'btn-outline-primary' ?>"><i class="fa-solid fa-star-half-stroke me-1"></i>Unfeatured</a>
         </div>
     </div>
 </div>
@@ -382,7 +382,7 @@ if ($mode === 'add' || $mode === 'edit'):
                             ?></td>
                             <td><?= $row['price'] ? '₹' . number_format($row['price']) . '<small class="text-muted ms-1">' . ($row['office_space_type'] === 'lease' ? '/yr' : '/mo') . '</small>' : '—' ?></td>
                             <td><span class="badge bg-<?= ($row['office_space_type'] ?? 'rent') === 'lease' ? 'info' : 'secondary' ?>"><?= htmlspecialchars(($row['office_space_type'] ?? 'rent')) ?></span></td>
-                            <td><span class="badge bg-<?= $row['status'] === 'published' ? 'success' : ($row['status'] === 'draft' ? 'secondary' : 'warning text-dark') ?>"><?= $row['status'] ?></span></td>
+                            <td><span class="badge bg-<?= $row['status'] === 'published' ? 'success' : 'secondary' ?>"><?= $row['status'] ?></span></td>
                             <td class="text-center">
                                 <?php if ($enqCnt > 0): ?>
                                 <a href="contacts.php?search=<?= urlencode($row['title']) ?>" class="badge bg-info text-decoration-none" title="View enquiries"><?= $enqCnt ?></a>
@@ -411,7 +411,7 @@ if ($mode === 'add' || $mode === 'edit'):
 <?php if ($total > $adminPerPage): ?>
 <?php
 $pagParams = [];
-foreach (['status','city','featured','search'] as $k) {
+foreach (['status','city','search'] as $k) {
     $v = $_GET[$k] ?? '';
     if ($v) $pagParams[] = urlencode($k) . '=' . urlencode($v);
 }

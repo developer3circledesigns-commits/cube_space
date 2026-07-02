@@ -88,9 +88,12 @@ if (isset($conn) && $conn) {
     <link rel="icon" href="favicon.ico" sizes="any">
     <link rel="icon" type="image/png" href="assets/images/favicon-32x32.png">
     <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
+    <link rel="preload" href="assets/css/style.css?v=6" as="style">
     <link rel="stylesheet" href="assets/css/style.css?v=6">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"></noscript>
     <meta name="access-token" content="">
 
     <style>
@@ -943,12 +946,15 @@ if (isset($conn) && $conn) {
         .gp-modal-logo {
             margin-bottom: 10px;
             text-align: right;
+            padding-right:18px;
         }
         .gp-modal-logo img {
             height: 70px;
             width: auto;
             max-width: 100%;
             object-fit: contain;
+            position: relative;
+            left: 18px;
         }
         .gp-left-badge {
             display: inline-flex;
