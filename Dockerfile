@@ -14,8 +14,7 @@ RUN docker-php-ext-install pdo_mysql mysqli gd exif
 COPY php.ini /usr/local/etc/php/conf.d/custom.ini
 
 # Copy project files
-COPY public_html/ /var/www/html/
-COPY src/ /var/www/html/src/
+COPY . /var/www/html/
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html

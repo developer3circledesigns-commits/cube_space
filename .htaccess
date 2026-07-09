@@ -3,6 +3,11 @@ RewriteEngine On
 # Block sensitive directories
 RewriteRule ^(config|lib|src|logs)(/|$) - [F,L]
 
+# Block sensitive files at repo root
+RewriteRule \.(env|gitignore|dockerignore)$ - [F,L]
+RewriteRule ^(Dockerfile|docker-compose\.yml|php\.ini|httpd\.conf|README\.md|composer\.(json|lock))$ - [F,L]
+RewriteRule ^.*\.sql$ - [F,L]
+
 # Block sensitive debug files
 RewriteRule ^test_db\.php$ - [F,L]
 
