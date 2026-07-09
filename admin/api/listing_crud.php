@@ -156,6 +156,16 @@ if ($action === 'create' || $action === 'update') {
 
     $imagePaths = [];
     $existingImages = json_decode($_POST['existing_images'] ?? '[]', true);
+    $existingImages = array_values(array_filter($existingImages, function($image) {
+        if (!is_string($image) || trim($image) === '') return false;
+        $host = parse_url($image, PHP_URL_HOST);
+        $scheme = parse_url($image, PHP_URL_SCHEME);
+        if ($host || $scheme) return true;
+        $path = parse_url($image, PHP_URL_PATH);
+        if (!$path) return false;
+        $filePath = __DIR__ . '/../..' . $path;
+        return file_exists($filePath);
+    }));
 
     if (!empty($_FILES['images'])) {
         $uploadDir = admin_uploads_dir();

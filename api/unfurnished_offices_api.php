@@ -33,8 +33,24 @@ function decode_existing_listing_images($imagesJson) {
     if (!is_array($images)) {
         return [];
     }
-    return array_values(array_filter($images, function($image) {
-        return is_string($image) && trim($image) !== '';
+    $projectRoot = realpath(__DIR__ . '/..');
+    return array_values(array_filter($images, function($image) use ($projectRoot) {
+        if (!is_string($image) || trim($image) === '') {
+            return false;
+        }
+        $host = parse_url($image, PHP_URL_HOST);
+        $scheme = parse_url($image, PHP_URL_SCHEME);
+        if ($host || $scheme) {
+            return true;
+        }
+        $path = parse_url($image, PHP_URL_PATH);
+        if (!$path) {
+            return false;
+        }
+        if ($path[0] !== '/') {
+            return file_exists($projectRoot . '/' . $path);
+        }
+        return file_exists($projectRoot . $path);
     }));
 }
 

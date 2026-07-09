@@ -54,7 +54,12 @@ if ($mode === 'add' || $mode === 'edit'):
         if (!$listing) { echo '<div class="alert alert-warning">Listing not found.</div>'; require_once __DIR__ . '/footer.php'; exit; }
     }
     $amenities = json_decode($listing['amenities'] ?? '[]', true);
-    $images = json_decode($listing['images'] ?? '[]', true);
+    $images = array_values(array_filter(json_decode($listing['images'] ?? '[]', true) ?: [], function($img) {
+        if (!is_string($img) || trim($img) === '') return false;
+        if (parse_url($img, PHP_URL_HOST) || parse_url($img, PHP_URL_SCHEME)) return true;
+        $path = parse_url($img, PHP_URL_PATH);
+        return $path && file_exists(__DIR__ . '/..' . $path);
+    }));
     $cities = mysqli_query($conn, "SELECT city FROM (SELECT city COLLATE utf8mb4_unicode_ci AS city FROM listing_cities UNION SELECT DISTINCT city COLLATE utf8mb4_unicode_ci AS city FROM $table WHERE city != '') AS c ORDER BY city");
     if (!$cities) $cities = false;
     $areas = mysqli_query($conn, "SELECT area, city FROM (SELECT area COLLATE utf8mb4_unicode_ci AS area, city COLLATE utf8mb4_unicode_ci AS city FROM listing_areas UNION SELECT DISTINCT area COLLATE utf8mb4_unicode_ci AS area, city COLLATE utf8mb4_unicode_ci AS city FROM $table WHERE area != '' AND area IS NOT NULL) AS a ORDER BY area");
