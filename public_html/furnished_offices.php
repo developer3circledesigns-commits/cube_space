@@ -2059,7 +2059,7 @@ if (isset($conn) && $conn) {
 
                 let statsHtml = '';
                 const statItems = [
-                    { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Current Available Area On Rent ' + o.available_sqft: null },
+                    { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Current Available Area On Lease ' + o.available_sqft: null },
                     { icon: 'fa-building', value: o.total_area_sqft ? 'Total Building Leasable Area ' + o.total_area_sqft + ' Sq Ft.' : null },
 
                 ];
@@ -2100,7 +2100,7 @@ if (isset($conn) && $conn) {
                                 <div class="card-footer-row mt-auto">
                                     <div class="card-price">
                                         <span class="price-label" style="font-weight:bold; color:#212529;">
-    Quoted Price 
+    Quoted Lease 
     <span style="font-weight:normal; text-transform:none;">(Negotiable)</span>
 </span>
                                         ${price}
@@ -2216,7 +2216,7 @@ if (isset($conn) && $conn) {
                 const address = o.address || o.area || o.city || '';
                 let statsHtml = '';
                 const statItems = [
-                    { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Current Available Area On Rent ' + o.available_sqft + ' Sq Ft.' : null },
+                    { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Current Available Area On Lease ' + o.available_sqft + ' Sq Ft.' : null },
                     { icon: 'fa-building', value: o.total_area_sqft ? 'Total Building Leasable Area ' + o.total_area_sqft + ' Sq Ft.' : null },
 
                 ];
@@ -2258,7 +2258,7 @@ if (isset($conn) && $conn) {
                                         ${statsHtml ? '<div class="stats-row">' + statsHtml + '</div>' : ''}
                                         <div class="card-footer-row mt-auto">
                                             <div class="card-price">
-                                                <span class="price-label">Quoted price</span>
+                                                <span class="price-label">Quoted Lease</span>
                                                 ${price}
                                             </div>
                                             <div class="card-actions">

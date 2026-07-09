@@ -348,7 +348,6 @@ if ($mode === 'add' || $mode === 'edit'):
                         <th scope="col">Title</th>
                         <th scope="col">City</th>
                         <th scope="col">Area</th>
-                        <th scope="col">Sq.ft</th>
                         <th scope="col">Seats</th>
                         <th scope="col">Price</th>
                         <th scope="col">Type</th>
@@ -359,7 +358,7 @@ if ($mode === 'add' || $mode === 'edit'):
                 </thead>
                 <tbody>
                     <?php if (!empty($dbError)): ?>
-                        <tr><td colspan="13" class="text-center text-danger py-4">Database Error: <?= htmlspecialchars($dbError) ?></td></tr>
+                        <tr><td colspan="12" class="text-center text-danger py-4">Database Error: <?= htmlspecialchars($dbError) ?></td></tr>
                     <?php elseif ($result && mysqli_num_rows($result) > 0): ?>
                         <?php while ($row = mysqli_fetch_assoc($result)):
                             $rowImages = json_decode($row['images'] ?? '[]', true);
@@ -372,7 +371,6 @@ if ($mode === 'add' || $mode === 'edit'):
                             <td class="fw-medium"><?= htmlspecialchars($row['title']) ?></td>
                             <td><?= htmlspecialchars($row['city']) ?></td>
                             <td><?= htmlspecialchars($row['area'] ?? '—') ?></td>
-                            <td><?= $row['total_area_sqft'] ? number_format($row['total_area_sqft']) : '—' ?></td>
                             <td><?php
                                 $ts = $row['total_seats'] ?? 0;
                                 if ($ts <= 50) echo '10-50';
@@ -401,7 +399,7 @@ if ($mode === 'add' || $mode === 'edit'):
                         </tr>
                         <?php endwhile; ?>
                     <?php else: ?>
-                        <tr><td colspan="13" class="text-center text-muted py-4">No listings found.</td></tr>
+                        <tr><td colspan="12" class="text-center text-muted py-4">No listings found.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>

@@ -339,7 +339,6 @@ if ($mode === 'add' || $mode === 'edit'):
                         <th scope="col">City</th>
                         <th scope="col">Area</th>
                         <th scope="col">Sq.ft</th>
-                        <th scope="col">Seats</th>
                         <th scope="col">Price</th>
                         <th scope="col">Type</th>
                         <th scope="col">Status</th>
@@ -349,7 +348,7 @@ if ($mode === 'add' || $mode === 'edit'):
                 </thead>
                 <tbody>
                     <?php if (!empty($dbError)): ?>
-                        <tr><td colspan="13" class="text-center text-danger py-4">Database Error: <?= htmlspecialchars($dbError) ?></td></tr>
+                        <tr><td colspan="12" class="text-center text-danger py-4">Database Error: <?= htmlspecialchars($dbError) ?></td></tr>
                     <?php elseif ($result && mysqli_num_rows($result) > 0): ?>
                         <?php while ($row = mysqli_fetch_assoc($result)):
                             $rowImages = json_decode($row['images'] ?? '[]', true);
@@ -363,13 +362,6 @@ if ($mode === 'add' || $mode === 'edit'):
                             <td><?= htmlspecialchars($row['city']) ?></td>
                             <td><?= htmlspecialchars($row['area'] ?? '—') ?></td>
                             <td><?= $row['total_area_sqft'] ? number_format($row['total_area_sqft']) : '—' ?></td>
-                            <td><?php
-                                $ts = $row['total_seats'] ?? 0;
-                                if ($ts <= 50) echo '10-50';
-                                elseif ($ts <= 100) echo '51-100';
-                                elseif ($ts <= 200) echo '101-200';
-                                else echo '200+';
-                            ?></td>
                             <td><?= $row['price'] ? '₹' . number_format($row['price']) . '<small class="text-muted ms-1">Sq Ft / Month</small>' : '—' ?></td>
                             <td><span class="badge bg-<?= ($row['office_space_type'] ?? 'rent') === 'lease' ? 'info' : 'secondary' ?>"><?= htmlspecialchars(($row['office_space_type'] ?? 'rent')) ?></span></td>
                             <td><span class="badge bg-<?= $row['status'] === 'published' ? 'success' : 'secondary' ?>"><?= $row['status'] ?></span></td>
@@ -390,7 +382,7 @@ if ($mode === 'add' || $mode === 'edit'):
                         </tr>
                         <?php endwhile; ?>
                     <?php else: ?>
-                        <tr><td colspan="13" class="text-center text-muted py-4">No listings found.</td></tr>
+                        <tr><td colspan="12" class="text-center text-muted py-4">No listings found.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>

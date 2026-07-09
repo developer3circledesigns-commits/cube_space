@@ -40,6 +40,9 @@ RUN mkdir -p /var/run/apache2 && chown www-data:www-data /var/run/apache2
 # Ensure temp directory exists and is writable
 RUN mkdir -p /tmp && chmod 1777 /tmp
 
+# Ensure log directory exists and is writable
+RUN mkdir -p /var/log/apache2 && chown www-data:www-data /var/log/apache2
+
 # Create entrypoint script to ensure Apache environment is set
 RUN echo '#!/bin/bash\nset -e\nsource /etc/apache2/envvars\nexec "$@"' > /tmp/docker-entrypoint.sh && chmod +x /tmp/docker-entrypoint.sh
 

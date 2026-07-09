@@ -1,15 +1,40 @@
-# docker-compose.yml
-version: '3.8'
-
 services:
+  db:
+    image: mysql:8.4
+    container_name: cubespace-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - cubespace_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   app:
     build: .
     container_name: cubespace-app
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DB_NAME: ${DB_NAME}
     ports:
       - "80:80"
       - "8080:8080"
     volumes:
-      - ./:/var/www/html
+      - .:/var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
   phpmyadmin:
@@ -18,10 +43,14 @@ services:
     ports:
       - "8081:80"
     environment:
-      PMA_HOST: "localhost"
-      PMA_USER: "root"
-      PMA_PASSWORD: ""
+      PMA_HOST: ${PMA_HOST}
+      PMA_USER: ${PMA_USER}
+      PMA_PASSWORD: ${PMA_PASSWORD}
       PMA_ARBITRARY: 1
     restart: unless-stopped
     depends_on:
-      - app
+      db:
+        condition: service_started
+
+volumes:
+  cubespace_mysql_data:
