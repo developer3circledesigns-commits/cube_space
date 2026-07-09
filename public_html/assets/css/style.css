@@ -710,7 +710,7 @@ body.mobile-nav-open {
 .footer-col ul:not(.contact-list) li a {
     display: inline-flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     padding: 2px 0;
     text-decoration: none;
     color: rgba(0, 0, 0, 0.85);
@@ -720,7 +720,8 @@ body.mobile-nav-open {
     content: "\f105";
     font-family: "Font Awesome 6 Free";
     font-weight: 900;
-    font-size: 0.75rem;
+    font-size: 0.85rem;
+    line-height: 1;
     color: #0d4ab4;
     transition: transform 0.25s ease;
 }

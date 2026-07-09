@@ -213,12 +213,14 @@ $amenities = json_decode($office['amenities'] ?? '[]', true) ?: [];
 
 // Fetch leasing options
 $leasingStmt = mysqli_prepare($conn, "SELECT option_title, option_desc, option_price, option_image FROM office_leasing_options WHERE office_id = ? AND is_active = 1 ORDER BY sort_order ASC");
-mysqli_stmt_bind_param($leasingStmt, 'i', $officeId);
-mysqli_stmt_execute($leasingStmt);
-$leasingResult = mysqli_stmt_get_result($leasingStmt);
 $leasingOptions = [];
-while ($lr = mysqli_fetch_assoc($leasingResult)) { $leasingOptions[] = $lr; }
-mysqli_stmt_close($leasingStmt);
+if ($leasingStmt) {
+    mysqli_stmt_bind_param($leasingStmt, 'i', $officeId);
+    mysqli_stmt_execute($leasingStmt);
+    $leasingResult = mysqli_stmt_get_result($leasingStmt);
+    while ($lr = mysqli_fetch_assoc($leasingResult)) { $leasingOptions[] = $lr; }
+    mysqli_stmt_close($leasingStmt);
+}
 
 
 
@@ -236,16 +238,18 @@ if ($officeLat && $officeLng) {
         ORDER BY (POW(latitude - ?, 2) + POW(longitude - ?, 2))
         LIMIT 6"
     );
-    mysqli_stmt_bind_param($nearStmt, 'sssdd', $slug, $slug, $slug, $officeLat, $officeLng);
-    mysqli_stmt_execute($nearStmt);
-    $nearRes = mysqli_stmt_get_result($nearStmt);
-    while ($nr = mysqli_fetch_assoc($nearRes)) {
-        $nr['images_arr'] = filter_listing_images($nr['images'] ?? '[]');
-        $nr['first_image'] = $nr['images_arr'][0] ?? null;
-        unset($nr['images']);
-        $nearestOffices[] = $nr;
+    if ($nearStmt) {
+        mysqli_stmt_bind_param($nearStmt, 'sssdd', $slug, $slug, $slug, $officeLat, $officeLng);
+        mysqli_stmt_execute($nearStmt);
+        $nearRes = mysqli_stmt_get_result($nearStmt);
+        while ($nr = mysqli_fetch_assoc($nearRes)) {
+            $nr['images_arr'] = filter_listing_images($nr['images'] ?? '[]');
+            $nr['first_image'] = $nr['images_arr'][0] ?? null;
+            unset($nr['images']);
+            $nearestOffices[] = $nr;
+        }
+        mysqli_stmt_close($nearStmt);
     }
-    mysqli_stmt_close($nearStmt);
 }
 
 $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | CubeSpace';

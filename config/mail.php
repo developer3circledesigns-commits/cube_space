@@ -1,4 +1,4 @@
 <?php
-define('MAIL_HOST', 'localhost');
-define('MAIL_FROM', 'noreply@cubespace.in');
-define('ADMIN_EMAIL', 'admin@cubespace.in');
+define('MAIL_HOST', getenv('MAIL_HOST') ?: 'localhost');
+define('MAIL_FROM', getenv('MAIL_FROM') ?: 'noreply@cubespaces.in');
+define('ADMIN_EMAIL', getenv('ADMIN_EMAIL') ?: 'sales@falconlease.com');

@@ -344,378 +344,245 @@ if (isset($conn) && $conn) {
             color: #dc2626;
         }
 
-        /* ----- Office Cards ----- */
-        .listing-cards {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        .office-card {
-            cursor: pointer;
-            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        /* ===========================================================
+           LISTING CARD
+        ===========================================================*/
 
-            border-radius: 0;
-        }
-        .office-card:hover {
-            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-            border-radius: 0;
-        }
-        .card.office-card {
-            border-radius: 0;
-            border: 1px solid #dcdcdc;
-            overflow: hidden;
-            background: #ffffff;
-        }
-        @media (min-width: 992px) {
-            .office-card.flex-lg-row .office-card-img {
-                width: 35%;
-                flex-shrink: 0;
-                aspect-ratio: 16 / 9;
-                border-radius: 0 !important;
-            }
-            .office-card.flex-lg-row .card-body {
-                flex: 1;
-                padding: 10px 20px;
-
-                border-radius: 0 !important;
-            }
-        }
-        @media (min-width: 768px) and (max-width: 991px) {
-            .office-card .office-card-img {
-                aspect-ratio: 16 / 9;
-
-                border-radius: 0 !important;
-            }
-        }
-        @media (max-width: 767px) {
-            .office-card .office-card-img {
-                aspect-ratio: 16 / 9;
-
-                border-radius: 0 !important;
-            }
-        }
-        .office-card .office-card-img {
-            position: relative;
-            overflow: hidden;
-            background: #f0f2f5;
-            display: flex;
-            align-items: stretch;
-            width: 100%;
-
-            border-radius: 0 !important;
-        }
-        .office-card .office-card-img .placeholder-img {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            min-height: 20px;
-            background: #eef2f7;
-            color: #b0b7c3;
-            font-size: 2.5rem;
-            flex: 1;
-
-            border-radius: 0 !important;
-        }
-        .office-card .office-card-img .card-carousel {
-            display: flex;
-            overflow-x: hidden;
-            scroll-snap-type: x mandatory;
-            scroll-behavior: smooth;
-            width: 100%;
-            height: 100%;
-            flex: 1;
-
-            border-radius: 0 !important;
-        }
-        .office-card .office-card-img .card-carousel .carousel-slide {
-            flex: 0 0 100%;
-            scroll-snap-align: start;
-            overflow: hidden;
-            display: flex;
-            align-items: stretch;
-
-            border-radius: 0 !important;
-        }
-        .office-card .office-card-img .card-carousel .carousel-slide img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            flex-shrink: 0;
-
-            border-radius: 0 !important;
-        }
-        .office-card .office-card-img .img-count {
-            position: absolute;
-            bottom: 6px;
-            right: 10px;
-            background: rgba(0,0,0,0.55);
-            color: #fff;
-            font-size: 0.65rem;
-            padding: 2px 10px;
-            border-radius: 0;
-            z-index: 5;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-
-            border-radius: 0 !important;
-        }
-        .office-card .office-card-img .img-count i {
-            font-size: 0.6rem;
-            border-radius: 0 !important;
+        .listing-cards{
+            display:flex;
+            flex-direction:column;
+            gap:20px;
         }
 
-        /* Carousel buttons */
-        .office-card .office-card-img .carousel-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255,255,255,0.9);
-            border: none;
-            border-radius: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            color: #333;
-            cursor: pointer;
-            z-index: 6;
-            transition: opacity 0.2s;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-            opacity: 0;
-            border-radius: 0 !important;
-        }
-        .office-card:hover .office-card-img .carousel-btn {
-            opacity: 1;
-            border-radius: 0 !important;
-        }
-        .office-card .office-card-img .carousel-prev {
-            left: 8px;
-            border-radius: 0 !important;
-        }
-        .office-card .office-card-img .carousel-next {
-            right: 8px;
-            border-radius: 0 !important;
-
+        .custom-card{
+            border:1px solid #ddd;
+            border-radius:0;
+            overflow:hidden;
+            background:#fff;
+            transition:.25s ease;
+            cursor:pointer;
         }
 
-        /* Carousel dots */
-        .office-card .office-card-img .carousel-dots {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 5px;
-            z-index: 6;
-            border-radius: 0 !important;
-        }
-        .office-card .office-card-img .carousel-dots button {
-            width: 6px;
-            height: 6px;
-            border-radius: 0;
-            border: none;
-            background: rgba(255,255,255,0.5);
-            padding: 0;
-            transition: all 0.2s;
-            cursor: pointer;
-            border-radius: 0 !important;
-        }
-        .office-card .office-card-img .carousel-dots button.active {
-            background: #fff;
-            width: 18px;
-            border-radius: 0 !important;
+        .custom-card:hover{
+            box-shadow:0 8px 25px rgba(0,0,0,.08);
         }
 
-        /* Card Body */
-        .office-card .card-body {
-            padding: 10px 16px 10px;
-            border-radius: 0;
+        .custom-card .row{
+            align-items:start;
         }
-        .office-card .card-body .property-name {
-            font-size: 1rem;
-            font-weight: 600;
-            margin: 0 0 2px 0;
-            color: #1a1a2e;
-            line-height: 1.3;
-            border-radius: 0 !important;
-        }
-        .office-card .card-body .property-address {
-            font-size: 0.8rem;
-            color: #6b7280;
-            margin: 0 0 10px 0;
-            display: flex;
-            align-items: flex-start;
-            gap: 5px;
-            border-radius: 0 !important;
-        }
-        .office-card .card-body .property-address i {
-            margin-top: 3px;
-            color: var(--primary);
-            font-size: 0.75rem;
-            border-radius: 0 !important;
-        }
-        .office-card .card-body .stats-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px 10px;
-            margin-bottom: 10px;
-            border-radius: 0 !important;
-        }
-        .office-card .card-body .stats-row .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 0.78rem;
-            color: #4b5563;
-            border-radius: 0 !important;
-        }
-        .office-card .card-body .stats-row .stat-item i {
-            color: var(--primary);
-            font-size: 0.7rem;
-            width: 14px;
-            text-align: center;
-            border-radius: 0 !important;
-        }
-        .office-card .card-body .stats-row .stat-item .stat-value {
-            font-weight: 600;
-            color: #1a1a2e;
-            white-space: nowrap;
-            border-radius: 0 !important;
-        }
-        .office-card .card-body .stats-row .stat-item.inv-badge .stat-value {
-            padding: 1px 10px;
 
-            font-size: 0.7rem;
-            font-weight: 600;
-            white-space: nowrap;
-            border-radius: 0 !important;
+        /* ========== IMAGE COLUMN ========== */
+
+        .image-wrapper{
+            position:relative;
+            padding:10px;
+            background:#fff;
+            overflow:hidden;
+            box-sizing:border-box;
         }
-        .office-card .card-body .stats-row .stat-item.inv-ready i {
-            color: #166534;
-            border-radius: 0 !important;
+
+        .image-wrapper .card-carousel{
+            width:100%;
+            display:flex;
+            overflow:hidden;
+            scroll-snap-type:x mandatory;
+            scroll-behavior:smooth;
         }
-        .office-card .card-body .stats-row .stat-item.inv-ready .stat-value {
-            background: #dcfce7;
-            color: #166534;
-            border-radius: 0 !important;
+
+        .image-wrapper .carousel-slide{
+            flex:0 0 100%;
+            scroll-snap-align:start;
         }
-        .office-card .card-body .stats-row .stat-item.inv-processing i {
-            color: #92400e;
-            border-radius: 0 !important;
+
+        .image-wrapper img,
+        .image-wrapper .carousel-slide img{
+            width:100%;
+            display:block;
+            object-fit:cover;
+            aspect-ratio:2/1;
+            border-radius:0;
         }
-        .office-card .card-body .stats-row .stat-item.inv-processing .stat-value {
-            background: #fef3c7;
-            color: #92400e;
-            border-radius: 0 !important;
+
+        .image-wrapper .placeholder-img{
+            width:100%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            aspect-ratio:2/1;
+            background:#f4f4f4;
+            color:#b6b6b6;
+            font-size:45px;
+            box-sizing:border-box;
         }
-        .office-card .card-body .description-wrapper {
-            margin-bottom: 8px;
-            border-radius: 0 !important;
+
+        /* ========== CARD CONTENT ========== */
+
+        .card-body{
+            padding:16px 18px;
+            display:flex;
+            flex-direction:column;
         }
-        .office-card .card-body .description-text {
-            font-size: 0.78rem;
-            color: #4b5563;
-            line-height: 1.5;
-            text-align: justify;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            margin: 0;
-            border-radius: 0 !important;
+
+        .card-title{
+            margin-bottom:6px;
+            font-size:18px;
+            font-weight:700;
+            color:#222;
         }
-        .office-card .card-body .description-text.expanded {
-            -webkit-line-clamp: unset;
-            border-radius: 0 !important;
+        .card-title code{font-size:.8rem;}
+
+        .property-address{
+            display:flex;
+            align-items:center;
+            gap:5px;
+            margin-bottom:6px;
+            color:#666;
+            font-size:13px;
         }
-        .office-card .card-body .description-toggle {
-            background: none;
-            border: none;
-            color: var(--primary);
-            font-size: 0.7rem;
-            font-weight: 500;
-            cursor: pointer;
-            padding: 2px 0;
-            margin-top: 4px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            border-radius: 0 !important;
+        .property-address i{
+            color:var(--primary);
+            font-size:.75rem;
         }
-        .office-card .card-body .description-toggle:hover {
-            opacity: 0.8;
-            border-radius: 0 !important;
+
+        .description-wrapper{
+            margin-bottom:6px;
         }
-        .office-card .card-body .description-toggle i {
-            font-size: 0.6rem;
-            transition: transform 0.2s;
-            border-radius: 0 !important;
+
+        .description-text{
+            display:-webkit-box;
+            -webkit-line-clamp:2;
+            -webkit-box-orient:vertical;
+            overflow:hidden;
+            font-size:13px;
+            color:#555;
+            line-height:1.5;
+            text-align:justify;
         }
-        .office-card .card-body .description-toggle.expanded i {
-            transform: rotate(180deg);
-            border-radius: 0 !important;
+        .description-text.expanded{
+            -webkit-line-clamp:unset;
         }
-        .office-card .card-body .card-footer-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding-top: 12px;
-            border-top: 1px solid #f0f2f5;
-            border-radius: 0 !important;
+        .description-toggle{
+            display:inline-flex;
+            align-items:center;
+            gap:4px;
+            background:none;
+            border:none;
+            color:var(--primary);
+            font-size:12px;
+            padding:0;
+            cursor:pointer;
+            margin-top:5px;
+            font-weight:500;
         }
-        .office-card .card-body .card-price {
-            display: flex;
-            flex-direction: column;
-            border-radius: 0 !important;
+        .description-toggle:hover{
+            text-decoration:underline;
         }
-        .office-card .card-body .card-price .price-label {
-            font-size: 0.6rem;
-            color: #9ca3af;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            border-radius: 0 !important;
+
+        .stats-row{
+            display:flex;
+            flex-wrap:wrap;
+            gap:4px 10px;
+            margin-bottom:8px;
         }
-        .office-card .card-body .card-price .amount {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--primary);
-            line-height: 1.2;
-            border-radius: 0 !important;
+        .stats-row .stat-item{
+            display:flex;
+            align-items:center;
+            gap:3px;
+            font-size:.72rem;
+            color:#4b5563;
         }
-        .office-card .card-body .card-price .period {
-            font-size: 0.7rem;
-            color: #6b7280;
-            font-weight: 400;
-            border-radius: 0 !important;
+        .stats-row .stat-item i{
+            color:var(--primary);
+            font-size:.65rem;
+            width:12px;
+            text-align:left;
         }
-        .office-card .card-body .card-price .contact-price {
-            font-weight: 600;
-            color: #6b7280;
-            font-size: 0.85rem;
-            border-radius: 0 !important;
+        .stats-row .stat-item .stat-value{
+            font-weight:600;
+            color:#1a1a2e;
+            white-space:nowrap;
         }
-        .office-card .card-body .card-actions .btn {
-            font-weight: 600;
-            font-size: 0.78rem;
-            padding: 6px 18px;
-            background: var(--primary);
-            border: none;
-            color: #fff;
-            transition: background 0.2s;
-            white-space: nowrap;
-            border-radius: 0 !important;
+        .stats-row .stat-item.inv-badge .stat-value{
+            padding:1px 8px;
+            font-size:.65rem;
+            font-weight:600;
+            white-space:nowrap;
         }
-        .office-card .card-body .card-actions .btn:hover {
-            background: var(--primary-dark);
-            border-radius: 0 !important;
+        .stats-row .stat-item.inv-ready i{color:#166534;}
+        .stats-row .stat-item.inv-ready .stat-value{background:#dcfce7;color:#166534;}
+        .stats-row .stat-item.inv-processing i{color:#92400e;}
+        .stats-row .stat-item.inv-processing .stat-value{background:#fef3c7;color:#92400e;}
+
+        .card-actions{
+            margin-top:auto;
         }
+        .card-actions .btn{
+            font-weight:600;
+            font-size:.8rem;
+            padding:7px 18px;
+            background:var(--primary);
+            border:none;
+            color:#fff;
+            transition:background .2s;
+            white-space:nowrap;
+        }
+        .card-actions .btn:hover{background:var(--primary-dark);}
+
+        .card-price{display:flex;flex-direction:column;}
+        .card-price .price-label{font-size:.55rem;color:#9ca3af;text-transform:uppercase;letter-spacing:.3px;}
+        .card-price .amount{font-size:1rem;font-weight:700;color:var(--primary);line-height:1.2;}
+        .card-price .period{font-size:.65rem;color:#6b7280;font-weight:400;}
+        .card-price .contact-price{font-weight:600;color:#6b7280;font-size:.8rem;}
+
+        /* ========== CAROUSEL CONTROLS ========== */
+
+        .image-wrapper .carousel-btn{
+            position:absolute;
+            top:50%;
+            transform:translateY(-50%);
+            width:30px;
+            height:30px;
+            border:none;
+            background:rgba(255,255,255,.9);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:12px;
+            opacity:0;
+            transition:.25s;
+            z-index:5;
+            cursor:pointer;
+        }
+
+        .custom-card:hover .carousel-btn{
+            opacity:1;
+        }
+
+        .carousel-prev{left:18px;}
+        .carousel-next{right:18px;}
+
+        .carousel-dots{
+            position:absolute;
+            left:50%;
+            bottom:18px;
+            transform:translateX(-50%);
+            display:flex;
+            gap:5px;
+        }
+
+        .carousel-dots button{
+            width:6px;
+            height:6px;
+            border:none;
+            background:rgba(255,255,255,.5);
+        }
+
+        .carousel-dots button.active{
+            width:16px;
+            background:#fff;
+        }
+
+
 
         /* ----- Pagination ----- */
         .pagination-wrapper {
@@ -1194,7 +1061,7 @@ if (isset($conn) && $conn) {
         }
 
         /* ----- Responsive ----- */
-        @media (max-width: 991px) {
+        @media (max-width: 991px){
             .filter-bar {
                 padding: 12px 14px;
                 gap: 8px;
@@ -1215,9 +1082,36 @@ if (isset($conn) && $conn) {
                 min-width: 150px;
                 max-width: 100%;
             }
+            .image-wrapper{
+                padding:10px;
+            }
+            .card-body{
+                padding:14px 16px;
+            }
         }
 
-        @media (max-width: 767px) {
+        @media (max-width: 767px){
+            .custom-card .row{
+                flex-direction:column;
+            }
+            .image-wrapper{
+                padding:10px;
+            }
+            .image-wrapper img,
+            .image-wrapper .carousel-slide img,
+            .image-wrapper .placeholder-img{
+                aspect-ratio:2/1;
+            }
+            .card-body{
+                text-align:center;
+                padding:12px 14px;
+            }
+            .property-address{
+                justify-content:center;
+            }
+            .stats-row{
+                justify-content:center;
+            }
             .container {
                 padding-left: 12px;
                 padding-right: 12px;
@@ -1231,225 +1125,46 @@ if (isset($conn) && $conn) {
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
             }
-            .filter-bar::-webkit-scrollbar {
-                display: none;
-            }
+            .filter-bar::-webkit-scrollbar { display: none; }
             .filter-bar .filter-select {
                 width: 100% !important;
                 max-width: 100% !important;
                 min-width: unset;
             }
             .filter-bar .position-relative {
-                min-width: unset;
-                max-width: 100%;
-                width: 100%;
+                min-width: unset; max-width: 100%; width: 100%;
             }
-            .filter-bar .position-relative .form-control {
-                width: 100%;
-            }
-            .localities-section {
-                padding: 10px 12px;
-            }
-            .localities-section .d-flex.flex-wrap {
-                gap: 4px;
-            }
-            .locality-chip {
-                font-size: 0.7rem;
-                padding: 3px 12px;
-            }
-            .localities-scroll-container {
-                gap: 4px;
-            }
-            .scroll-btn {
-                width: 22px;
-                height: 22px;
-                font-size: 0.55rem;
-            }
-            .results-counter {
-                font-size: 0.8rem;
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .office-card .office-card-img {
-                aspect-ratio: 16 / 9;
-                min-height: 45px;
-                max-height: 80px;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body {
-                padding: 3px 12px 4px;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body .property-name {
-                font-size: 0.88rem;
-                margin-bottom: 1px;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body .property-address {
-                font-size: 0.73rem;
-                margin-bottom: 8px;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body .stats-row {
-                gap: 3px 6px;
-                margin-bottom: 8px;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body .stats-row .stat-item {
-                font-size: 0.7rem;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body .card-footer-row {
-                padding-top: 10px;
-                gap: 8px;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body .card-price .amount {
-                font-size: 0.9rem;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body .card-actions .btn {
-                font-size: 0.68rem;
-                padding: 5px 12px;
-                border-radius: 0 !important;
-            }
-            .office-card .office-card-img .carousel-btn {
-                width: 24px;
-                height: 24px;
-                font-size: 0.6rem;
-                opacity: 1;
-                border-radius: 0 !important;
-            }
-            .office-card .office-card-img .carousel-dots button {
-                width: 5px;
-                height: 5px;
-                border-radius: 0;
-            }
-            .office-card .office-card-img .carousel-dots button.active {
-                width: 14px;
-                border-radius: 0;
-            }
-            .listing-cards {
-                gap: 10px;
-            }
-            .aside-card .card-body {
-                padding: 16px;
-            }
-            .nearest-section .nearest-grid {
-                grid-template-columns: 1fr;
-            }
-            .toast-container {
-                bottom: 12px;
-                right: 12px;
-                left: 12px;
-                max-width: 100%;
-            }
-            .toast {
-                font-size: 0.8rem;
-                padding: 12px 16px;
-            }
-            .modal-dialog {
-                margin: 12px;
-            }
-            .modal-content {
-                }
-            .modal-body .form-control {
-                font-size: 0.85rem;
-                padding: 8px 12px;
-            }
-            .breadcrumb {
-                font-size: 0.75rem;
-            }
-            .pagination-wrapper .page-link {
-                padding: 4px 10px;
-                font-size: 0.75rem;
-            }
+            .filter-bar .position-relative .form-control { width: 100%; }
+            .localities-section { padding: 10px 12px; }
+            .localities-section .d-flex.flex-wrap { gap: 4px; }
+            .locality-chip { font-size: 0.7rem; padding: 3px 12px; }
+            .localities-scroll-container { gap: 4px; }
+            .scroll-btn { width: 22px; height: 22px; font-size: 0.55rem; }
+            .results-counter { font-size: 0.8rem; flex-direction: column; align-items: flex-start; }
+            .listing-cards { gap: 10px; }
+            .aside-card .card-body { padding: 16px; }
+            .nearest-section .nearest-grid { grid-template-columns: 1fr; }
+            .toast-container { bottom: 12px; right: 12px; left: 12px; max-width: 100%; }
+            .toast { font-size: 0.8rem; padding: 12px 16px; }
+            .modal-dialog { margin: 12px; }
+            .modal-body .form-control { font-size: 0.85rem; padding: 8px 12px; }
+            .breadcrumb { font-size: 0.75rem; }
+            .pagination-wrapper .page-link { padding: 4px 10px; font-size: 0.75rem; }
         }
 
-        @media (max-width: 575px) {
-            .container {
-                padding-left: 8px;
-                padding-right: 8px;
-            }
-            .office-card .office-card-img {
-                aspect-ratio: 16 / 9;
-                min-height: 35px;
-                max-height: 60px;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body {
-                padding: 2px 10px 3px;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body .property-name {
-                font-size: 0.82rem;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body .property-address {
-                margin-bottom: 6px;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body .stats-row {
-                gap: 2px 4px;
-                margin-bottom: 6px;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body .stats-row .stat-item {
-                font-size: 0.66rem;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body .card-footer-row {
-                padding-top: 8px;
-                flex-wrap: wrap;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body .card-price .amount {
-                font-size: 0.82rem;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body .card-price .price-label {
-                font-size: 0.55rem;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body .card-actions .btn {
-                font-size: 0.63rem;
-                padding: 4px 10px;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body .description-text {
-                font-size: 0.72rem;
-                border-radius: 0 !important;
-            }
-            .office-card .card-body .description-toggle {
-                font-size: 0.65rem;
-                border-radius: 0 !important;
-            }
-            .locality-chip {
-                font-size: 0.63rem;
-                padding: 2px 8px;
-            }
-            .localities-scroll-container {
-                gap: 3px;
-            }
-            .scroll-btn {
-                width: 20px;
-                height: 20px;
-                font-size: 0.5rem;
-            }
-            .filter-bar {
-                padding: 8px;
-                gap: 4px;
-            }
-            .filter-bar .filter-select {
-                font-size: 0.72rem;
-                padding: 2px 18px 2px 6px;
-                min-height: 28px;
-            }
-            .filter-bar .form-control {
-                font-size: 0.72rem;
-                padding: 2px 6px;
-                min-height: 28px;
-            }
+        @media (max-width: 575px){
+            .container { padding-left: 8px; padding-right: 8px; }
+            .image-wrapper { padding:8px; }
+            .card-body { padding:10px 12px; }
+            .stats-row .stat-item { font-size:0.66rem; }
+            .card-price .amount { font-size:0.9rem; }
+            .card-actions .btn { font-size:0.75rem; padding:6px 14px; }
+            .locality-chip { font-size: 0.63rem; padding: 2px 8px; }
+            .localities-scroll-container { gap: 3px; }
+            .scroll-btn { width: 20px; height: 20px; font-size: 0.5rem; }
+            .filter-bar { padding: 8px; gap: 4px; }
+            .filter-bar .filter-select { font-size: 0.72rem; padding: 2px 18px 2px 6px; min-height: 28px; }
+            .filter-bar .form-control { font-size: 0.72rem; padding: 2px 6px; min-height: 28px; }
         }
     </style>
 </head>
@@ -1471,54 +1186,48 @@ if (isset($conn) && $conn) {
 
         <!-- Header -->
         <div class="mb-4">
-            <h1 class="fw-bold mb-2"><?= $heading ?> <span id="pageCity" class="text-primary">Chennai</span></h1>
+            <h1 class="mb-1" style="font-size: 1.5rem;"><?= $heading ?> <span id="pageCity" class="text-primary">Chennai</span></h1>
             <p class="text-muted mb-0"><?= $subheading ?></p>
         </div>
 
         <!-- Filter Bar -->
-        <div class="d-flex gap-2 mb-3 align-items-center filter-bar" id="filterBar" role="search" aria-label="Filter office spaces" style="flex-wrap: nowrap; overflow-x: auto;">
-            <select class="form-select form-select-sm filter-select filter-product-select" id="filterProduct" aria-label="Filter by Product">
-                <option value="">All Products</option>
-                <option value="managed">Managed Furnished Office</option>
-                <option value="commercial" selected>Furnished / Unfurnished Office</option>
-            </select>
-            <span class="text-muted" style="font-size: 1.1rem; line-height: 1; flex-shrink: 0;">|</span>
-            <select class="form-select form-select-sm filter-select filter-city-select" id="filterCity" aria-label="Filter by City">
-                <option value="">All Cities</option>
-                <?php foreach ($cities as $c): ?>
-                    <option value="<?= htmlspecialchars($c) ?>"><?= htmlspecialchars(ucfirst($c)) ?></option>
-                <?php endforeach; ?>
-            </select>
-            <select class="form-select form-select-sm filter-select filter-locality-select" id="filterLocality" aria-label="Filter by Locality">
-                <option value="">All Locations</option>
-                <?php foreach ($areas as $a): ?>
-                    <option value="<?= htmlspecialchars($a) ?>"><?= htmlspecialchars(ucfirst($a)) ?></option>
-                <?php endforeach; ?>
-            </select>
-            <select class="form-select form-select-sm filter-select filter-sqft-select" id="filterSqft" aria-label="Filter by Square Feet">
-                <option value="">All Sq Ft</option>
-                <option value="1000-5000">1000 - 5000</option>
-                <option value="5000-10000">5000 - 10000</option>
-                <option value="10000-20000">10000 - 20000</option>
-                <option value="20000-">20000+</option>
-            </select>
-        </div>
-
-        <!-- Localities -->
-        <div class="localities-section mb-4">
-            <div class="d-flex align-items-center gap-2 mb-2">
-                <i class="fa-solid fa-location-dot text-primary"></i>
-                <span class="fw-semibold small">Popular Localities</span>
+        <div class="d-flex gap-2 mb-3 align-items-end filter-bar" id="filterBar" role="search" aria-label="Filter office spaces" style="flex-wrap: nowrap; overflow-x: auto;">
+            <div>
+                <label class="form-label" style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:2px;white-space:nowrap;">Product</label>
+                <select class="form-select form-select-sm filter-select filter-product-select" id="filterProduct" aria-label="Filter by Product">
+                    <option value="">All Products</option>
+                    <option value="managed">Managed Furnished Office</option>
+                    <option value="commercial" selected>Furnished / Unfurnished Office</option>
+                </select>
             </div>
-            <div class="localities-scroll-wrap">
-                <button class="scroll-btn scroll-left" type="button" aria-label="Scroll left" onclick="scrollLocalities(-1)" disabled><i class="fa-solid fa-chevron-left"></i></button>
-                <div class="localities-scroll-container" id="localityChips" role="tablist" aria-label="Filter by locality">
-                    <?php foreach (['Guindy', 'Pallavaram – Thoraipakkam Radial Road', 'OMR', 'Taramani', 'Perungudi', 'Thoraipakkam', 'Sholinganallur', 'Navalur','Velachery','Nungambakkam','T.Nagar'] as $loc): ?>
-                        <button class="btn btn-sm locality-chip" data-area="<?= htmlspecialchars($loc) ?>" role="tab" aria-selected="false"><?= htmlspecialchars($loc) ?></button>
+            <div style="width:1px;background:#bbb;align-self:stretch;flex-shrink:0;"></div>
+            <div>
+                <label class="form-label" style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:2px;white-space:nowrap;">City</label>
+                <select class="form-select form-select-sm filter-select filter-city-select" id="filterCity" aria-label="Filter by City">
+                    <option value="">All Cities</option>
+                    <?php foreach ($cities as $c): ?>
+                        <option value="<?= htmlspecialchars($c) ?>"><?= htmlspecialchars(ucfirst($c)) ?></option>
                     <?php endforeach; ?>
-                    <button class="btn btn-sm locality-chip active" data-area="" role="tab" aria-selected="true">All</button>
-                </div>
-                <button class="scroll-btn scroll-right" type="button" aria-label="Scroll right" onclick="scrollLocalities(1)"><i class="fa-solid fa-chevron-right"></i></button>
+                </select>
+            </div>
+            <div>
+                <label class="form-label" style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:2px;white-space:nowrap;">Locality</label>
+                <select class="form-select form-select-sm filter-select filter-locality-select" id="filterLocality" aria-label="Filter by Locality">
+                    <option value="">All Locations</option>
+                    <?php foreach ($areas as $a): ?>
+                        <option value="<?= htmlspecialchars($a) ?>"><?= htmlspecialchars(ucfirst($a)) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div>
+                <label class="form-label" style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:2px;white-space:nowrap;">Sq Ft</label>
+                <select class="form-select form-select-sm filter-select filter-sqft-select" id="filterSqft" aria-label="Filter by Square Feet">
+                    <option value="">All Sq Ft</option>
+                    <option value="1000-5000">1000 - 5000</option>
+                    <option value="5000-10000">5000 - 10000</option>
+                    <option value="10000-20000">10000 - 20000</option>
+                    <option value="20000-">20000+</option>
+                </select>
             </div>
         </div>
 
@@ -2051,10 +1760,6 @@ if (isset($conn) && $conn) {
                     carouselHtml = '<div class="placeholder-img"><i class="fa-solid fa-building"></i></div>';
                 }
 
-                const imgCount = o.images_arr && o.images_arr.length > 1 ?
-                    `<div class="img-count"><i class="fa-solid fa-image"></i> ${o.images_arr.length}</div>` :
-                    '';
-
                 const address = o.address || o.area || o.city || '';
 
                 let statsHtml = '';
@@ -2087,26 +1792,31 @@ if (isset($conn) && $conn) {
                     </div>` : '';
 
                 html += `
-                        <div class="card office-card flex-lg-row" data-slug="${escHtml(o.slug)}" data-listing-type="${escHtml(o.listing_type_db)}" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
-                            <div class="card-img-top office-card-img">
-                                ${carouselHtml}
-                                ${imgCount}
-                            </div>
-                            <div class="card-body d-flex flex-column">
-                                <h5 class="property-name">${escHtml(o.title)} ${o.listing_code ? '<code class="small text-muted fw-normal">' + escHtml(o.listing_code) + '</code>' : ''}</h5>
-                                <p class="property-address"><i class="fa-solid fa-location-dot"></i> <span>${escHtml(address)}</span></p>
-                                ${descHtml}
-                                ${statsHtml ? '<div class="stats-row">' + statsHtml + '</div>' : ''}
-                                <div class="card-footer-row mt-auto">
-                                    <div class="card-price">
-                                        <span class="price-label" style="font-weight:bold; color:#212529;">
+                        <div class="card custom-card shadow-sm" data-slug="${escHtml(o.slug)}" data-listing-type="${escHtml(o.listing_type_db)}" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
+                            <div class="row g-0 align-items-stretch">
+                                <div class="col-lg-6 col-md-6 image-wrapper">
+                                    ${carouselHtml}
+                                </div>
+                                <div class="col-lg-6 col-md-6">
+                                    <div class="card-body">
+                                        <h3 class="card-title mb-3">${escHtml(o.title)} ${o.listing_code ? '<code class="small text-muted fw-normal">' + escHtml(o.listing_code) + '</code>' : ''}</h3>
+                                        <p class="property-address"><i class="fa-solid fa-location-dot"></i> <span>${escHtml(address)}</span></p>
+                                        ${descHtml}
+                                        ${statsHtml ? '<div class="stats-row">' + statsHtml + '</div>' : ''}
+                                        <div class="mt-auto">
+                                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                                <div class="card-price">
+                                                    <span class="price-label" style="font-weight:bold; color:#212529;">
     Quoted Lease 
     <span style="font-weight:normal; text-transform:none;">(Negotiable)</span>
 </span>
-                                        ${price}
-                                    </div>
-                                    <div class="card-actions">
-                                        <span class="btn btn-get-price" role="button" tabindex="0" data-office-id="${o.id}" data-listing-code="${escHtml(o.listing_code)}" onclick="event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')" onkeydown="if(event.key==='Enter'){event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')}">Get Best Price</span>
+                                                    ${price}
+                                                </div>
+                                                <div class="card-actions">
+                                                    <span class="btn btn-get-price" role="button" tabindex="0" data-office-id="${o.id}" data-listing-code="${escHtml(o.listing_code)}" onclick="event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')" onkeydown="if(event.key==='Enter'){event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')}">Get Best Price</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -2117,7 +1827,7 @@ if (isset($conn) && $conn) {
 
             initCarousels(container);
 
-            container.querySelectorAll('.office-card').forEach(card => {
+            container.querySelectorAll('.custom-card').forEach(card => {
                 card.addEventListener('click', function(e) {
                     if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
                         .target.closest('.btn-get-price') || e.target.closest('.description-toggle')) return;
@@ -2173,7 +1883,6 @@ if (isset($conn) && $conn) {
             nearest.forEach(o => {
                 const carouselId = 'ncar-' + o.id;
                 let carouselHtml = '';
-                let imgCountHtml = '';
 
                 if (o.images_arr && o.images_arr.length) {
                     const lastIdx = o.images_arr.length - 1;
@@ -2202,9 +1911,6 @@ if (isset($conn) && $conn) {
                         }
                         carouselHtml += '</div>';
                     }
-                    imgCountHtml = o.images_arr.length > 1 ?
-                        `<div class="img-count"><i class="fa-solid fa-image"></i> ${o.images_arr.length}</div>` :
-                        '';
                 } else {
                     carouselHtml = '<div class="placeholder-img"><i class="fa-solid fa-building"></i></div>';
                 }
@@ -2244,25 +1950,30 @@ if (isset($conn) && $conn) {
                     </div>` : '';
 
                 html += `
-                                <div class="card office-card" data-slug="${escHtml(o.slug)}" data-listing-type="${escHtml(o.listing_type_db)}" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
-                                    <div class="card-img-top office-card-img position-relative overflow-hidden">
-                                        <span class="badge-nearby"><i class="fa-regular fa-compass"></i> Nearby</span>
-                                        ${carouselHtml}
-                                        ${imgCountHtml}
-                                    </div>
-                                    <div class="card-body d-flex flex-column">
-                                        ${distanceHtml}
-                                        <h5 class="property-name">${escHtml(o.title)} ${o.listing_code ? '<code class="small text-muted fw-normal">' + escHtml(o.listing_code) + '</code>' : ''}</h5>
-                                        <p class="property-address"><i class="fa-solid fa-location-dot"></i> <span>${escHtml(address)}</span></p>
-                                        ${descHtml}
-                                        ${statsHtml ? '<div class="stats-row">' + statsHtml + '</div>' : ''}
-                                        <div class="card-footer-row mt-auto">
-                                            <div class="card-price">
-                                                <span class="price-label">Quoted Lease</span>
-                                                ${price}
-                                            </div>
-                                            <div class="card-actions">
-                                                <span class="btn btn-get-price" role="button" tabindex="0" data-office-id="${o.id}" data-listing-code="${escHtml(o.listing_code)}" onclick="event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')" onkeydown="if(event.key==='Enter'){event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')}">Get Best Price</span>
+                                <div class="card custom-card shadow-sm" data-slug="${escHtml(o.slug)}" data-listing-type="${escHtml(o.listing_type_db)}" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
+                                    <div class="row g-0 align-items-stretch">
+                                        <div class="col-lg-6 col-md-6 image-wrapper">
+                                            <span class="badge-nearby"><i class="fa-regular fa-compass"></i> Nearby</span>
+                                            ${carouselHtml}
+                                        </div>
+                                        <div class="col-lg-6 col-md-6">
+                                            <div class="card-body">
+                                                ${distanceHtml}
+                                                <h3 class="card-title mb-3">${escHtml(o.title)} ${o.listing_code ? '<code class="small text-muted fw-normal">' + escHtml(o.listing_code) + '</code>' : ''}</h3>
+                                                <p class="property-address"><i class="fa-solid fa-location-dot"></i> <span>${escHtml(address)}</span></p>
+                                                ${descHtml}
+                                                ${statsHtml ? '<div class="stats-row">' + statsHtml + '</div>' : ''}
+                                                <div class="mt-auto">
+                                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                                        <div class="card-price">
+                                                            <span class="price-label">Quoted Lease</span>
+                                                            ${price}
+                                                        </div>
+                                                        <div class="card-actions">
+                                                            <span class="btn btn-get-price" role="button" tabindex="0" data-office-id="${o.id}" data-listing-code="${escHtml(o.listing_code)}" onclick="event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')" onkeydown="if(event.key==='Enter'){event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')}">Get Best Price</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -2277,7 +1988,7 @@ if (isset($conn) && $conn) {
             initCarousels(el);
 
             // Click handlers for nearest cards
-            el.querySelectorAll('.office-card').forEach(card => {
+            el.querySelectorAll('.custom-card').forEach(card => {
                 card.addEventListener('click', function(e) {
                     if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
                         .target.closest('.btn-get-price') || e.target.closest('.description-toggle')) return;

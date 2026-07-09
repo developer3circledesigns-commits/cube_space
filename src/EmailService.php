@@ -10,9 +10,9 @@ class EmailService {
     private bool $enabled;
 
     public function __construct() {
-        $this->fromEmail = getenv('MAIL_FROM') ?: 'noreply@cubespace.in';
+        $this->fromEmail = getenv('MAIL_FROM') ?: 'noreply@cubespaces.in';
         $this->fromName = 'CubeSpace';
-        $this->adminEmail = getenv('ADMIN_EMAIL') ?: 'admin@cubespace.in';
+        $this->adminEmail = getenv('ADMIN_EMAIL') ?: 'sales@falconlease.com';
         $host = getenv('MAIL_HOST');
 
         if (empty($host)) {

@@ -6,13 +6,13 @@ $db   = getenv('DB_NAME') ?: ($_SERVER['DB_NAME'] ?? null);
 $port = getenv('DB_PORT') ?: ($_SERVER['DB_PORT'] ?? null);
 
 if (empty($host)) {
-    $host = file_exists('/.dockerenv') ? 'mysql' : '127.0.0.1';
+    $host = file_exists('/.dockerenv') ? 'mysql' : 'localhost';
 }
 if (empty($user)) {
-    $user = 'root';
+    $user = 'u814177917_cubespace';
 }
 if ($pass === null || $pass === '') {
-    $pass = '';
+    $pass = 'cubespace@123C';
 }
 if (empty($db)) {
     $db = 'u814177917_cubespace';

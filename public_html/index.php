@@ -101,7 +101,8 @@ if ($action === 'forgot_password' || $action === 'reset_password') {
 
         <div class="hero-content">
 
-            <h1>Find your Perfect Workspace in Chennai</h1>
+            <div style="font-size: 50px; padding-top: 0px; padding-bottom:169px; font-weight: 500; color: #fff; margin-bottom: 8px; letter-spacing: 0.5px;">www.cubespaces.in</div>
+            <h1>Find your Perfect Workspace</h1>
 
             <p>Flexible office solutions for startups, SMEs and Enterprises</p>
 
@@ -112,13 +113,13 @@ if ($action === 'forgot_password' || $action === 'reset_password') {
                 <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
                     <div class="leasing-tabs">
                         <button type="button" class="tab-btn active" onclick="cubeNavigate('managed_offices.php')">
-                            Managed Office Spaces<br><span>( All inclusive Rentals )</span>
+                            Managed Office Spaces<br><span style="text-transform: none;">( All Inclusive Rentals )</span>
                             <br><span class="hero-tab-cta" style="text-decoration:none !important;">Click Here</span>
                         </button>
                     </div>
                     <div class="leasing-tabs">
                         <button type="button" class="tab-btn" onclick="cubeNavigate('furnished_offices.php')">
-                            Furnished / Unfurnished Office Spaces<br><span style="text-transform: none;">( Regular Lease On S<span style="text-transform: lowercase;">q</span> F<span style="text-transform: lowercase;">t</span> basis )</span>
+                            Furnished / Unfurnished Office Spaces<br><span style="text-transform: none;">( Regular Rental on S<span style="text-transform: lowercase;">q</span> F<span style="text-transform: lowercase;">t</span> basis )</span>
                             <br><span class="hero-tab-cta" style="text-decoration:none !important;">Click Here</span>
                         </button>
                     </div>

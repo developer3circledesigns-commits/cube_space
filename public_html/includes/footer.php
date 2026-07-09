@@ -28,20 +28,19 @@
             <h3>Contact Info</h3>
             <ul class="contact-list">
                 <li><i class="fa-solid fa-phone"></i><a href="tel:+919962200015">+91 99622 00015</a></li>
+                <li><i class="fa-solid fa-envelope"></i><a href="mailto:sales@falconlease.com">sales@falconlease.com</a></li>
                 <li><i class="fa-solid fa-location-dot"></i><span>Chennai</span></li>
                 <li><i class="fa-solid fa-envelope"></i><a href="mailto:hafiz@falconlease.com">hafiz@falconlease.com</a></li>
-                <li><i class="fa-solid fa-envelope"></i><a href="mailto:sales@falconlease.com">sales@falconlease.com</a></li>
                 <li><i class="fa-solid fa-globe"></i><a href="https://www.cubespaces.in" target="_blank" rel="noopener noreferrer">www.cubespaces.in</a></li>
-                <li><i class="fa-solid fa-globe"></i><a href="https://www.cubespaces.work" target="_blank" rel="noopener noreferrer">www.cubespaces.work</a></li>
             </ul>
         </div>
 
     </div>
 
-    <div class="footer-bottom">
+    <!-- <div class="footer-bottom">
         <p>&copy; <?= date('Y') ?> CubeSpace. All Rights Reserved.</p>
         <p>Design and Developed By Circle Designs</p>
-    </div>
+    </div> -->
 
 </footer>
 

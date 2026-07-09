@@ -2,7 +2,6 @@ User-agent: *
 Disallow: /admin/
 Disallow: /api/
 Disallow: /uploads/
-Disallow: /lib/
 Allow: /
 
 Sitemap: https://cubespaces.in/sitemap.xml
