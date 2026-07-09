@@ -412,37 +412,40 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
             .gallery-side .gallery-item { height: 140px; }
         }
 
-        /* ===== LIGHTBOX ===== */
-        .lightbox { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.93); display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .lightbox.active { display: flex; }
-        .lb-top { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; z-index: 10; background: linear-gradient(rgba(0,0,0,0.4), transparent); }
-        .lb-counter { font-size: 13px; color: rgba(255,255,255,0.7); font-weight: 500; }
-        .lb-close { width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(255,255,255,0.1); color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; font-family: inherit; }
-        .lb-close:hover { background: rgba(255,255,255,0.2); }
-        .lb-progress { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.15); z-index: 11; }
-        .lb-progress-fill { height: 100%; background: #0d4ab4; transition: width 0.3s ease; }
-        .lb-slide-area { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; position: relative; overflow: hidden; touch-action: pan-y; }
-        .lb-slide-track { display: flex; height: 100%; transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94); will-change: transform; }
-        .lb-slide { flex: 0 0 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 60px 80px; }
-        .lb-slide img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; user-select: none; -webkit-user-drag: none; transition: opacity 0.2s; opacity: 1; }
-        .lb-slide.loading img { opacity: 0; }
-        .lb-slide img.zoomed { transform: scale(2); cursor: grab; }
-        .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 10; width: 48px; height: 48px; border-radius: 50%; border: none; background: rgba(255,255,255,0.1); color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; backdrop-filter: blur(4px); font-family: inherit; }
-        .lb-nav:hover { background: rgba(255,255,255,0.25); }
-        .lb-nav:active { transform: translateY(-50%) scale(0.95); }
-        .lb-prev { left: 16px; }
-        .lb-next { right: 16px; }
-        .lb-nav:disabled { opacity: 0.2; cursor: default; }
-        .lb-thumbs { width: 100%; background: rgba(0,0,0,0.5); padding: 12px 16px; display: flex; gap: 8px; overflow-x: auto; justify-content: center; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.3) transparent; }
-        .lb-thumbs::-webkit-scrollbar { height: 4px; }
-        .lb-thumbs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 2px; }
-        .lb-thumb { width: 56px; height: 42px; border-radius: 4px; overflow: hidden; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; opacity: 0.5; transition: all 0.2s; background: #1a1a1a; }
-        .lb-thumb:hover { opacity: 0.8; }
-        .lb-thumb.active { border-color: #0d4ab4; opacity: 1; }
-        .lb-thumb img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-        .lb-spinner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.15); border-top-color: #fff; border-radius: 50%; animation: lbSpin 0.7s linear infinite; display: none; }
-        .lb-slide.loading .lb-spinner { display: block; }
-        @keyframes lbSpin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+        /* ===== IMAGE CAROUSEL MODAL (full screen) ===== */
+        .carousel-modal .modal-dialog { max-width: 100vw; margin: 0; height: 100vh; }
+        .carousel-modal .modal-content { background: #000; border: none; border-radius: 0; height: 100vh; display: flex; flex-direction: column; }
+        .carousel-modal .modal-header { position: absolute; top: 0; left: 0; right: 0; z-index: 10; background: linear-gradient(rgba(0,0,0,0.6), transparent); border: none; padding: 16px 24px; }
+        .carousel-modal .modal-header .counter { font-size: 14px; color: rgba(255,255,255,0.8); font-weight: 500; }
+        .carousel-modal .btn-close { filter: brightness(0) invert(1); opacity: 0.7; }
+        .carousel-modal .btn-close:hover { opacity: 1; }
+        .carousel-modal .modal-body { padding: 0; flex: 1; overflow: hidden; min-height: 0; }
+        .carousel-modal .carousel { width: 100%; height: 100%; }
+        .carousel-modal .carousel-inner { height: 100%; }
+        .carousel-modal .carousel-item { height: 100%; }
+        .carousel-modal .carousel-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .carousel-modal .carousel-control-prev,
+        .carousel-modal .carousel-control-next { width: 48px; height: 48px; top: 50%; transform: translateY(-50%); border-radius: 50%; background: rgba(255,255,255,0.15); border: none; opacity: 0; transition: opacity 0.25s; }
+        .carousel-modal:hover .carousel-control-prev,
+        .carousel-modal:hover .carousel-control-next { opacity: 1; }
+        .carousel-modal .carousel-control-prev { left: 16px; }
+        .carousel-modal .carousel-control-next { right: 16px; }
+        .carousel-modal .carousel-control-prev:hover,
+        .carousel-modal .carousel-control-next:hover { background: rgba(255,255,255,0.3); }
+        .carousel-modal .carousel-thumbs { display: flex; gap: 6px; overflow-x: auto; padding: 10px 16px; justify-content: center; background: rgba(0,0,0,0.5); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.3) transparent; flex-shrink: 0; }
+        .carousel-modal .carousel-thumbs::-webkit-scrollbar { height: 4px; }
+        .carousel-modal .carousel-thumbs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 2px; }
+        .carousel-modal .carousel-thumbs .thumb { width: 60px; height: 44px; border-radius: 4px; overflow: hidden; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; opacity: 0.5; transition: all 0.2s; background: #1a1a1a; }
+        .carousel-modal .carousel-thumbs .thumb:hover { opacity: 0.8; }
+        .carousel-modal .carousel-thumbs .thumb.active { border-color: #0d4ab4; opacity: 1; }
+        .carousel-modal .carousel-thumbs .thumb img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+        @media (max-width: 768px) {
+            .carousel-modal .carousel-control-prev,
+            .carousel-modal .carousel-control-next { width: 36px; height: 36px; }
+            .carousel-modal .carousel-control-prev { left: 6px; }
+            .carousel-modal .carousel-control-next { right: 6px; }
+            .carousel-modal .carousel-thumbs .thumb { width: 48px; height: 36px; }
+        }
 
         /* ===== WORKSPACE NAME ===== */
         .ws-header { margin-bottom: 20px; }
@@ -630,6 +633,29 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
         }
         .sidebar-benefits li i { color: #0d4ab4; font-size: 14px; width: 20px; text-align: center; }
 
+        /* ===== GET BEST PRICE MODAL ===== */
+        .gp-modal-row { min-height: 440px; overflow: hidden; }
+        .gp-modal-left { background: #eef4ff; display: flex; align-items: center; position: relative; overflow: hidden; }
+        .gp-modal-left::before { content: '\f19d'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; right: -20px; bottom: -30px; font-size: 10rem; color: rgba(13,74,180,0.06); line-height: 1; }
+        .gp-modal-left::after { content: '\f0b1'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; left: -15px; top: -20px; font-size: 6rem; color: rgba(13,74,180,0.04); line-height: 1; transform: rotate(-15deg); }
+        .gp-modal-left-inner { padding: 36px 50px 36px 40px; position: relative; z-index: 1; }
+        .gp-modal-logo { margin-bottom: 10px; text-align: right; padding-right: 18px; }
+        .gp-modal-logo img { height: 70px; width: auto; max-width: 100%; object-fit: contain; position: relative; left: 18px; }
+        .gp-left-heading { font-size: 0.95rem; font-weight: 600; line-height: 1.4; color: #1a1a2e; margin-bottom: 0; text-align: right; }
+        .gp-modal-right { padding: 28px 30px; display: flex; flex-direction: column; justify-content: center; }
+        .gp-modal-right .form-label { font-size: 0.78rem; font-weight: 600; color: #374151; margin-bottom: 4px; }
+        .gp-modal-right .form-control { font-size: 0.85rem; padding: 9px 14px; border: 1.5px solid #e5e7eb; background: #fafbff; transition: border-color 0.2s, box-shadow 0.2s; }
+        .gp-modal-right .form-control:focus { border-color: #0d4ab4; box-shadow: 0 0 0 3px rgba(13,74,180,0.1); background: #fff; }
+        .gp-modal-right .btn-primary { font-weight: 600; font-size: 0.88rem; padding: 11px; background: #0d4ab4; border: none; transition: all 0.2s; margin-top: 4px; }
+        .gp-modal-right .btn-primary:hover { background: #083891; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(13,74,180,0.25); }
+        @media (max-width: 767px) {
+            .gp-modal-left::before, .gp-modal-left::after { display: none; }
+            .gp-modal-left-inner { padding: 24px 22px; }
+            .gp-left-heading { font-size: 0.85rem; }
+            .gp-modal-right { padding: 20px 22px; }
+            .gp-modal-row { min-height: auto; }
+        }
+
         /* ===== BOTTOM STICKY CTA ===== */
         .bottom-sticky {
             position: fixed; bottom: 0; left: 0; right: 0; z-index: 97;
@@ -680,12 +706,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
             .mobile-bottom-bar { display: block; }
             .page-container { padding-bottom: 120px; }
             .sticky-nav { top: 70px; }
-            .lb-slide { padding: 60px 16px; }
-            .lb-nav { width: 36px; height: 36px; font-size: 14px; }
-            .lb-prev { left: 8px; }
-            .lb-next { right: 8px; }
-            .lb-thumbs { justify-content: flex-start; padding: 10px 12px; }
-            .lb-thumb { width: 48px; height: 36px; }
+
         }
         @media (max-width: 576px) {
             .page-container { padding: 16px 16px 120px; }
@@ -740,37 +761,40 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                 <span><?php echo $officeArea ?: $officeCity; ?></span>
             </div>
 
-            <!-- Image Gallery (first image left big, rest right grid) -->
+            <!-- Image Gallery (max 4 images) -->
             <?php
             $totalImages = count($images);
             $firstImage = $images[0] ?? 'https://images.unsplash.com/photo-1497366756111-5c12c1785e86?w=1200';
-            $restImages = array_slice($images, 1);
-            $restCount = count($restImages);
-            // For the overlay on the last visible right-side image when there are many
-            $hiddenCount = max(0, $restCount - 4); // up to 4 thumbnails shown in right grid; the 4th gets overlay if more
+            $hiddenCount = max(0, $totalImages - 4);
             ?>
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="fw-semibold" style="font-size:14px;color:#111827;"><i class="fa-regular fa-image me-1"></i>Photos (<?php echo (int)$totalImages; ?>)</span>
+                <?php if ($totalImages > 4): ?>
+                <button onclick="openLightbox(0)" class="btn btn-sm" style="margin-left:auto;background:#0d4ab4;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:13px;font-weight:600;"><i class="fa-solid fa-expand me-1"></i>View all</button>
+                <?php endif; ?>
+            </div>
             <div class="image-gallery">
                 <div class="gallery-featured" onclick="openLightbox(0)">
                     <img src="<?php echo htmlspecialchars($firstImage); ?>" alt="<?php echo $officeName; ?>" loading="lazy" onerror="imgErrorToPlaceholder(this)">
-                    <span class="photo-hint"><i class="fa-solid fa-expand"></i> Click to view all <?php echo (int)$totalImages; ?> photos</span>
                 </div>
                 <div class="gallery-side">
-                    <?php foreach ($restImages as $i => $img):
-                        $src = htmlspecialchars($img);
-                        $lightboxIdx = $i + 1;
-                        $showOverlay = ($i === 3 && $restCount > 4);
+                    <?php for ($i = 0; $i < 4; $i++):
+                        $img = $images[$i + 1] ?? null;
+                        $isFourth = ($i === 3);
+                        $showOverlay = $isFourth && $hiddenCount > 0;
                     ?>
-                    <div class="gallery-item" onclick="openLightbox(<?php echo (int)$lightboxIdx; ?>)">
-                        <img src="<?php echo $src; ?>" alt="<?php echo $officeName; ?>" loading="lazy" onerror="imgErrorToPlaceholder(this)">
+                    <div class="gallery-item" onclick="<?php echo $showOverlay ? 'openLightbox(0)' : ($img ? 'openLightbox(' . ($i + 1) . ')' : ''); ?>">
                         <?php if ($showOverlay): ?>
                         <div class="gallery-more">
                             <i class="fa-solid fa-images"></i>
                             +<?php echo (int)$hiddenCount; ?> more
                             <small>View all</small>
                         </div>
+                        <?php elseif ($img): ?>
+                        <img src="<?php echo htmlspecialchars($img); ?>" alt="<?php echo $officeName; ?>" loading="lazy" onerror="imgErrorToPlaceholder(this)">
                         <?php endif; ?>
                     </div>
-                    <?php endforeach; ?>
+                    <?php endfor; ?>
                 </div>
             </div>
 
@@ -993,40 +1017,10 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                         <h4>Connect with our workspace expert</h4>
                     </div>
                 </div>
-                <form class="sidebar-form" id="contactForm" onsubmit="handleSidebarForm(event)">
-                    <input type="hidden" name="office_id" value="<?php echo (int)$officeId; ?>">
-                    <input type="hidden" name="source" value="detail_page">
-                    <div class="mb-3">
-                        <label>Full Name *</label>
-                        <input type="text" name="name" placeholder="Enter your name" required data-rules="required|max:120">
-                    </div>
-                    <div class="form-row">
-                        <div class="mb-3">
-                            <label>Phone *</label>
-                            <input type="tel" name="phone" placeholder="10-digit mobile" required data-rules="required|phone" maxlength="10">
-                        </div>
-                        <div class="mb-3">
-                            <label>Email</label>
-                            <input type="email" name="email" placeholder="email@example.com" data-rules="email|max:180">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label>Team Size</label>
-                        <select name="seats">
-                            <option value="">Select team size</option>
-                            <option value="10-50">10-50 seats</option>
-                            <option value="51-100">51-100 seats</option>
-                            <option value="101-200">101-200 seats</option>
-                            <option value="200+">200+ seats</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label>Message</label>
-                        <textarea name="message" placeholder="Tell us about your requirements..." data-rules="max:1000"></textarea>
-                    </div>
-                    <button type="submit" class="btn-submit"><i class="fa-solid fa-paper-plane"></i> Get Best Price</button>
+                <div class="sidebar-form">
+                    <button type="button" class="btn-submit" onclick="openGetPriceModal(<?php echo (int)$officeId; ?>, '<?php echo htmlspecialchars($office['listing_code'] ?? '', ENT_QUOTES); ?>', '<?php echo htmlspecialchars($officeName, ENT_QUOTES); ?>')"><i class="fa-solid fa-paper-plane"></i> Get Best Price</button>
                     <button type="button" class="btn-call-sidebar" onclick="window.open('tel:+919962200015')"><i class="fa-solid fa-phone"></i> Call +91 99622 00015</button>
-                </form>
+                </div>
             </div>
 
             <!-- <div class="sidebar-card">
@@ -1073,19 +1067,93 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
     </div>
 </div>
 
-<!-- LIGHTBOX -->
-<div class="lightbox" id="lightbox">
-    <div class="lb-progress"><div class="lb-progress-fill" id="progressFill"></div></div>
-    <div class="lb-top">
-        <span class="lb-counter" id="lbCounter">1 / <?php echo (int)$totalImages; ?></span>
-        <button class="lb-close" onclick="closeLightbox()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+<!-- IMAGE CAROUSEL MODAL (Bootstrap) -->
+<div class="modal fade carousel-modal" id="imageCarouselModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="counter" id="carouselCounter">1 / <?php echo (int)$totalImages; ?></span>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="imageCarousel" class="carousel slide" data-bs-ride="false" data-bs-interval="false" data-bs-wrap="true">
+                    <div class="carousel-inner" id="carouselInner">
+                        <?php foreach ($images as $i => $img): ?>
+                        <div class="carousel-item<?php echo $i === 0 ? ' active' : ''; ?>">
+                            <img src="<?php echo htmlspecialchars($img); ?>" alt="<?php echo $officeName; ?> - Image <?php echo $i + 1; ?>" loading="<?php echo $i === 0 ? 'eager' : 'lazy'; ?>">
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#imageCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#imageCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
+            </div>
+            <div class="carousel-thumbs" id="carouselThumbs">
+                <?php foreach ($images as $i => $img): ?>
+                <div class="thumb<?php echo $i === 0 ? ' active' : ''; ?>" data-index="<?php echo $i; ?>">
+                    <img src="<?php echo htmlspecialchars($img); ?>" alt="" loading="lazy">
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
     </div>
-    <div class="lb-slide-area" id="slideArea">
-        <button class="lb-nav lb-prev" id="prevBtn" aria-label="Previous"><i class="fa-solid fa-chevron-left"></i></button>
-        <button class="lb-nav lb-next" id="nextBtn" aria-label="Next"><i class="fa-solid fa-chevron-right"></i></button>
-        <div class="lb-slide-track" id="slideTrack"></div>
+</div>
+
+<!-- GET BEST PRICE MODAL -->
+<div class="modal fade" id="getPriceModal" tabindex="-1" aria-labelledby="getPriceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0 position-absolute top-0 end-0 z-3 bg-transparent" style="border: none !important;">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="row g-0 gp-modal-row">
+                    <div class="col-md-5 gp-modal-left">
+                        <div class="gp-modal-left-inner">
+                            <div class="gp-modal-logo">
+                                <img src="assets/images/final-logo.png" alt="CubeSpace">
+                            </div>
+                            <h6 class="gp-left-heading">Connect with our workspace expert</h6>
+                        </div>
+                    </div>
+                    <div class="col-md-7 gp-modal-right">
+                        <form id="getPriceForm" onsubmit="handleGetPriceForm(event)">
+                            <input type="hidden" name="office_id" id="gpOfficeId" value="">
+                            <input type="hidden" name="listing_code" id="gpListingCode" value="">
+                            <input type="hidden" name="source" value="detail_page">
+                            <div class="mb-3">
+                                <label for="gpWorkspaceName" class="form-label fw-semibold small">Workspace Name</label>
+                                <input type="text" class="form-control" id="gpWorkspaceName" name="workspace_name" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="gpName" class="form-label fw-semibold small">Full Name *</label>
+                                <input type="text" class="form-control" id="gpName" name="name" required data-rules="required|max:120" placeholder="Enter your name">
+                            </div>
+                            <div class="mb-3">
+                                <label for="gpPhone" class="form-label fw-semibold small">Phone *</label>
+                                <input type="tel" class="form-control" id="gpPhone" name="phone" required data-rules="required|phone" maxlength="10" placeholder="10-digit mobile number">
+                            </div>
+                            <div class="mb-3">
+                                <label for="gpEmail" class="form-label fw-semibold small">Email</label>
+                                <input type="email" class="form-control" id="gpEmail" name="email" data-rules="email|max:180" placeholder="email@example.com">
+                            </div>
+                            <div class="mb-3">
+                                <label for="gpMessage" class="form-label fw-semibold small">Message</label>
+                                <textarea class="form-control" id="gpMessage" name="message" data-rules="max:1000" rows="3" placeholder="Tell us about your requirements..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100" id="gpSubmitBtn"><i class="fa-solid fa-paper-plane"></i> Get Best Price</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="lb-thumbs" id="thumbStrip"></div>
 </div>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
@@ -1099,6 +1167,48 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
 <script src="assets/js/main.js"></script>
 <script src="assets/js/lightbox.js"></script>
 <script>
+    // Get Best Price Modal
+    const getPriceModalEl = document.getElementById('getPriceModal');
+    const getPriceModal = getPriceModalEl ? new bootstrap.Modal(getPriceModalEl) : null;
+
+    function openGetPriceModal(officeId, listingCode, workspaceName) {
+        document.getElementById('gpOfficeId').value = officeId;
+        document.getElementById('gpListingCode').value = listingCode || '';
+        document.getElementById('gpWorkspaceName').value = workspaceName ? (listingCode ? workspaceName + ' - ' + listingCode : workspaceName) : '';
+        if (getPriceModal) getPriceModal.show();
+    }
+
+    function handleGetPriceForm(event) {
+        event.preventDefault();
+        if (window.CSForms && !CSForms.validate(event.target)) return;
+        const form = event.target;
+        const btn = document.getElementById('gpSubmitBtn');
+        const formData = new FormData(form);
+
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sending...';
+        btn.disabled = true;
+
+        (window.CubeAPI ? CubeAPI.postForm('/api/contact.php', formData) : fetch('/api/contact.php', { method: 'POST', body: formData, credentials: 'same-origin' }).then(res => res.json()))
+            .then(data => {
+                if (data.success) {
+                    form.reset();
+                    if (getPriceModal) getPriceModal.hide();
+                    showAlertModal('Thank you! Your enquiry has been submitted successfully. Our workspace expert will get back to you with the best price shortly.', 'success');
+                } else {
+                    btn.innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i> Failed - Try Again';
+                    showToast(data.message || 'Failed to send enquiry.', 'error');
+                    setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Get Best Price'; btn.disabled = false; }, 3000);
+                }
+            })
+            .catch((err) => {
+                btn.innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i> Error - Try Again';
+                showToast(err && err.message ? err.message : 'Network error. Please try again.', 'error');
+                console.error('Get price form error:', err);
+                setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Get Best Price'; btn.disabled = false; }, 3000);
+            });
+    }
+</script>
+<script>
     function imgErrorToPlaceholder(img) {
         if (!img || !img.parentElement) return;
         img.parentElement.innerHTML = '<div class="placeholder-img"><i class="fa-solid fa-building"></i></div>';
@@ -1106,13 +1216,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
 
 </script>
 <script>
-const officeImages = <?php echo json_encode(array_map('htmlspecialchars', $images)); ?>;
 const officeId = <?php echo json_encode($officeId); ?>;
-
-// Lightbox
-if (typeof CubeSpaceLightbox !== 'undefined') {
-    CubeSpaceLightbox.init(officeImages);
-}
 
 function openLightbox(i) {
     if (typeof CubeSpaceLightbox !== 'undefined') CubeSpaceLightbox.open(i);

@@ -284,7 +284,7 @@ if ($action === 'list') {
         default: $orderBy = 'featured DESC, created_at DESC';
     }
 
-    $sql = "SELECT id, title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code
+    $sql = "SELECT id, title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, billable_seats, remarks, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code
             FROM managed_offices
             WHERE $whereClause
             ORDER BY $orderBy
@@ -426,7 +426,7 @@ if ($action === 'list') {
             $centerLng = $lngSum / $coordCount;
 
             $placeholders = implode(',', array_fill(0, count($excludeIds), '?'));
-            $nearSql = "SELECT id, title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code
+            $nearSql = "SELECT id, title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, billable_seats, remarks, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code
                         FROM managed_offices
                         WHERE status='published' AND latitude IS NOT NULL AND id NOT IN ($placeholders)
                         ORDER BY (POW(latitude - ?, 2) + POW(longitude - ?, 2))
@@ -516,7 +516,7 @@ if ($action === 'map') {
     }
 
     $whereClause = implode(' AND ', $where);
-    $sql = "SELECT id, title, slug, city, area, address, latitude, longitude, price, price_label, total_seats, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured
+    $sql = "SELECT id, title, slug, city, area, address, latitude, longitude, price, price_label, total_seats, billable_seats, remarks, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured
             FROM managed_offices WHERE $whereClause ORDER BY featured DESC, created_at DESC LIMIT ?";
 
     $allParams = array_merge($params, [$limit]);
@@ -542,6 +542,7 @@ if ($action === 'map') {
             'price' => $row['price'],
             'price_label' => $row['price_label'],
             'total_seats' => $row['total_seats'],
+            'billable_seats' => $row['billable_seats'],
             'total_area_sqft' => $row['total_area_sqft'],
             'office_space_type' => $row['office_space_type'] ?? 'rent',
             'featured' => $row['featured'],

@@ -110,7 +110,11 @@
                     btn.innerHTML = '<i class="fa-solid fa-check"></i> Enquiry Sent!';
                     btn.style.background = '#08753f';
                     form.reset();
-                    if (window.CubeToast) CubeToast.success('Enquiry sent!');
+                    if (window.showAlertModal) {
+                        setTimeout(function() { showAlertModal('Thank you! Your enquiry has been submitted successfully. Our workspace expert will get back to you with the best price shortly.', 'success'); }, 300);
+                    } else if (window.CubeToast) {
+                        CubeToast.success('Enquiry sent!');
+                    }
                 } else {
                     btn.innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i> Failed - Try Again';
                     btn.style.background = '#dc2626';

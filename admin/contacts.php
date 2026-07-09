@@ -29,6 +29,7 @@ $adminPerPage = 50;
 $adminOffset = ($adminListPage - 1) * $adminPerPage;
 $mode = $_GET['mode'] ?? 'list';
 $statusFilter = $_GET['status'] ?? '';
+$interestFilter = $_GET['interest'] ?? '';
 $searchQuery = trim($_GET['search'] ?? '');
 
 if ($mode === 'view'):
@@ -141,6 +142,13 @@ if ($mode === 'view'):
         $params[] = $statusFilter;
         $types .= 's';
     }
+    if ($interestFilter && in_array($interestFilter, ['managed', 'furnished'])) {
+        if ($interestFilter === 'managed') {
+            $conditions[] = "(interest = 'managed' OR listing_code LIKE 'MO%')";
+        } else {
+            $conditions[] = "(interest = 'furnished' OR listing_code LIKE 'FO%')";
+        }
+    }
     if ($searchQuery) {
         $conditions[] = "(name LIKE ? OR phone LIKE ? OR email LIKE ? OR company LIKE ?)";
         $sp = "%$searchQuery%";
@@ -174,6 +182,7 @@ if ($mode === 'view'):
 
     $exportUrl = 'api/contact_crud.php?action=export';
     if ($statusFilter) $exportUrl .= '&status=' . urlencode($statusFilter);
+    if ($interestFilter) $exportUrl .= '&interest=' . urlencode($interestFilter);
     if ($searchQuery) $exportUrl .= '&search=' . urlencode($searchQuery);
 ?>
 <div class="page-header">
@@ -196,10 +205,14 @@ if ($mode === 'view'):
     <div class="col-md-7">
         <div class="d-flex gap-2 flex-wrap align-items-center">
             <span class="small text-muted">Filter:</span>
-            <a href="contacts.php<?= $searchQuery ? '?search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= !$statusFilter ? 'btn-primary' : 'btn-outline-primary' ?>">All</a>
-            <a href="contacts.php?status=new<?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $statusFilter === 'new' ? 'btn-primary' : 'btn-outline-primary' ?>">New</a>
-            <a href="contacts.php?status=contacted<?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $statusFilter === 'contacted' ? 'btn-primary' : 'btn-outline-primary' ?>">Contacted</a>
-            <a href="contacts.php?status=closed<?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $statusFilter === 'closed' ? 'btn-primary' : 'btn-outline-primary' ?>">Closed</a>
+            <a href="contacts.php<?= $searchQuery ? '?search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= !$statusFilter && !$interestFilter ? 'btn-primary' : 'btn-outline-primary' ?>">All</a>
+            <a href="contacts.php?status=new<?= $interestFilter ? '&interest=' . urlencode($interestFilter) : '' ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $statusFilter === 'new' ? 'btn-primary' : 'btn-outline-primary' ?>">New</a>
+            <a href="contacts.php?status=contacted<?= $interestFilter ? '&interest=' . urlencode($interestFilter) : '' ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $statusFilter === 'contacted' ? 'btn-primary' : 'btn-outline-primary' ?>">Contacted</a>
+            <a href="contacts.php?status=closed<?= $interestFilter ? '&interest=' . urlencode($interestFilter) : '' ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $statusFilter === 'closed' ? 'btn-primary' : 'btn-outline-primary' ?>">Closed</a>
+            <span class="small text-muted ms-2">Type:</span>
+            <a href="contacts.php<?= $statusFilter ? '?status=' . urlencode($statusFilter) : '' ?><?= $searchQuery ? ($statusFilter ? '&' : '?') . 'search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= !$interestFilter ? 'btn-primary' : 'btn-outline-primary' ?>">All</a>
+            <a href="contacts.php?interest=managed<?= $statusFilter ? '&status=' . urlencode($statusFilter) : '' ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $interestFilter === 'managed' ? 'btn-primary' : 'btn-outline-primary' ?>">Managed</a>
+            <a href="contacts.php?interest=furnished<?= $statusFilter ? '&status=' . urlencode($statusFilter) : '' ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $interestFilter === 'furnished' ? 'btn-primary' : 'btn-outline-primary' ?>">Furnished</a>
         </div>
     </div>
 </div>
@@ -262,6 +275,7 @@ if ($mode === 'view'):
 $pagUrl = 'contacts.php?';
 $pagParams = [];
 if ($statusFilter) $pagParams[] = 'status=' . urlencode($statusFilter);
+if ($interestFilter) $pagParams[] = 'interest=' . urlencode($interestFilter);
 if ($searchQuery) $pagParams[] = 'search=' . urlencode($searchQuery);
 $pagUrl .= implode('&', $pagParams);
 ?>

@@ -41,7 +41,7 @@ $searchQuery = trim($_GET['search'] ?? '');
 
 if ($mode === 'add' || $mode === 'edit'):
     $editId = (int)($_GET['id'] ?? 0);
-    $listing = ['title'=>'', 'listing_type'=>$type, 'description'=>'', 'city'=>'', 'area'=>'', 'address'=>'', 'price'=>'', 'price_label'=>'', 'total_seats'=>'', 'total_area_sqft'=>'', 'amenities'=>'[]', 'images'=>'[]', 'status'=>'published', 'featured'=>0, 'office_space_type'=>'rent', 'latitude'=>null, 'longitude'=>null, 'listing_code'=>'', 'slug'=>'', 'min_inventory'=>'', 'inventory_type'=>''];
+    $listing = ['title'=>'', 'listing_type'=>$type, 'description'=>'', 'city'=>'', 'area'=>'', 'address'=>'', 'price'=>'', 'price_label'=>'', 'total_seats'=>'', 'total_area_sqft'=>'', 'billable_seats'=>'', 'remarks'=>'', 'amenities'=>'[]', 'images'=>'[]', 'status'=>'published', 'featured'=>0, 'office_space_type'=>'rent', 'latitude'=>null, 'longitude'=>null, 'listing_code'=>'', 'slug'=>'', 'min_inventory'=>'', 'inventory_type'=>''];
     if ($mode === 'edit' && $editId) {
         $stmt = mysqli_prepare($conn, "SELECT * FROM $table WHERE id=?");
         if ($stmt) {
@@ -125,7 +125,7 @@ if ($mode === 'add' || $mode === 'edit'):
             </div>
 
             <div class="col-md-3 position-relative">
-                <label for="total_seats" class="form-label small fw-semibold">Available Seats <span class="text-danger">*</span></label>
+                <label for="total_seats" class="form-label small fw-semibold">Category <span class="text-danger">*</span></label>
                 <select name="total_seats" id="total_seats" class="form-select form-select-sm" required>
                     <option value="">- Select -</option>
                     <option value="50" <?= $listing['total_seats']=='50'?'selected':'' ?>>10-50 Seats</option>
@@ -139,6 +139,11 @@ if ($mode === 'add' || $mode === 'edit'):
             <div class="col-md-3 position-relative">
                 <label for="min_inventory" class="form-label small fw-semibold">Minimum Inventory</label>
                 <input type="text" name="min_inventory" id="min_inventory" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['min_inventory']??'') ?>" placeholder="e.g. 5 seats">
+            </div>
+
+            <div class="col-md-3 position-relative">
+                <label for="billable_seats" class="form-label small fw-semibold">Current Available Billable Seats</label>
+                <input type="number" name="billable_seats" id="billable_seats" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['billable_seats']??'') ?>" placeholder="e.g. 30" min="0">
             </div>
 
             <div class="col-12 position-relative">
@@ -199,7 +204,18 @@ if ($mode === 'add' || $mode === 'edit'):
                 <input type="number" step="0.01" name="price" id="price" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price']??'') ?>" placeholder="e.g. 150000">
             </div>
 
-            <input type="hidden" name="status" value="published">
+            <div class="col-md-3 position-relative">
+                <label for="status" class="form-label small fw-semibold">Status</label>
+                <select name="status" id="status" class="form-select form-select-sm">
+                    <option value="draft" <?= ($listing['status']??'published')==='draft'?'selected':'' ?>>Draft</option>
+                    <option value="published" <?= ($listing['status']??'published')==='published'?'selected':'' ?>>Published</option>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <label for="remarks" class="form-label small fw-semibold">Remarks</label>
+                <textarea name="remarks" id="remarks" class="form-control form-control-sm" rows="2" placeholder="Internal remarks..."><?= htmlspecialchars($listing['remarks']??'') ?></textarea>
+            </div>
 
             <div class="col-12">
                 <div class="form-check">
@@ -219,6 +235,8 @@ if ($mode === 'add' || $mode === 'edit'):
 <?php else:
     $statusFilter = $_GET['status'] ?? '';
     $cityFilter = $_GET['city'] ?? '';
+    $areaFilter = $_GET['area'] ?? '';
+    $seatsFilter = $_GET['seats'] ?? '';
 
     $where = [];
     $params = [];
@@ -234,6 +252,16 @@ if ($mode === 'add' || $mode === 'edit'):
         $conditions[] = "city = ?";
         $params[] = $cityFilter;
         $types .= 's';
+    }
+    if ($areaFilter) {
+        $conditions[] = "area = ?";
+        $params[] = $areaFilter;
+        $types .= 's';
+    }
+    if ($seatsFilter && in_array($seatsFilter, ['50','100','200','500'])) {
+        $conditions[] = "total_seats = ?";
+        $params[] = (int)$seatsFilter;
+        $types .= 'i';
     }
     if ($searchQuery) {
         $conditions[] = "(title LIKE ? OR city LIKE ? OR area LIKE ? OR address LIKE ?)";
@@ -280,10 +308,12 @@ if ($mode === 'add' || $mode === 'edit'):
     }
     $cities = mysqli_query($conn, "SELECT city FROM (SELECT city COLLATE utf8mb4_unicode_ci AS city FROM listing_cities UNION SELECT DISTINCT city COLLATE utf8mb4_unicode_ci AS city FROM $table WHERE city != '') AS c ORDER BY city");
     if (!$cities) $cities = false;
+    $areas = mysqli_query($conn, "SELECT DISTINCT area FROM $table WHERE area IS NOT NULL AND area != '' ORDER BY area");
+    if (!$areas) $areas = false;
 
     function mkUrl($extra) {
         $params = [];
-        foreach (['status','city','search'] as $k) {
+        foreach (['status','city','area','seats','search'] as $k) {
             $v = $_GET[$k] ?? '';
             if ($v && !isset($extra[$k])) $params[] = urlencode($k) . '=' . urlencode($v);
         }
@@ -294,7 +324,7 @@ if ($mode === 'add' || $mode === 'edit'):
     }
 
     $exportUrl = 'api/listing_crud.php?action=export&listing_type=managed';
-    foreach (['status','city','search'] as $k) {
+    foreach (['status','city','area','seats','search'] as $k) {
         $v = $_GET[$k] ?? '';
         if ($v) $exportUrl .= '&' . urlencode($k) . '=' . urlencode($v);
     }
@@ -308,25 +338,38 @@ if ($mode === 'add' || $mode === 'edit'):
     </div>
 </div>
 <div class="row g-2 mb-3">
-    <div class="col-md-5">
-        <form method="get" class="d-flex gap-2">
-            <input type="search" name="search" class="form-control form-control-sm" placeholder="Search by title, city, area, address..." value="<?= htmlspecialchars($searchQuery) ?>">
+    <div class="col-md-12">
+        <form method="get" class="d-flex gap-2 flex-wrap align-items-center">
+            <input type="search" name="search" class="form-control form-control-sm" style="width:150px" placeholder="Search..." value="<?= htmlspecialchars($searchQuery) ?>">
+            <select name="status" class="form-select form-select-sm" style="width:110px;" onchange="this.form.submit()">
+                <option value="">Status</option>
+                <option value="draft" <?= $statusFilter === 'draft' ? 'selected' : '' ?>>Draft</option>
+                <option value="published" <?= $statusFilter === 'published' ? 'selected' : '' ?>>Published</option>
+            </select>
+            <select name="city" class="form-select form-select-sm" style="width:120px;" onchange="this.form.submit()">
+                <option value="">City</option>
+                <?php if ($cities): mysqli_data_seek($cities, 0); while ($c = mysqli_fetch_assoc($cities)): ?>
+                <option value="<?= htmlspecialchars($c['city']) ?>" <?= $cityFilter === $c['city'] ? 'selected' : '' ?>><?= htmlspecialchars(ucfirst($c['city'])) ?></option>
+                <?php endwhile; endif; ?>
+            </select>
+            <select name="area" class="form-select form-select-sm" style="width:120px;" onchange="this.form.submit()">
+                <option value="">Area</option>
+                <?php if ($areas): mysqli_data_seek($areas, 0); while ($a = mysqli_fetch_assoc($areas)): ?>
+                <option value="<?= htmlspecialchars($a['area']) ?>" <?= $areaFilter === $a['area'] ? 'selected' : '' ?>><?= htmlspecialchars($a['area']) ?></option>
+                <?php endwhile; endif; ?>
+            </select>
+            <select name="seats" class="form-select form-select-sm" style="width:130px;" onchange="this.form.submit()">
+                <option value="">Seats</option>
+                <option value="50" <?= $seatsFilter === '50' ? 'selected' : '' ?>>10-50 Seats</option>
+                <option value="100" <?= $seatsFilter === '100' ? 'selected' : '' ?>>51-100 Seats</option>
+                <option value="200" <?= $seatsFilter === '200' ? 'selected' : '' ?>>101-200 Seats</option>
+                <option value="500" <?= $seatsFilter === '500' ? 'selected' : '' ?>>200+ Seats</option>
+            </select>
             <button type="submit" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-search"></i></button>
-            <?php if ($searchQuery): ?>
-            <a href="<?= mkUrl(['search'=>'']) ?>" class="btn btn-sm btn-outline-secondary">&times;</a>
+            <?php if ($searchQuery || $statusFilter || $cityFilter || $areaFilter || $seatsFilter): ?>
+            <a href="managed-office.php" class="btn btn-sm btn-outline-secondary">&times;</a>
             <?php endif; ?>
         </form>
-    </div>
-    <div class="col-md-7">
-        <div class="d-flex gap-2 flex-wrap align-items-center">
-            <span class="small text-muted">Filter:</span>
-            <a href="<?= mkUrl(['status'=>'','city'=>'']) ?>" class="btn btn-sm <?= !$statusFilter && !$cityFilter ? 'btn-primary' : 'btn-outline-primary' ?>">All</a>
-            <a href="<?= mkUrl(['status'=>'draft']) ?>" class="btn btn-sm <?= $statusFilter === 'draft' ? 'btn-primary' : 'btn-outline-primary' ?>">Draft</a>
-            <a href="<?= mkUrl(['status'=>'published']) ?>" class="btn btn-sm <?= $statusFilter === 'published' ? 'btn-primary' : 'btn-outline-primary' ?>">Published</a>
-            <?php if ($cities && mysqli_num_rows($cities)): mysqli_data_seek($cities, 0); while ($c = mysqli_fetch_assoc($cities)): ?>
-            <a href="<?= mkUrl(['city'=>$c['city']]) ?>" class="btn btn-sm <?= $cityFilter === $c['city'] ? 'btn-primary' : 'btn-outline-primary' ?>"><?= htmlspecialchars(ucfirst($c['city'])) ?></a>
-            <?php endwhile; endif; ?>
-        </div>
     </div>
 </div>
 <?php if (isset($_GET['deleted'])): ?><div class="alert alert-success py-2">Listing deleted.</div><?php endif; ?>
@@ -414,7 +457,7 @@ if ($mode === 'add' || $mode === 'edit'):
 <?php if ($total > $adminPerPage): ?>
 <?php
 $pagParams = [];
-foreach (['status','city','search'] as $k) {
+foreach (['status','city','area','seats','search'] as $k) {
     $v = $_GET[$k] ?? '';
     if ($v) $pagParams[] = urlencode($k) . '=' . urlencode($v);
 }

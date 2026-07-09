@@ -1229,6 +1229,10 @@ if (isset($conn) && $conn) {
                     <option value="20000-">20000+</option>
                 </select>
             </div>
+            <div>
+                <label class="form-label" style="opacity:0;font-size:0.75rem;white-space:nowrap;user-select:none;">.</label>
+                <button type="button" class="btn btn-primary" onclick="currentPage=1;loadListings()" style="font-size:0.8rem;font-weight:600;padding:4px 16px;background:#0d4ab4;border:none;border-radius:6px;white-space:nowrap;height:31.5px;line-height:1;"><i class="fa-solid fa-search me-1"></i>Search</button>
+            </div>
         </div>
 
         <!-- Main Grid -->
@@ -1273,7 +1277,7 @@ if (isset($conn) && $conn) {
                                 <li class="mb-2 d-flex align-items-center"><i class="fa-solid fa-city text-primary me-2" style="width: 20px; text-align: center;"></i><span>Enterprise Ready Offices</span></li>
                             </ul>
                         </div>
-                        <button class="btn btn-primary w-100" id="btnRequestCallback"><i class="fa-solid fa-phone"></i> Request Callback</button>
+                        <button class="btn btn-primary w-100" id="btnRequestCallback"><i class="fa-solid fa-phone"></i> Request Call Back</button>
                     </div>
                 </div>
                 <!-- <div class="card aside-card">
@@ -1318,7 +1322,7 @@ if (isset($conn) && $conn) {
                             <label for="cbMessage" class="form-label fw-semibold small">Message (optional)</label>
                             <textarea class="form-control" id="cbMessage" name="message" data-rules="max:1000" rows="3" placeholder="Tell us about your requirement..."></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100" id="cbSubmitBtn">Request Callback</button>
+                        <button type="submit" class="btn btn-primary w-100" id="cbSubmitBtn">Request Call Back</button>
                     </form>
                 </div>
             </div>
@@ -2107,7 +2111,7 @@ if (isset($conn) && $conn) {
                 })
                 .finally(() => {
                     btn.disabled = false;
-                    btn.innerHTML = 'Request Callback';
+                    btn.innerHTML = 'Request Call Back';
                 });
         }
 

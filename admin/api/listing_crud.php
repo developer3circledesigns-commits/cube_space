@@ -76,6 +76,8 @@ if ($action === 'create' || $action === 'update') {
     $priceLabel = trim($_POST['price_label'] ?? '');
     $officeSpaceType = in_array(trim($_POST['office_space_type'] ?? ''), ['rent', 'lease']) ? trim($_POST['office_space_type']) : 'rent';
     $totalSeats = isset($_POST['total_seats']) && $_POST['total_seats'] !== '' ? (int)$_POST['total_seats'] : null;
+    $billableSeats = isset($_POST['billable_seats']) && $_POST['billable_seats'] !== '' ? (int)$_POST['billable_seats'] : null;
+    $remarks = trim($_POST['remarks'] ?? '');
     $totalAreaSqft = isset($_POST['total_area_sqft']) && $_POST['total_area_sqft'] !== '' ? (int)$_POST['total_area_sqft'] : 0;
     $status = trim($_POST['status'] ?? 'draft');
     $featured = !empty($_POST['featured']) ? 1 : 0;
@@ -103,6 +105,7 @@ if ($action === 'create' || $action === 'update') {
     }
 
     $isFurnished = in_array($table, ['furnished_offices', 'unfurnished_offices']);
+    $hasBillableSeats = $table === 'managed_offices';
 
     $validator = new Validator($_POST);
     if (!$validator->validate([
@@ -114,6 +117,8 @@ if ($action === 'create' || $action === 'update') {
         'price'            => 'numeric|min:0',
         'price_label'      => 'max:120',
         'total_seats'      => 'integer|min:0',
+        'billable_seats'   => 'integer|min:0',
+        'remarks'          => 'max:5000',
         'total_area_sqft'  => 'integer|min:0',
         'status'           => 'required|in:draft,published,archived',
         'office_space_type'=> 'required|in:rent,lease',
@@ -205,13 +210,14 @@ if ($action === 'create' || $action === 'update') {
     // Auto-generate listing code
     if ($action === 'create') {
         $prefix = match($listingType) {
-            'managed'     => 'MFO',
+            'managed'     => 'MO',
             'commercial'  => 'OSP',
-            'furnished'   => 'FUO',
+            'furnished'   => 'FO',
             'unfurnished' => 'UFU',
             default       => 'LST',
         };
-        $maxRes = mysqli_query($conn, "SELECT MAX(CAST(SUBSTRING(listing_code, 4) AS UNSIGNED)) as max_num FROM $table WHERE listing_code LIKE '{$prefix}%'");
+        $prefixLen = strlen($prefix);
+        $maxRes = mysqli_query($conn, "SELECT MAX(CAST(SUBSTRING(listing_code, $prefixLen + 1) AS UNSIGNED)) as max_num FROM $table WHERE listing_code LIKE '{$prefix}%'");
         if (!$maxRes) {
             throw new Exception('Failed to generate listing code: ' . mysqli_error($conn));
         }
@@ -248,22 +254,41 @@ if ($action === 'create' || $action === 'update') {
             } else {
                 $minInventory = trim($_POST['min_inventory'] ?? '');
                 $inventoryType = trim($_POST['inventory_type'] ?? '');
-                $stmt = mysqli_prepare($conn,
-                    "INSERT INTO $table (title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, total_area_sqft, min_inventory, inventory_type, amenities, images, status, featured, feature_highlights, seo_text, office_space_type, listing_type, listing_code)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-                );
-                if (!$stmt) {
-                    throw new Exception('Column mismatch in ' . $table . ' table: ' . mysqli_error($conn));
+                if ($hasBillableSeats) {
+                    $stmt = mysqli_prepare($conn,
+                        "INSERT INTO $table (title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, total_area_sqft, billable_seats, remarks, min_inventory, inventory_type, amenities, images, status, featured, feature_highlights, seo_text, office_space_type, listing_type, listing_code)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    );
+                    if (!$stmt) {
+                        throw new Exception('Column mismatch in ' . $table . ' table: ' . mysqli_error($conn));
+                    }
+                    mysqli_stmt_bind_param($stmt, 'ssssssddssssissssssssssss',
+                        $title, $slug, $description, $city, $area, $address,
+                        $latitude, $longitude,
+                        $price, $priceLabel, $totalSeats, $totalAreaSqft,
+                        $billableSeats, $remarks, $minInventory, $inventoryType,
+                        $amenitiesJson, $imagesJson,
+                        $status, $featured, $featureHighlightsJson, $seoText, $officeSpaceType,
+                        $listingType, $listingCode
+                    );
+                } else {
+                    $stmt = mysqli_prepare($conn,
+                        "INSERT INTO $table (title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, total_area_sqft, min_inventory, inventory_type, amenities, images, status, featured, feature_highlights, seo_text, office_space_type, listing_type, listing_code)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    );
+                    if (!$stmt) {
+                        throw new Exception('Column mismatch in ' . $table . ' table: ' . mysqli_error($conn));
+                    }
+                    mysqli_stmt_bind_param($stmt, 'ssssssddsssssssssisssss',
+                        $title, $slug, $description, $city, $area, $address,
+                        $latitude, $longitude,
+                        $price, $priceLabel, $totalSeats, $totalAreaSqft,
+                        $minInventory, $inventoryType,
+                        $amenitiesJson, $imagesJson,
+                        $status, $featured, $featureHighlightsJson, $seoText, $officeSpaceType,
+                        $listingType, $listingCode
+                    );
                 }
-                mysqli_stmt_bind_param($stmt, 'ssssssddsssssssssisssss',
-                    $title, $slug, $description, $city, $area, $address,
-                    $latitude, $longitude,
-                    $price, $priceLabel, $totalSeats, $totalAreaSqft,
-                    $minInventory, $inventoryType,
-                    $amenitiesJson, $imagesJson,
-                    $status, $featured, $featureHighlightsJson, $seoText, $officeSpaceType,
-                    $listingType, $listingCode
-                );
             }
             if (!mysqli_stmt_execute($stmt)) {
                 throw new Exception('Failed to insert listing: ' . mysqli_stmt_error($stmt));
@@ -308,18 +333,39 @@ if ($action === 'create' || $action === 'update') {
             } else {
                 $minInventory = trim($_POST['min_inventory'] ?? '');
                 $inventoryType = trim($_POST['inventory_type'] ?? '');
-                $stmt = mysqli_prepare($conn,
-                    "UPDATE $table SET title=?, slug=?, description=?, city=?, area=?, address=?, latitude=?, longitude=?, price=?, price_label=?, total_seats=?, total_area_sqft=?, min_inventory=?, inventory_type=?, amenities=?, images=?, status=?, featured=?, feature_highlights=?, seo_text=?, office_space_type=?, listing_type=?, updated_at=NOW() WHERE id=?"
-                );
-                mysqli_stmt_bind_param($stmt, 'ssssssddsssssssssissssi',
-                    $title, $slug, $description, $city, $area, $address,
-                    $latitude, $longitude,
-                    $price, $priceLabel, $totalSeats, $totalAreaSqft,
-                    $minInventory, $inventoryType,
-                    $amenitiesJson, $imagesJson,
-                    $status, $featured, $featureHighlightsJson, $seoText, $officeSpaceType,
-                    $listingType, $id
-                );
+                if ($hasBillableSeats) {
+                    $stmt = mysqli_prepare($conn,
+                        "UPDATE $table SET title=?, slug=?, description=?, city=?, area=?, address=?, latitude=?, longitude=?, price=?, price_label=?, total_seats=?, total_area_sqft=?, billable_seats=?, remarks=?, min_inventory=?, inventory_type=?, amenities=?, images=?, status=?, featured=?, feature_highlights=?, seo_text=?, office_space_type=?, listing_type=?, updated_at=NOW() WHERE id=?"
+                    );
+                    if (!$stmt) {
+                        throw new Exception('Update prepare failed for managed_offices: ' . mysqli_error($conn));
+                    }
+                    mysqli_stmt_bind_param($stmt, 'ssssssddssssisssssssssssi',
+                        $title, $slug, $description, $city, $area, $address,
+                        $latitude, $longitude,
+                        $price, $priceLabel, $totalSeats, $totalAreaSqft,
+                        $billableSeats, $remarks, $minInventory, $inventoryType,
+                        $amenitiesJson, $imagesJson,
+                        $status, $featured, $featureHighlightsJson, $seoText, $officeSpaceType,
+                        $listingType, $id
+                    );
+                } else {
+                    $stmt = mysqli_prepare($conn,
+                        "UPDATE $table SET title=?, slug=?, description=?, city=?, area=?, address=?, latitude=?, longitude=?, price=?, price_label=?, total_seats=?, total_area_sqft=?, min_inventory=?, inventory_type=?, amenities=?, images=?, status=?, featured=?, feature_highlights=?, seo_text=?, office_space_type=?, listing_type=?, updated_at=NOW() WHERE id=?"
+                    );
+                    if (!$stmt) {
+                        throw new Exception('Update prepare failed for ' . $table . ': ' . mysqli_error($conn));
+                    }
+                    mysqli_stmt_bind_param($stmt, 'ssssssddsssssssssissssi',
+                        $title, $slug, $description, $city, $area, $address,
+                        $latitude, $longitude,
+                        $price, $priceLabel, $totalSeats, $totalAreaSqft,
+                        $minInventory, $inventoryType,
+                        $amenitiesJson, $imagesJson,
+                        $status, $featured, $featureHighlightsJson, $seoText, $officeSpaceType,
+                        $listingType, $id
+                    );
+                }
             }
             if (!mysqli_stmt_execute($stmt)) {
                 throw new Exception('Failed to update listing');
