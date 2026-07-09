@@ -21,6 +21,9 @@ RewriteRule ^(.*)/$ /$1 [L,R=301]
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
 
+# Ensure index.php is recognized
+DirectoryIndex index.php
+
 # Disable directory listing
 Options -Indexes
 
