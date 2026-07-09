@@ -7,8 +7,7 @@ if (!defined('JWT_SECRET')) {
 }
 if (!defined('JWT_SECRET')) {
     $configCandidates = [
-        __DIR__ . '/../../config/jwt.php',
-        __DIR__ . '/../../../config/jwt.php',
+        dirname(__DIR__) . '/config/jwt.php',
     ];
     foreach ($configCandidates as $configFile) {
         if (file_exists($configFile)) {
@@ -174,10 +173,9 @@ function validate_csrf_token($token) {
 
 function log_app_error($message, $context = []) {
     $logDirs = [
-        __DIR__ . '/../../logs',
-        __DIR__ . '/../../../logs',
+        dirname(__DIR__) . '/logs',
     ];
-    $logDir = __DIR__ . '/../../logs';
+    $logDir = dirname(__DIR__) . '/logs';
     foreach ($logDirs as $dir) {
         if (is_dir($dir) || is_dir(dirname($dir))) {
             $logDir = $dir;

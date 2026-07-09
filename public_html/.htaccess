@@ -1,5 +1,8 @@
 RewriteEngine On
 
+# Block sensitive directories
+RewriteRule ^(config|lib|src|logs)(/|$) - [F,L]
+
 # Block sensitive debug files
 RewriteRule ^test_db\.php$ - [F,L]
 

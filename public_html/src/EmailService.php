@@ -18,7 +18,6 @@ class EmailService {
         if (empty($host)) {
             $configCandidates = [
                 __DIR__ . '/../config/mail.php',
-                __DIR__ . '/../../config/mail.php',
             ];
             foreach ($configCandidates as $configFile) {
                 if (file_exists($configFile)) {

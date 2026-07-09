@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 if (!isset($conn)) {
-    foreach ([__DIR__ . '/../public_html/api/db_config.php'] as $dbFile) {
+    foreach ([__DIR__ . '/../api/db_config.php'] as $dbFile) {
         if (is_file($dbFile)) {
             require_once $dbFile;
             break;

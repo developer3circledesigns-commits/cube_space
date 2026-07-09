@@ -8,7 +8,6 @@ $port = getenv('DB_PORT') ?: ($_SERVER['DB_PORT'] ?? null);
 if (empty($host) || empty($user) || $pass === null || empty($db)) {
     $configCandidates = [
         __DIR__ . '/../config/database.php',
-        __DIR__ . '/../../config/database.php',
     ];
     foreach ($configCandidates as $configFile) {
         if (file_exists($configFile)) {
@@ -36,7 +35,7 @@ if (empty($port)) {
 if (!function_exists('cubespace_require_project')) {
 function cubespace_require_project(string $relative): void {
     $relative = ltrim(str_replace('\\', '/', $relative), '/');
-    foreach ([__DIR__ . '/../' . $relative, __DIR__ . '/../../' . $relative] as $path) {
+    foreach ([__DIR__ . '/../' . $relative] as $path) {
         if (is_file($path)) {
             require_once $path;
             return;

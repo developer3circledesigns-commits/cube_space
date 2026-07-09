@@ -28,19 +28,7 @@ function cubespace_project_root(): string {
         return $root;
     }
 
-    $candidates = [
-        dirname(__DIR__, 2),
-        dirname(__DIR__),
-    ];
-
-    foreach ($candidates as $dir) {
-        if (is_file($dir . '/config/database.php')) {
-            $root = $dir;
-            return $root;
-        }
-    }
-
-    $root = dirname(__DIR__, 2);
+    $root = dirname(__DIR__);
     return $root;
 }
 }
