@@ -1808,7 +1808,7 @@ if (isset($conn) && $conn) {
                                                 <div class="card-price">
                                                     <span class="price-label" style="font-weight:bold; color:#212529;">
     Quoted Rent
-    <span style="font-weight:normal; text-transform:none;">(Negotiable)</span>
+    <span style="font-weight:normal; text-transform:none;">( Negotiable )</span>
 </span>
                                                     ${price}
                                                 </div>

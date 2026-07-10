@@ -859,7 +859,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                     <div class="cd-item">
                         <div class="cd-icon"><i class="fa-solid fa-people-group"></i></div>
                         <div>
-                            <div class="cd-label">Current Available Seats</div>
+                            <div class="cd-label">Current Available Billable Seats</div>
                             <div class="cd-value"><?php echo fmt_seats($totalSeats); ?> Seats</div>
                         </div>
                     </div>
@@ -881,7 +881,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                     <div class="cd-item">
                         <div class="cd-icon"><i class="fa-solid fa-building"></i></div>
                         <div>
-                            <div class="cd-label">Total Building Leasable Area</div>
+                            <div class="cd-label">Current Available Area on Rent</div>
                             <div class="cd-value"><?php echo $totalSqft ? number_format($totalSqft) . ' Sq Ft.' : '-'; ?></div>
                         </div>
                     </div>
@@ -889,7 +889,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                     <div class="cd-item">
                         <div class="cd-icon"><i class="fa-solid fa-ruler-combined"></i></div>
                         <div>
-                            <div class="cd-label">Current Available Area On Rent</div>
+                            <div class="cd-label">Current Available Rental Area</div>
                             <div class="cd-value"><?php echo htmlspecialchars($availableSqft); ?> Sq Ft.</div>
                         </div>
                     </div>

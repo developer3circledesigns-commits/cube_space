@@ -28,7 +28,7 @@ $editTable = get_listing_table($editType) ?: 'furnished_offices';
 $searchQuery = trim($_GET['search'] ?? '');
 
 if ($mode === 'add' || $mode === 'edit'):
-    $listing = ['title'=>'', 'listing_type'=>'', 'description'=>'', 'city'=>'', 'area'=>'', 'address'=>'', 'price'=>'', 'price_label'=>'', 'total_seats'=>'', 'total_area_sqft'=>'', 'available_sqft'=>'', 'min_inventory'=>'', 'inventory_type'=>'', 'amenities'=>'[]', 'images'=>'[]', 'status'=>'draft', 'featured'=>0, 'office_space_type'=>'rent', 'feature_highlights'=>'[]', 'seo_text'=>'', 'latitude'=>null, 'longitude'=>null, 'listing_code'=>'', 'slug'=>''];
+    $listing = ['title'=>'', 'listing_type'=>'', 'description'=>'', 'city'=>'', 'area'=>'', 'address'=>'', 'price'=>'', 'price_label'=>'', 'total_seats'=>'', 'total_area_sqft'=>'', 'available_sqft'=>'', 'min_inventory'=>'', 'inventory_type'=>'', 'amenities'=>'[]', 'images'=>'[]', 'status'=>'draft', 'featured'=>0, 'office_space_type'=>'rent', 'feature_highlights'=>'[]', 'seo_text'=>'', 'remarks'=>'', 'latitude'=>null, 'longitude'=>null, 'listing_code'=>'', 'slug'=>''];
     if ($mode === 'edit' && $editId && $editTable) {
         $stmt = mysqli_prepare($conn, "SELECT * FROM $editTable WHERE id=?");
         mysqli_stmt_bind_param($stmt, 'i', $editId);
@@ -128,7 +128,7 @@ if ($mode === 'add' || $mode === 'edit'):
             </div>
 
             <div class="col-md-3 position-relative">
-                <label for="inventory_type" class="form-label small fw-semibold">Inventory Type</label>
+                <label for="inventory_type" class="form-label small fw-semibold">Current Status</label>
                 <input type="text" name="inventory_type" id="inventory_type" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['inventory_type'] ?? '') ?>" placeholder="e.g. Ready to move in">
             </div>
 
@@ -190,7 +190,18 @@ if ($mode === 'add' || $mode === 'edit'):
                 <input type="number" step="0.01" name="price" id="price" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price']??'') ?>" placeholder="e.g. 150000">
             </div>
 
-            <input type="hidden" name="status" value="published">
+            <div class="col-md-3 position-relative">
+                <label for="status" class="form-label small fw-semibold">Status</label>
+                <select name="status" id="status" class="form-select form-select-sm">
+                    <option value="draft" <?= ($listing['status']??'draft')==='draft'?'selected':'' ?>>Draft</option>
+                    <option value="published" <?= ($listing['status']??'draft')==='published'?'selected':'' ?>>Published</option>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <label for="remarks" class="form-label small fw-semibold">Remarks</label>
+                <textarea name="remarks" id="remarks" class="form-control form-control-sm" rows="2" placeholder="Internal remarks..."><?= htmlspecialchars($listing['remarks']??'') ?></textarea>
+            </div>
 
             <div class="col-12">
                 <div class="form-check">

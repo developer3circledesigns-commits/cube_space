@@ -232,21 +232,23 @@ if ($action === 'create' || $action === 'update') {
         mysqli_begin_transaction($conn);
         try {
             if ($isFurnished) {
+                $availableSqft = trim($_POST['available_sqft'] ?? '');
+                $minInventory = trim($_POST['min_inventory'] ?? '');
+                $inventoryType = trim($_POST['inventory_type'] ?? '');
+                $remarks = trim($_POST['remarks'] ?? '');
                 $stmt = mysqli_prepare($conn,
-                    "INSERT INTO $table (title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, total_area_sqft, available_sqft, min_inventory, inventory_type, amenities, images, status, featured, feature_highlights, seo_text, office_space_type, listing_type, listing_code)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    "INSERT INTO $table (title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, total_area_sqft, available_sqft, min_inventory, inventory_type, remarks, amenities, images, status, featured, feature_highlights, seo_text, office_space_type, listing_type, listing_code)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 );
                 if (!$stmt) {
                     throw new Exception('Column mismatch in furnished_offices table: ' . mysqli_error($conn));
                 }
-                $availableSqft = trim($_POST['available_sqft'] ?? '');
-                $minInventory = trim($_POST['min_inventory'] ?? '');
-                $inventoryType = trim($_POST['inventory_type'] ?? '');
-                mysqli_stmt_bind_param($stmt, 'ssssssddsssissssssssssss',
+                mysqli_stmt_bind_param($stmt, 'ssssssddsssssssssssssssss',
                     $title, $slug, $description, $city, $area, $address,
                     $latitude, $longitude,
                     $price, $priceLabel, $totalSeats, $totalAreaSqft,
                     $availableSqft, $minInventory, $inventoryType,
+                    $remarks,
                     $amenitiesJson, $imagesJson,
                     $status, $featured, $featureHighlightsJson, $seoText, $officeSpaceType,
                     $listingType, $listingCode
@@ -318,14 +320,19 @@ if ($action === 'create' || $action === 'update') {
                 $availableSqft = trim($_POST['available_sqft'] ?? '');
                 $minInventory = trim($_POST['min_inventory'] ?? '');
                 $inventoryType = trim($_POST['inventory_type'] ?? '');
+                $remarks = trim($_POST['remarks'] ?? '');
                 $stmt = mysqli_prepare($conn,
-                    "UPDATE $table SET title=?, slug=?, description=?, city=?, area=?, address=?, latitude=?, longitude=?, price=?, price_label=?, total_seats=?, total_area_sqft=?, available_sqft=?, min_inventory=?, inventory_type=?, amenities=?, images=?, status=?, featured=?, feature_highlights=?, seo_text=?, office_space_type=?, listing_type=?, updated_at=NOW() WHERE id=?"
+                    "UPDATE $table SET title=?, slug=?, description=?, city=?, area=?, address=?, latitude=?, longitude=?, price=?, price_label=?, total_seats=?, total_area_sqft=?, available_sqft=?, min_inventory=?, inventory_type=?, remarks=?, amenities=?, images=?, status=?, featured=?, feature_highlights=?, seo_text=?, office_space_type=?, listing_type=?, updated_at=NOW() WHERE id=?"
                 );
-                mysqli_stmt_bind_param($stmt, 'ssssssddsssisssssssisssi',
+                if (!$stmt) {
+                    throw new Exception('Update prepare failed for ' . $table . ': ' . mysqli_error($conn));
+                }
+                mysqli_stmt_bind_param($stmt, 'ssssssddsssisssssssssssi',
                     $title, $slug, $description, $city, $area, $address,
                     $latitude, $longitude,
                     $price, $priceLabel, $totalSeats, $totalAreaSqft,
                     $availableSqft, $minInventory, $inventoryType,
+                    $remarks,
                     $amenitiesJson, $imagesJson,
                     $status, $featured, $featureHighlightsJson, $seoText, $officeSpaceType,
                     $listingType, $id
