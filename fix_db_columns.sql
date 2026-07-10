@@ -28,4 +28,6 @@ ALTER TABLE managed_offices
   ADD COLUMN IF NOT EXISTS listing_type VARCHAR(50) DEFAULT 'managed' AFTER office_space_type,
   ADD COLUMN IF NOT EXISTS listing_code VARCHAR(20) DEFAULT NULL AFTER listing_type,
   ADD COLUMN IF NOT EXISTS min_inventory VARCHAR(100) DEFAULT NULL AFTER total_area_sqft,
-  ADD COLUMN IF NOT EXISTS inventory_type VARCHAR(50) DEFAULT NULL AFTER min_inventory;
+  ADD COLUMN IF NOT EXISTS inventory_type VARCHAR(50) DEFAULT NULL AFTER min_inventory,
+  ADD COLUMN IF NOT EXISTS billable_seats INT DEFAULT NULL AFTER total_area_sqft,
+  ADD COLUMN IF NOT EXISTS remarks TEXT DEFAULT NULL AFTER billable_seats;

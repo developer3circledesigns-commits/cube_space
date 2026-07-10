@@ -32,6 +32,8 @@ CREATE TABLE IF NOT EXISTS `managed_offices` (
   `price_label` varchar(100),
   `total_seats` int,
   `total_area_sqft` int,
+  `billable_seats` int DEFAULT NULL,
+  `remarks` text,
   `min_inventory` varchar(50),
   `inventory_type` varchar(100),
   `amenities` json,
