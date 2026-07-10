@@ -221,6 +221,8 @@ if ($mode === 'add' || $mode === 'edit'):
 <?php else:
     $statusFilter = $_GET['status'] ?? '';
     $cityFilter = $_GET['city'] ?? '';
+    $areaFilter = $_GET['area'] ?? '';
+    $sqftFilter = $_GET['sqft'] ?? '';
 
     $conditions = [];
     $params = [];
@@ -234,6 +236,16 @@ if ($mode === 'add' || $mode === 'edit'):
     if ($cityFilter) {
         $conditions[] = "city = ?";
         $params[] = $cityFilter;
+        $types .= 's';
+    }
+    if ($areaFilter) {
+        $conditions[] = "area = ?";
+        $params[] = $areaFilter;
+        $types .= 's';
+    }
+    if ($sqftFilter && in_array($sqftFilter, ['1000-5000','5000-10000','10000-20000','20000-'])) {
+        $conditions[] = "available_sqft = ?";
+        $params[] = $sqftFilter;
         $types .= 's';
     }
     if ($searchQuery) {
@@ -282,10 +294,12 @@ if ($mode === 'add' || $mode === 'edit'):
 
     $cities = mysqli_query($conn, "SELECT city FROM (SELECT city COLLATE utf8mb4_unicode_ci AS city FROM listing_cities UNION SELECT DISTINCT city COLLATE utf8mb4_unicode_ci AS city FROM furnished_offices WHERE city != '' UNION SELECT DISTINCT city COLLATE utf8mb4_unicode_ci AS city FROM unfurnished_offices WHERE city != '') AS c ORDER BY city");
     if (!$cities) $cities = false;
+    $areas = mysqli_query($conn, "SELECT DISTINCT area FROM (SELECT area COLLATE utf8mb4_unicode_ci AS area FROM listing_areas UNION SELECT DISTINCT area COLLATE utf8mb4_unicode_ci AS area FROM furnished_offices WHERE area != '' AND area IS NOT NULL UNION SELECT DISTINCT area COLLATE utf8mb4_unicode_ci AS area FROM unfurnished_offices WHERE area != '' AND area IS NOT NULL) AS a WHERE area IS NOT NULL AND area != '' ORDER BY area");
+    if (!$areas) $areas = false;
 
     function osMkUrl($extra) {
         $params = [];
-        foreach (['status','city','search'] as $k) {
+        foreach (['status','city','area','sqft','search'] as $k) {
             $v = $_GET[$k] ?? '';
             if ($v && !isset($extra[$k])) $params[] = urlencode($k) . '=' . urlencode($v);
         }
@@ -296,7 +310,7 @@ if ($mode === 'add' || $mode === 'edit'):
     }
 
     $exportUrl = 'api/listing_crud.php?action=export&listing_type=office-space';
-    foreach (['status','city','search'] as $k) {
+    foreach (['status','city','area','sqft','search'] as $k) {
         $v = $_GET[$k] ?? '';
         if ($v) $exportUrl .= '&' . urlencode($k) . '=' . urlencode($v);
     }
@@ -310,25 +324,38 @@ if ($mode === 'add' || $mode === 'edit'):
     </div>
 </div>
 <div class="row g-2 mb-3">
-    <div class="col-md-5">
-        <form method="get" class="d-flex gap-2">
-            <input type="search" name="search" class="form-control form-control-sm" placeholder="Search by title, city, area, address..." value="<?= htmlspecialchars($searchQuery) ?>">
+    <div class="col-md-12">
+        <form method="get" class="d-flex gap-2 flex-wrap align-items-center">
+            <input type="search" name="search" class="form-control form-control-sm" style="width:150px" placeholder="Search..." value="<?= htmlspecialchars($searchQuery) ?>">
+            <select name="status" class="form-select form-select-sm" style="width:110px;" onchange="this.form.submit()">
+                <option value="">Status</option>
+                <option value="draft" <?= $statusFilter === 'draft' ? 'selected' : '' ?>>Draft</option>
+                <option value="published" <?= $statusFilter === 'published' ? 'selected' : '' ?>>Published</option>
+            </select>
+            <select name="city" class="form-select form-select-sm" style="width:120px;" onchange="this.form.submit()">
+                <option value="">City</option>
+                <?php if ($cities): mysqli_data_seek($cities, 0); while ($c = mysqli_fetch_assoc($cities)): ?>
+                <option value="<?= htmlspecialchars($c['city']) ?>" <?= $cityFilter === $c['city'] ? 'selected' : '' ?>><?= htmlspecialchars(ucfirst($c['city'])) ?></option>
+                <?php endwhile; endif; ?>
+            </select>
+            <select name="area" class="form-select form-select-sm" style="width:120px;" onchange="this.form.submit()">
+                <option value="">Area</option>
+                <?php if ($areas): mysqli_data_seek($areas, 0); while ($a = mysqli_fetch_assoc($areas)): ?>
+                <option value="<?= htmlspecialchars($a['area']) ?>" <?= $areaFilter === $a['area'] ? 'selected' : '' ?>><?= htmlspecialchars($a['area']) ?></option>
+                <?php endwhile; endif; ?>
+            </select>
+            <select name="sqft" class="form-select form-select-sm" style="width:130px;" onchange="this.form.submit()">
+                <option value="">Sq.ft Range</option>
+                <option value="1000-5000" <?= $sqftFilter === '1000-5000' ? 'selected' : '' ?>>1000 - 5000 Sq.ft</option>
+                <option value="5000-10000" <?= $sqftFilter === '5000-10000' ? 'selected' : '' ?>>5000 - 10000 Sq.ft</option>
+                <option value="10000-20000" <?= $sqftFilter === '10000-20000' ? 'selected' : '' ?>>10000 - 20000 Sq.ft</option>
+                <option value="20000-" <?= $sqftFilter === '20000-' ? 'selected' : '' ?>>20000+ Sq.ft</option>
+            </select>
             <button type="submit" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-search"></i></button>
-            <?php if ($searchQuery): ?>
-            <a href="<?= osMkUrl(['search'=>'']) ?>" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-times"></i></a>
+            <?php if ($searchQuery || $statusFilter || $cityFilter || $areaFilter || $sqftFilter): ?>
+            <a href="office-space.php" class="btn btn-sm btn-outline-secondary">&times;</a>
             <?php endif; ?>
         </form>
-    </div>
-    <div class="col-md-7">
-        <div class="d-flex gap-2 flex-wrap align-items-center">
-            <span class="small text-muted">Filter:</span>
-            <a href="<?= osMkUrl(['status'=>'','city'=>'']) ?>" class="btn btn-sm <?= !$statusFilter && !$cityFilter ? 'btn-primary' : 'btn-outline-primary' ?>">All</a>
-            <a href="<?= osMkUrl(['status'=>'draft']) ?>" class="btn btn-sm <?= $statusFilter === 'draft' ? 'btn-primary' : 'btn-outline-primary' ?>">Draft</a>
-            <a href="<?= osMkUrl(['status'=>'published']) ?>" class="btn btn-sm <?= $statusFilter === 'published' ? 'btn-primary' : 'btn-outline-primary' ?>">Published</a>
-            <?php if ($cities): mysqli_data_seek($cities, 0); while ($c = mysqli_fetch_assoc($cities)): ?>
-            <a href="<?= osMkUrl(['city'=>$c['city']]) ?>" class="btn btn-sm <?= $cityFilter === $c['city'] ? 'btn-primary' : 'btn-outline-primary' ?>"><?= htmlspecialchars(ucfirst($c['city'])) ?></a>
-            <?php endwhile; endif; ?>
-        </div>
     </div>
 </div>
 <div class="bulk-bar">
@@ -407,7 +434,7 @@ if ($mode === 'add' || $mode === 'edit'):
 </div>
 <?php if ($total > $adminPerPage):
 $pagParams = [];
-foreach (['status','city','search'] as $k) {
+foreach (['status','city','area','sqft','search'] as $k) {
     $v = $_GET[$k] ?? '';
     if ($v) $pagParams[] = urlencode($k) . '=' . urlencode($v);
 }
