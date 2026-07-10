@@ -51,16 +51,23 @@ if (!function_exists('isActive')) {
             </li>
         </ul>
         <button class="mobile-menu" aria-label="Toggle Navigation Menu" aria-expanded="false" aria-controls="mobileNav">
-            <i class="fa-solid fa-bars"></i>
+            <span class="hamburger-box">
+                <span class="hamburger-inner"></span>
+            </span>
         </button>
         <ul class="mobile-nav" id="mobileNav">
+            <li class="mobile-nav-header">
+                <span class="mobile-nav-title">Menu</span>
+                <button class="mobile-nav-close" aria-label="Close Menu"><i class="fa-solid fa-xmark"></i></button>
+            </li>
             <li><a href="index.php"<?= isActive('index.php') ?>><i class="fa-solid fa-house nav-mobile-icon"></i>Home</a></li>
             <li><a href="managed_offices.php"<?= isActive('managed_offices.php') ?>><i class="fa-solid fa-briefcase nav-mobile-icon"></i>Managed Offices</a></li>
             <li><a href="furnished_offices.php"<?= isActive('furnished_offices.php') ?>><i class="fa-solid fa-building nav-mobile-icon"></i>Furnished Offices</a></li>
             <li><a href="unfurnished_offices.php"<?= isActive('unfurnished_offices.php') ?>><i class="fa-solid fa-building-user nav-mobile-icon"></i>Unfurnished Offices</a></li>
             <li><a href="contact.php"<?= isActive('contact.php') ?>><i class="fa-solid fa-envelope nav-mobile-icon"></i>Contact Us</a></li>
             <li><a href="contact.php"<?= isActive('contact.php') ?>><i class="fa-solid fa-paper-plane nav-mobile-icon"></i>Share Requirement</a></li>
-            <li><a href="/admin/" target="_blank" rel="noopener noreferrer"<?= $isAdminPage ? ' class="active"' : '' ?>><i class="fa-solid fa-user-shield nav-mobile-icon"></i>Admin Login</a></li>
+            <li class="mobile-nav-admin"><a href="/admin/" target="_blank" rel="noopener noreferrer"<?= $isAdminPage ? ' class="active"' : '' ?>><i class="fa-solid fa-user-shield nav-mobile-icon"></i>Admin Login</a></li>
         </ul>
+        <div class="mobile-backdrop"></div>
     </div>
 </nav>

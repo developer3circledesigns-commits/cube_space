@@ -68,9 +68,9 @@ echo "\nDownloaded " . count($downloadedFiles) . " images\n\n";
 echo "=== SQL UPDATE QUERIES ===\n\n";
 
 // Assign images to managed offices
-$managedCodes = ['MFO001', 'MFO002', 'MFO003', 'MFO004', 'MFO005', 'MFO006', 'MFO007', 'MFO008', 'MFO009', 'MFO010',
-                 'MFO011', 'MFO012', 'MFO013', 'MFO014', 'MFO015', 'MFO016', 'MFO017', 'MFO018', 'MFO019', 'MFO020',
-                 'MFO021', 'MFO022', 'MFO023', 'MFO024', 'MFO025', 'MFO026', 'MFO027', 'MFO028', 'MFO029', 'MFO030'];
+$managedCodes = ['MO001', 'MO002', 'MO003', 'MO004', 'MO005', 'MO006', 'MO007', 'MO008', 'MO009', 'MO010',
+                 'MO011', 'MO012', 'MO013', 'MO014', 'MO015', 'MO016', 'MO017', 'MO018', 'MO019', 'MO020',
+                 'MO021', 'MO022', 'MO023', 'MO024', 'MO025', 'MO026', 'MO027', 'MO028', 'MO029', 'MO030'];
 
 foreach ($managedCodes as $index => $code) {
     $img1 = $downloadedFiles[($index * 3) % count($downloadedFiles)];
@@ -84,9 +84,9 @@ foreach ($managedCodes as $index => $code) {
 echo "\n";
 
 // Assign images to furnished offices
-$furnishedCodes = ['FUO001', 'FUO002', 'FUO003', 'FUO004', 'FUO005', 'FUO006', 'FUO007', 'FUO008', 'FUO009', 'FUO010',
-                   'FUO011', 'FUO012', 'FUO013', 'FUO014', 'FUO015', 'FUO016', 'FUO017', 'FUO018', 'FUO019', 'FUO020',
-                   'FUO021', 'FUO022', 'FUO023', 'FUO024', 'FUO025', 'FUO026', 'FUO027', 'FUO028', 'FUO029', 'FUO030'];
+$furnishedCodes = ['FO001', 'FO002', 'FO003', 'FO004', 'FO005', 'FO006', 'FO007', 'FO008', 'FO009', 'FO010',
+                   'FO011', 'FO012', 'FO013', 'FO014', 'FO015', 'FO016', 'FO017', 'FO018', 'FO019', 'FO020',
+                   'FO021', 'FO022', 'FO023', 'FO024', 'FO025', 'FO026', 'FO027', 'FO028', 'FO029', 'FO030'];
 
 foreach ($furnishedCodes as $index => $code) {
     $img1 = $downloadedFiles[($index * 2) % count($downloadedFiles)];
