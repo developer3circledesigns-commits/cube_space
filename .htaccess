@@ -1,7 +1,7 @@
 RewriteEngine On
 
 # Block sensitive directories
-RewriteRule ^(config|lib|src|logs)(/|$) - [F,L]
+RewriteRule ^(config|lib|src|logs|vendor)(/|$) - [F,L]
 
 # Block sensitive files at repo root
 RewriteRule \.(env|gitignore|dockerignore)$ - [F,L]

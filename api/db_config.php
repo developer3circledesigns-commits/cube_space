@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/../lib/dotenv.php';
+load_env();
+
 $host = getenv('DB_HOST') ?: ($_SERVER['DB_HOST'] ?? null);
 $user = getenv('DB_USER') ?: ($_SERVER['DB_USER'] ?? null);
 $pass = getenv('DB_PASS') ?: ($_SERVER['DB_PASS'] ?? null);

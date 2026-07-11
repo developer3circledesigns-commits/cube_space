@@ -153,7 +153,7 @@ if ($action === 'reply') {
         die(json_encode(['error' => 'Contact not found or has no email address']));
     }
 
-    require_once cubespace_project_root() . '/src/EmailService.php';
+    cubespace_require_project('src/autoload.php');
     $mail = new \CubeSpace\EmailService();
     $htmlBody = nl2br(htmlspecialchars($body));
     $fullHtml = '<p>Dear ' . htmlspecialchars($contact['name']) . ',</p>' . $htmlBody . '<hr><p style="color:#888;font-size:12px;">CubeSpace Team</p>';

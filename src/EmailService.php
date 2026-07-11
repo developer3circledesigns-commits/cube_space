@@ -3,38 +3,46 @@ declare(strict_types=1);
 
 namespace CubeSpace;
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception as PHPMailerException;
+
 class EmailService {
+    private string $host;
+    private int $port;
+    private string $username;
+    private string $password;
+    private string $encryption;
     private string $fromEmail;
     private string $fromName;
     private string $adminEmail;
     private bool $enabled;
 
     public function __construct() {
-        $this->fromEmail = getenv('MAIL_FROM') ?: 'noreply@cubespaces.in';
-        $this->fromName = 'CubeSpace';
-        $this->adminEmail = getenv('ADMIN_EMAIL') ?: 'sales@falconlease.com';
-        $host = getenv('MAIL_HOST');
+        $this->loadConfig();
 
-        if (empty($host)) {
-            $configCandidates = [
-                __DIR__ . '/../config/mail.php',
-            ];
-            foreach ($configCandidates as $configFile) {
-                if (file_exists($configFile)) {
-                    require_once $configFile;
-                    $host = defined('MAIL_HOST') ? MAIL_HOST : '';
-                    if (defined('MAIL_FROM')) {
-                        $this->fromEmail = MAIL_FROM;
-                    }
-                    if (defined('ADMIN_EMAIL')) {
-                        $this->adminEmail = ADMIN_EMAIL;
-                    }
-                    break;
-                }
+        $this->enabled = $this->host !== '' && $this->host !== 'localhost';
+    }
+
+    private function loadConfig(): void {
+        $candidates = [
+            __DIR__ . '/../config/mail.php',
+        ];
+        foreach ($candidates as $file) {
+            if (file_exists($file)) {
+                require_once $file;
+                break;
             }
         }
 
-        $this->enabled = !empty($host);
+        $this->host = defined('MAIL_HOST') ? MAIL_HOST : (getenv('MAIL_HOST') ?: '');
+        $this->port = (int)(defined('MAIL_PORT') ? MAIL_PORT : (getenv('MAIL_PORT') ?: '587'));
+        $this->username = defined('MAIL_USERNAME') ? MAIL_USERNAME : (getenv('MAIL_USERNAME') ?: '');
+        $this->password = defined('MAIL_PASSWORD') ? MAIL_PASSWORD : (getenv('MAIL_PASSWORD') ?: '');
+        $this->encryption = defined('MAIL_ENCRYPTION') ? MAIL_ENCRYPTION : (getenv('MAIL_ENCRYPTION') ?: 'tls');
+        $this->fromEmail = defined('MAIL_FROM') ? MAIL_FROM : (getenv('MAIL_FROM') ?: 'noreply@cubespaces.in');
+        $this->fromName = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : (getenv('MAIL_FROM_NAME') ?: 'CubeSpace');
+        $this->adminEmail = defined('ADMIN_EMAIL') ? ADMIN_EMAIL : (getenv('ADMIN_EMAIL') ?: 'sales@falconlease.com');
     }
 
     public function isEnabled(): bool {
@@ -45,35 +53,69 @@ class EmailService {
         return $this->adminEmail;
     }
 
+    public function getFromEmail(): string {
+        return $this->fromEmail;
+    }
+
+    private function createPHPMailer(): PHPMailer {
+        $mail = new PHPMailer(true);
+
+        $mail->isSMTP();
+        $mail->Host = $this->host;
+        $mail->Port = $this->port;
+        $mail->SMTPAuth = $this->username !== '';
+        $mail->CharSet = PHPMailer::CHARSET_UTF8;
+
+        if ($this->username !== '') {
+            $mail->Username = $this->username;
+            $mail->Password = $this->password;
+        }
+
+        if ($this->encryption === 'tls') {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        } elseif ($this->encryption === 'ssl') {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        } else {
+            $mail->SMTPSecure = '';
+        }
+
+        $mail->SMTPDebug = SMTP::DEBUG_OFF;
+
+        $mail->setFrom($this->fromEmail, $this->fromName);
+
+        return $mail;
+    }
+
     public function send(string $to, string $subject, string $body, ?string $replyTo = null): bool {
         if (!$this->enabled) {
+            $this->logEmail("SMTP not configured. Would send to $to: $subject");
             return false;
         }
 
-        $headers = [
-            'MIME-Version: 1.0',
-            'Content-Type: text/html; charset=UTF-8',
-            'From: ' . $this->fromName . ' <' . $this->fromEmail . '>',
-            'X-Mailer: CubeSpace Mailer',
-        ];
+        try {
+            $mail = $this->createPHPMailer();
+            $mail->addAddress($to);
+            $mail->Subject = $subject;
+            $mail->isHTML(true);
+            $mail->Body = $body;
 
-        if ($replyTo) {
-            $headers[] = 'Reply-To: ' . $replyTo;
-        }
+            if ($replyTo) {
+                $mail->addReplyTo($replyTo);
+            }
 
-        $ok = @mail($to, $subject, $body, implode("\r\n", $headers));
-        if (!$ok) {
-            $this->logEmail("Failed to send to $to: $subject");
+            $mail->send();
+            $this->logEmail("Sent to $to: $subject");
+            return true;
+        } catch (PHPMailerException $e) {
+            $this->logEmail("Failed to send to $to: $subject - " . $e->getMessage());
+            return false;
+        } catch (\Throwable $e) {
+            $this->logEmail("Failed to send to $to: $subject - " . $e->getMessage());
+            return false;
         }
-        return $ok;
     }
 
     public function notifyAdminNewContact(array $contact): bool {
-        if (!$this->enabled) {
-            $this->logEmail('New contact enquiry from ' . ($contact['name'] ?? 'Unknown'));
-            return false;
-        }
-
         $subject = 'New Enquiry: ' . ($contact['name'] ?? 'Unknown') . ' - CubeSpace';
         $body = $this->renderTemplate('admin-new-contact', [
             'name' => $contact['name'] ?? 'N/A',
@@ -85,15 +127,16 @@ class EmailService {
             'message' => $contact['message'] ?? 'N/A',
         ]);
 
-        return $this->send($this->adminEmail, $subject, $body);
+        $result = $this->send($this->adminEmail, $subject, $body);
+
+        if (!$result) {
+            $this->logEmail('New contact enquiry from ' . ($contact['name'] ?? 'Unknown') . ' (email failed)');
+        }
+
+        return $result;
     }
 
     public function notifyAdminNewPartner(array $partner): bool {
-        if (!$this->enabled) {
-            $this->logEmail('New partner submission from ' . ($partner['first_name'] ?? 'Unknown'));
-            return false;
-        }
-
         $subject = 'New Partner Submission: ' . ($partner['establishment_name'] ?? 'Unknown') . ' - CubeSpace';
         $body = $this->renderTemplate('admin-new-partner', [
             'establishment_type' => $partner['establishment_type'] ?? 'N/A',
@@ -107,11 +150,17 @@ class EmailService {
             'email' => $partner['email'] ?? 'N/A',
         ]);
 
-        return $this->send($this->adminEmail, $subject, $body);
+        $result = $this->send($this->adminEmail, $subject, $body);
+
+        if (!$result) {
+            $this->logEmail('New partner submission from ' . ($partner['first_name'] ?? 'Unknown') . ' (email failed)');
+        }
+
+        return $result;
     }
 
     public function notifyPartnerApproved(array $partner): bool {
-        if (!$this->enabled || empty($partner['email'])) {
+        if (empty($partner['email'])) {
             return false;
         }
 
@@ -177,7 +226,7 @@ class EmailService {
     private function logEmail(string $message): void {
         $logDir = __DIR__ . '/../logs';
         if (!is_dir($logDir)) {
-            mkdir($logDir, 0755, true);
+            @mkdir($logDir, 0755, true);
         }
         $logFile = $logDir . '/mail_' . date('Y-m-d') . '.log';
         file_put_contents($logFile, date('c') . ' ' . $message . PHP_EOL, FILE_APPEND | LOCK_EX);
