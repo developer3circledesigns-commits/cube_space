@@ -101,7 +101,8 @@ if ($action === 'forgot_password' || $action === 'reset_password') {
 
         <div class="hero-content">
 
-            <div class="leasing-title">www.cubespaces.in</div>
+            <div class="leasing-title" style="padding-bottom:0;margin-bottom:0; ">www.cubespaces.in</div>
+            <p class="leasing-title" style="padding-top:0;font-weight:400;">Online Office Space Search Platform</p>
             <h1>Find your Perfect Workspace</h1>
 
             <p>Flexible office solutions for startups, SMEs and Enterprises</p>
