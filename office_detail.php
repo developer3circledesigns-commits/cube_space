@@ -832,7 +832,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                 <div class="overview-text collapsed" id="overviewText">
                     <?php echo nl2br(htmlspecialchars($officeDescription)); ?>
                 </div>
-                <button class="read-more-btn" onclick="toggleOverview()">Read more <i class="fa-solid fa-chevron-down"></i></button>
+                <button class="read-more-btn" onclick="toggleOverview()">Read more</button>
                 <!-- <?php if (!empty($featureHighlights)): ?>
                 <div class="feature-highlights">
                     <?php foreach ($featureHighlights as $highlight): ?>
@@ -874,7 +874,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                         <div class="cd-icon"><i class="fa-solid fa-circle-check" style="color:#166534;"></i></div>
                         <div>
                             <div class="cd-label">Status</div>
-                            <div class="cd-value" style="color:#166534;">Ready to move in</div>
+                            <div class="cd-value" style="color:#166534;"><?php echo htmlspecialchars($inventoryType ?: 'Ready to move in'); ?></div>
                         </div>
                     </div>
                     <?php else: ?>
@@ -899,7 +899,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                         <div class="cd-icon"><i class="fa-solid <?php echo $inventoryType === 'Ready to move in' ? 'fa-circle-check' : 'fa-clock'; ?>" style="color:<?php echo $inventoryType === 'Ready to move in' ? '#166534' : '#92400e'; ?>;"></i></div>
                         <div>
                             <div class="cd-label">Status</div>
-                            <div class="cd-value" style="color:<?php echo $inventoryType === 'Ready to move in' ? '#166534' : '#92400e'; ?>;"><?php echo $inventoryType === 'Ready to move in' ? 'Ready to move in' : 'Processing'; ?></div>
+                            <div class="cd-value" style="color:<?php echo $inventoryType === 'Ready to move in' ? '#166534' : '#92400e'; ?>;"><?php echo htmlspecialchars($inventoryType); ?></div>
                         </div>
                     </div>
                     <?php endif; ?>

@@ -200,8 +200,8 @@ if ($mode === 'add' || $mode === 'edit'):
             </div>
 
             <div class="col-md-6 position-relative">
-                <label for="price" class="form-label small fw-semibold">Price</label>
-                <input type="number" step="0.01" name="price" id="price" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price']??'') ?>" placeholder="e.g. 150000">
+                <label for="price" class="form-label small fw-semibold">Quoted Rent</label>
+                <input type="number" step="0.01" name="price" id="price" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price']??'') ?>" placeholder="Enter quoted rent">
             </div>
 
             <div class="col-md-3 position-relative">

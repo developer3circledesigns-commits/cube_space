@@ -327,7 +327,7 @@ if ($action === 'create' || $action === 'update') {
                 if (!$stmt) {
                     throw new Exception('Update prepare failed for ' . $table . ': ' . mysqli_error($conn));
                 }
-                mysqli_stmt_bind_param($stmt, 'ssssssddsssisssssssssssi',
+                mysqli_stmt_bind_param($stmt, 'ssssssddsssisssssssssssii',
                     $title, $slug, $description, $city, $area, $address,
                     $latitude, $longitude,
                     $price, $priceLabel, $totalSeats, $totalAreaSqft,
@@ -404,6 +404,9 @@ if ($action === 'export') {
 
     $statusFilter = trim($_GET['status'] ?? '');
     $cityFilter = trim($_GET['city'] ?? '');
+    $areaFilter = trim($_GET['area'] ?? '');
+    $sqftFilter = trim($_GET['sqft'] ?? '');
+    $seatsFilter = trim($_GET['seats'] ?? '');
     $featuredFilter = trim($_GET['featured'] ?? '');
     $search = trim($_GET['search'] ?? '');
 
@@ -416,6 +419,15 @@ if ($action === 'export') {
     }
     if ($cityFilter) {
         $conditions[] = "city = ?"; $params[] = $cityFilter; $types .= 's';
+    }
+    if ($areaFilter) {
+        $conditions[] = "area = ?"; $params[] = $areaFilter; $types .= 's';
+    }
+    if ($sqftFilter && in_array($sqftFilter, ['1000-5000','5000-10000','10000-20000','20000-'])) {
+        $conditions[] = "available_sqft = ?"; $params[] = $sqftFilter; $types .= 's';
+    }
+    if ($seatsFilter && in_array($seatsFilter, ['50','100','200','500'])) {
+        $conditions[] = "total_seats = ?"; $params[] = (int)$seatsFilter; $types .= 'i';
     }
     if ($featuredFilter === 'yes') {
         $conditions[] = "featured = 1";

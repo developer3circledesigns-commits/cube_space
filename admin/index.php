@@ -69,7 +69,12 @@ $csrfTokenLogin = CSRFManager::generateToken();
                 </div>
                 <div class="mb-4">
                     <label for="password" class="form-label small fw-semibold text-secondary">Password</label>
-                    <input type="password" id="password" name="password" class="form-control" required placeholder="Enter password">
+                    <div class="position-relative">
+                        <input type="password" id="password" name="password" class="form-control pe-5" required placeholder="Enter password">
+                        <button type="button" id="togglePassword" class="btn position-absolute top-50 end-0 translate-middle-y border-0" style="cursor:pointer;background:transparent;padding:8px 12px;z-index:5;" tabindex="-1">
+                            <i class="fa-regular fa-eye" id="togglePasswordIcon"></i>
+                        </button>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">Sign In</button>
             </form>
@@ -215,6 +220,17 @@ document.getElementById('resetPasswordForm').addEventListener('submit', async fu
         console.error('Reset password error:', err);
     }
     btn.disabled = false; btn.textContent = 'Reset Password';
+});
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const pw = document.getElementById('password');
+    const icon = document.getElementById('togglePasswordIcon');
+    if (pw.type === 'password') {
+        pw.type = 'text';
+        icon.className = 'fa-regular fa-eye-slash';
+    } else {
+        pw.type = 'password';
+        icon.className = 'fa-regular fa-eye';
+    }
 });
 </script>
 </body>

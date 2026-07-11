@@ -28,7 +28,7 @@ $editTable = get_listing_table($editType) ?: 'furnished_offices';
 $searchQuery = trim($_GET['search'] ?? '');
 
 if ($mode === 'add' || $mode === 'edit'):
-    $listing = ['title'=>'', 'listing_type'=>'', 'description'=>'', 'city'=>'', 'area'=>'', 'address'=>'', 'price'=>'', 'price_label'=>'', 'total_seats'=>'', 'total_area_sqft'=>'', 'available_sqft'=>'', 'min_inventory'=>'', 'inventory_type'=>'', 'amenities'=>'[]', 'images'=>'[]', 'status'=>'draft', 'featured'=>0, 'office_space_type'=>'rent', 'feature_highlights'=>'[]', 'seo_text'=>'', 'remarks'=>'', 'latitude'=>null, 'longitude'=>null, 'listing_code'=>'', 'slug'=>''];
+    $listing = ['title'=>'', 'listing_type'=>'', 'description'=>'', 'city'=>'', 'area'=>'', 'address'=>'', 'price'=>'', 'price_label'=>'', 'total_seats'=>'', 'total_area_sqft'=>'', 'available_sqft'=>'', 'min_inventory'=>'', 'inventory_type'=>'', 'amenities'=>'[]', 'images'=>'[]', 'status'=>'published', 'featured'=>0, 'office_space_type'=>'rent', 'feature_highlights'=>'[]', 'seo_text'=>'', 'remarks'=>'', 'latitude'=>null, 'longitude'=>null, 'listing_code'=>'', 'slug'=>''];
     if ($mode === 'edit' && $editId && $editTable) {
         $stmt = mysqli_prepare($conn, "SELECT * FROM $editTable WHERE id=?");
         mysqli_stmt_bind_param($stmt, 'i', $editId);
@@ -186,15 +186,15 @@ if ($mode === 'add' || $mode === 'edit'):
             </div>
 
             <div class="col-md-6 position-relative">
-                <label for="price" class="form-label small fw-semibold">Price</label>
-                <input type="number" step="0.01" name="price" id="price" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price']??'') ?>" placeholder="e.g. 150000">
+                <label for="price" class="form-label small fw-semibold">Quoted Rent</label>
+                <input type="number" step="0.01" name="price" id="price" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price']??'') ?>" placeholder="Enter quoted rent">
             </div>
 
             <div class="col-md-3 position-relative">
                 <label for="status" class="form-label small fw-semibold">Status</label>
                 <select name="status" id="status" class="form-select form-select-sm">
-                    <option value="draft" <?= ($listing['status']??'draft')==='draft'?'selected':'' ?>>Draft</option>
-                    <option value="published" <?= ($listing['status']??'draft')==='published'?'selected':'' ?>>Published</option>
+                    <option value="published" <?= ($listing['status']??'published')==='published'?'selected':'' ?>>Published</option>
+                    <option value="draft" <?= ($listing['status']??'published')==='draft'?'selected':'' ?>>Draft</option>
                 </select>
             </div>
 

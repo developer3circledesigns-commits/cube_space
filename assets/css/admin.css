@@ -34,11 +34,13 @@ body {
     border-bottom: 1px solid rgba(255,255,255,0.08);
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
 }
 .admin-sidebar .sidebar-header img {
     height: 32px;
     width: auto;
+    filter: brightness(2.5);
 }
 .admin-sidebar .sidebar-header span {
     font-size: 13px;

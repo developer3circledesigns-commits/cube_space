@@ -89,8 +89,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 <div class="d-flex" style="min-height: 100vh;">
     <aside class="admin-sidebar d-none d-md-flex">
         <div class="sidebar-header">
-            <img src="/assets/images/final-logo.png" alt="CubeSpace" loading="lazy">
-            <span>Admin</span>
+            <img src="../assets/images/final-logo.png" alt="CubeSpace" loading="lazy">
         </div>
         <nav class="nav flex-column flex-grow-1 overflow-auto pt-2">
             <a href="dashboard.php" class="nav-link <?= $currentPage === 'dashboard' ? 'active' : '' ?>"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
@@ -111,7 +110,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
     <div class="offcanvas offcanvas-start text-bg-dark admin-offcanvas" tabindex="-1" id="adminOffcanvas" aria-label="Admin Navigation">
         <div class="offcanvas-header">
-            <span class="fw-bold"><img src="/assets/images/final-logo.png" alt="CubeSpace" style="height: 28px;" class="me-2" loading="lazy">Admin</span>
+            <span class="fw-bold"><img src="../assets/images/final-logo.png" alt="CubeSpace" style="height: 28px;" class="me-2" loading="lazy">Admin</span>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body">

@@ -3,16 +3,16 @@ services:
     image: mysql:8.4
     container_name: cubespace-db
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: cubespace
+      MYSQL_USER: cubespace_user
+      MYSQL_PASSWORD: cubespace_password
     ports:
       - "3307:3306"
     volumes:
       - cubespace_mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpassword"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot_password"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -22,11 +22,11 @@ services:
     build: .
     container_name: cubespace-app
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_USER: ${DB_USER}
-      DB_PASS: ${DB_PASS}
-      DB_NAME: ${DB_NAME}
+      DB_HOST: cubespace-db
+      DB_PORT: 3306
+      DB_USER: cubespace_user
+      DB_PASS: cubespace_password
+      DB_NAME: cubespace
     ports:
       - "80:80"
       - "8080:8080"
@@ -38,15 +38,16 @@ services:
     restart: unless-stopped
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin
+    image: phpmyadmin/phpmyadmin:latest
     container_name: cubespace-phpmyadmin
     ports:
       - "8081:80"
     environment:
-      PMA_HOST: ${PMA_HOST}
-      PMA_USER: ${PMA_USER}
-      PMA_PASSWORD: ${PMA_PASSWORD}
+      PMA_HOST: cubespace-db
+      PMA_USER: cubespace_user
+      PMA_PASSWORD: cubespace_password
       PMA_ARBITRARY: 1
+      PMA_HOST_BASE_URL: phpmyadmin/
     restart: unless-stopped
     depends_on:
       db:

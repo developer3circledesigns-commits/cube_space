@@ -60,7 +60,7 @@ $pageTitle = 'Office Spaces - CubeSpace';
 $metaDesc = 'Browse furnished and unfurnished office spaces in Chennai. Fully equipped offices and shell spaces for custom fit-outs across prime business locations.';
 $breadcrumbLabel = 'Office Spaces';
 $heading = 'Furnished / Unfurnished Office Spaces in';
-$subheading = 'Furnished and unfurnished office spaces across prime locations. Fully equipped plug-and-play offices and shell spaces for custom fit-outs.';
+$subheading = 'Furnished and unfurnished office spaces across prime locations. Fully equipped plug-and-play offices and shell spaces for customized fit-outs.';
 
 $totalCount = 0;
 $areas = [];
@@ -1435,7 +1435,7 @@ if (isset($conn) && $conn) {
             const expanded = p.classList.toggle('expanded');
             if (btn && btn.classList.contains('description-toggle')) {
                 btn.classList.toggle('expanded');
-                btn.innerHTML = expanded ? 'View less <i class="fa-solid fa-chevron-up"></i>' : 'View more <i class="fa-solid fa-chevron-down"></i>';
+                btn.innerHTML = expanded ? 'View less' : 'View more';
             }
         }
 
@@ -1779,8 +1779,8 @@ if (isset($conn) && $conn) {
                     }
                 });
                 if (o.inventory_type) {
-                    const isReady = o.inventory_type === 'Ready to move in';
-                    statsHtml += `<span class="stat-item inv-badge ${isReady ? 'inv-ready' : 'inv-processing'}"><i class="fa-solid ${isReady ? 'fa-circle-check' : 'fa-clock'}"></i> <span class="stat-value">${isReady ? 'Ready to move in' : 'Processing'}</span></span>`;
+                    const isReady = o.inventory_type.toLowerCase() === 'ready to move in';
+                    statsHtml += `<span class="stat-item inv-badge ${isReady ? 'inv-ready' : 'inv-processing'}"><i class="fa-solid ${isReady ? 'fa-circle-check' : 'fa-clock'}"></i> <span class="stat-value">${escHtml(o.inventory_type)}</span></span>`;
                 }
 
                 const period = o.office_space_type === 'lease' ? 'Sq Ft / Month' : 'Sq Ft / Month';
@@ -1792,7 +1792,7 @@ if (isset($conn) && $conn) {
                 const descHtml = o.description ? `
                     <div class="description-wrapper">
                         <p class="description-text" id="${descId}">${escHtml(o.description)}</p>
-                        <button class="description-toggle" onclick="toggleDescription('${descId}')">View more <i class="fa-solid fa-chevron-down"></i></button>
+                        <button class="description-toggle" onclick="toggleDescription('${descId}')">View more</button>
                     </div>` : '';
 
                 html += `
@@ -1937,8 +1937,8 @@ if (isset($conn) && $conn) {
                     }
                 });
                 if (o.inventory_type) {
-                    const isReady = o.inventory_type === 'Ready to move in';
-                    statsHtml += `<span class="stat-item inv-badge ${isReady ? 'inv-ready' : 'inv-processing'}"><i class="fa-solid ${isReady ? 'fa-circle-check' : 'fa-clock'}"></i> <span class="stat-value">${isReady ? 'Ready to move in' : 'Processing'}</span></span>`;
+                    const isReady = o.inventory_type.toLowerCase() === 'ready to move in';
+                    statsHtml += `<span class="stat-item inv-badge ${isReady ? 'inv-ready' : 'inv-processing'}"><i class="fa-solid ${isReady ? 'fa-circle-check' : 'fa-clock'}"></i> <span class="stat-value">${escHtml(o.inventory_type)}</span></span>`;
                 }
 
                 const period = o.office_space_type === 'lease' ? ' seat / year' : 'seat / month';
@@ -1950,7 +1950,7 @@ if (isset($conn) && $conn) {
                 const descHtml = o.description ? `
                     <div class="description-wrapper">
                         <p class="description-text" id="${descId}">${escHtml(o.description)}</p>
-                        <button class="description-toggle" onclick="toggleDescription('${descId}')">View more <i class="fa-solid fa-chevron-down"></i></button>
+                        <button class="description-toggle" onclick="toggleDescription('${descId}')">View more</button>
                     </div>` : '';
 
                 html += `

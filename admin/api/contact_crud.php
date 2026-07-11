@@ -77,6 +77,7 @@ if ($action === 'update') {
 
 if ($action === 'export') {
     $statusFilter = trim($_GET['status'] ?? '');
+    $interestFilter = trim($_GET['interest'] ?? '');
     $search = trim($_GET['search'] ?? '');
 
     $where = '';
@@ -88,6 +89,13 @@ if ($action === 'export') {
         $conditions[] = "status = ?";
         $params[] = $statusFilter;
         $types .= 's';
+    }
+    if ($interestFilter && in_array($interestFilter, ['managed', 'furnished'])) {
+        if ($interestFilter === 'managed') {
+            $conditions[] = "(interest = 'managed' OR listing_code LIKE 'MO%')";
+        } else {
+            $conditions[] = "(interest = 'furnished' OR listing_code LIKE 'FO%')";
+        }
     }
     if ($search) {
         $conditions[] = "(name LIKE ? OR phone LIKE ? OR email LIKE ? OR company LIKE ?)";

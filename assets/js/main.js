@@ -52,8 +52,8 @@
         var btn = text.nextElementSibling;
         text.classList.toggle('collapsed');
         btn.innerHTML = text.classList.contains('collapsed')
-            ? 'Read more <i class="fa-solid fa-chevron-down"></i>'
-            : 'Show less <i class="fa-solid fa-chevron-up"></i>';
+            ? 'Read more'
+            : 'Show less';
     };
 
     // Sticky nav scroll

@@ -1184,7 +1184,7 @@ if (isset($conn) && $conn) {
         <!-- Header -->
         <div class="mb-4">
             <h1 class="mb-1" style="font-size: 1.5rem;">Managed Furnished Office Spaces in <span id="pageCity" class="text-primary">Chennai</span></h1>
-            <p class="text-muted mb-0">Fully furnished, serviced, plug-and-play office spaces from top providers.</p>
+            <p class="text-muted mb-0">Fully furnished, serviced, plug-and-play office spaces from top service providers.</p>
         </div>
 
         <!-- Filter Bar -->
@@ -1431,12 +1431,17 @@ if (isset($conn) && $conn) {
         function toggleDescription(id) {
             const p = document.getElementById(id);
             if (!p) return;
-            const btn = p.nextElementSibling;
             const expanded = p.classList.toggle('expanded');
+            const btn = p.nextElementSibling;
             if (btn && btn.classList.contains('description-toggle')) {
                 btn.classList.toggle('expanded');
-                btn.innerHTML = expanded ? 'View less <i class="fa-solid fa-chevron-up"></i>' : 'View more <i class="fa-solid fa-chevron-down"></i>';
+                btn.innerHTML = expanded ? 'View less' : 'View more';
             }
+        }
+        
+        function createDescriptionHtml(desc, descId) {
+            if (!desc) return '';
+            return '<div class="description-wrapper"><p class="description-text" id="' + descId + '">' + desc + '</p><button class="description-toggle" onclick="toggleDescription(\'' + descId + '\')" title="View more details" type="button">View more</button></div>';
         }
 
         function navigateTo(url) {
@@ -1496,12 +1501,25 @@ if (isset($conn) && $conn) {
         function getSeatsFilter() {
             const val = document.getElementById('filterSeats').value;
             if (!val) return {};
-            const parts = val.split('-');
-            if (parts.length === 2) {
-                if (parts[1] === '') return { min_seats: parseInt(parts[0]) };
-                return { min_seats: parseInt(parts[0]), max_seats: parseInt(parts[1]) };
+            
+            if (val === '200+') {
+                return { min_seats: 200 };
             }
-            return {};
+            
+            const parts = val.split('-');
+            if (parts.length !== 2) return {};
+            
+            const minVal = parts[0].trim();
+            const maxVal = parts[1].trim();
+            
+            if (isNaN(minVal) || (maxVal !== '' && isNaN(maxVal))) return {};
+            
+            const minSeats = parseInt(minVal);
+            const maxSeats = maxVal ? parseInt(maxVal) : null;
+            
+            if (minSeats < 0 || (maxSeats !== null && maxSeats < 0)) return {};
+            
+            return { min_seats: minSeats, ...(maxSeats !== null ? { max_seats: maxSeats } : {}) };
         }
 
         function buildQueryParams() {
@@ -1768,7 +1786,7 @@ if (isset($conn) && $conn) {
 
                 let statsHtml = '';
                 const statItems = [
-                    { icon: 'fa-users', value: o.billable_seats ? 'Current Available Billable Seats ' + o.billable_seats : null },
+                    { icon: 'fa-users', value: o.billable_seats ? 'Current Available Billable Seats <strong>' + o.billable_seats + '</strong>' : null },
                     { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + String(o.min_inventory).replace(/\b(cabin|office|floor|seats?|people|persons?|none)\b\s*\+?\s*/gi, '').trim() + ' Seats' : null},
                 ];
                 statItems.forEach(s => {
@@ -1785,11 +1803,7 @@ if (isset($conn) && $conn) {
                     `<span class="contact-price">Contact for Price</span>`;
 
                 const descId = 'desc-' + o.id;
-                const descHtml = o.description ? `
-                    <div class="description-wrapper">
-                        <p class="description-text" id="${descId}">${escHtml(o.description)}</p>
-                        <button class="description-toggle" onclick="toggleDescription('${descId}')">View more <i class="fa-solid fa-chevron-down"></i></button>
-                    </div>` : '';
+                const descHtml = o.description ? createDescriptionHtml(escHtml(o.description), descId) : '';
 
                 html += `
                         <div class="card custom-card shadow-sm" data-slug="${escHtml(o.slug)}" data-listing-type="managed" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
@@ -1939,11 +1953,7 @@ if (isset($conn) && $conn) {
                     `<span class="contact-price">Contact for Price</span>`;
 
                 const descId = 'ndesc-' + o.id;
-                const descHtml = o.description ? `
-                    <div class="description-wrapper">
-                        <p class="description-text" id="${descId}">${escHtml(o.description)}</p>
-                        <button class="description-toggle" onclick="toggleDescription('${descId}')">View more <i class="fa-solid fa-chevron-down"></i></button>
-                    </div>` : '';
+                const descHtml = o.description ? createDescriptionHtml(escHtml(o.description), descId) : '';
 
                 html += `
                                 <div class="card custom-card shadow-sm" data-slug="${escHtml(o.slug)}" data-listing-type="managed" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">

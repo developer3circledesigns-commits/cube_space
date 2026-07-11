@@ -495,7 +495,9 @@ body.mobile-nav-open {
     color: #fff;
     font-size: 25px;
     font-weight: 600;
-    margin-bottom: 25px;
+    padding-top: 0px;
+    padding-bottom: 50px;
+    margin-bottom: 8px;
 }
 .leasing-tabs {
     display: flex;
@@ -504,6 +506,26 @@ body.mobile-nav-open {
     margin-bottom: 0;
     flex-wrap: wrap;
     flex: 1;
+}
+@media (max-width: 991px) {
+    .leasing-title {
+        color: #fff;
+        font-size: 25px;
+        font-weight: 600;
+        padding-top: 0px;
+        padding-bottom: 50px;
+        margin-bottom: 8px;
+    }
+}
+@media (max-width: 768px) {
+    .leasing-title {
+        color: #fff;
+        font-size: 25px;
+        font-weight: 600;
+        padding-top: 0px;
+        padding-bottom: 50px;
+        margin-bottom: 8px;
+    }
 }
 .tab-btn {
     border: none;
@@ -951,7 +973,14 @@ body.mobile-nav-open {
     .hamburger-inner::after { top: 7px; }
 }
 @media (max-width: 768px) {
-    .leasing-title { font-size: 24px; }
+    .leasing-title {
+        color: #fff;
+        font-size: 25px;
+        font-weight: 600;
+        padding-top: 0px;
+        padding-bottom: 50px;
+        margin-bottom: 8px;
+    }
     .tab-content { padding: 25px; }
     .expert-grid { grid-template-columns: 1fr; }
     .expert-item { padding: 20px 0; border-right: none !important; border-bottom: 1px solid #e5e7eb; }
