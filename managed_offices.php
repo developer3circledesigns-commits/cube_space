@@ -134,7 +134,7 @@ if (isset($conn) && $conn) {
             flex-wrap: wrap;
             position: sticky;
             top: 70px;
-            z-index: 99;
+            z-index: 1030;
         }
         .filter-bar .filter-select {
             border-color: #0d4ab4;
@@ -681,6 +681,7 @@ if (isset($conn) && $conn) {
             box-shadow: 0 2px 6px rgba(0,0,0,0.05);
             background: #ffffff;
             transition: var(--transition);
+            margin-top: 20px;
         }
         .aside-card:hover {
             box-shadow: var(--shadow-md);
@@ -693,12 +694,15 @@ if (isset($conn) && $conn) {
         @media (min-width: 992px) {
             .content-area {
                 position: relative;
+                padding-top: 8px;
             }
             .content-area aside.col-lg-4 {
                 position: -webkit-sticky;
                 position: sticky;
-                top: 150px;
+                top: 190px;
                 align-self: flex-start;
+                padding-top: 8px;
+                z-index: 1;
             }
         }
         .aside-card .card-body h3 {

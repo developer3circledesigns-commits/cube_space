@@ -182,25 +182,41 @@ function filter_listing_images($imagesJson) {
         return [];
     }
 
-    return array_values(array_filter($images, function($image) {
+    $valid = [];
+    foreach ($images as $image) {
         if (!is_string($image) || trim($image) === '') {
-            return false;
+            continue;
         }
+        $image = trim($image);
 
         $host = parse_url($image, PHP_URL_HOST);
         $scheme = parse_url($image, PHP_URL_SCHEME);
         if ($host || $scheme) {
-            return true;
+            if (!$scheme) {
+                $image = 'https://' . ltrim($image, '/');
+            }
+            $scheme = parse_url($image, PHP_URL_SCHEME);
+            if (!in_array($scheme, ['http', 'https'], true)) {
+                continue;
+            }
+            $host = parse_url($image, PHP_URL_HOST);
+            if (!$host || !str_contains($host, '.')) {
+                continue;
+            }
+            $valid[] = $image;
+            continue;
         }
 
         $path = parse_url($image, PHP_URL_PATH);
-        if (!$path || $path[0] !== '/') {
-            $localPath = __DIR__ . '/' . ltrim($path, '/');
-            return file_exists($localPath);
+        if (!$path) {
+            continue;
         }
-
-        return file_exists(__DIR__ . $path);
-    }));
+        $fullPath = ($path[0] === '/') ? __DIR__ . $path : __DIR__ . '/' . ltrim($path, '/');
+        if (file_exists($fullPath)) {
+            $valid[] = $image;
+        }
+    }
+    return array_values($valid);
 }
 
 $images = filter_listing_images($office['images'] ?? '[]');
@@ -260,7 +276,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
     <meta charset="UTF-8">
     <?php include __DIR__ . '/includes/head-meta.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <script>function imgErrorToPlaceholder(img){if(!img||!img.parentElement)return;img.parentElement.innerHTML='<div class=\"placeholder-img\"><i class=\"fa-solid fa-building\"></i></div>';}</script>
+    <script>function imgErrorToPlaceholder(img){if(!img)return;img.style.display='none';var p=img.parentElement;if(!p)return;if(p.querySelector('.placeholder-img'))return;var fallback=document.createElement('div');fallback.className='placeholder-img';fallback.innerHTML='<i class=\"fa-solid fa-building\"></i>';p.appendChild(fallback);}</script>
     <title><?php echo e($pageTitle); ?></title>
     <meta name="description" content="View details for <?php echo e($officeName); ?> - <?php echo e($officeType); ?> in <?php echo e($officeCity); ?>. Check amenities, pricing, and availability.">
     <link rel="icon" href="favicon.ico" sizes="any">
@@ -321,22 +337,22 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
         /* ===== IMAGE GALLERY (first left big, rest right grid) ===== */
         .image-gallery {
             display: flex;
-            gap: 0;
+            gap: 6px;
             border-radius: 12px;
             overflow: hidden;
             margin-bottom: 24px;
             position: relative;
             background: #e2e8f0;
-            min-height: 460px;
+            aspect-ratio: 16 / 9;
+            max-height: 540px;
         }
         .gallery-featured {
-            flex: 0 0 50%;
-            max-width: 50%;
+            flex: 0 0 75%;
+            max-width: 75%;
             position: relative;
             overflow: hidden;
             background: #e2e8f0;
             cursor: pointer;
-            border-right: 2px solid #fff;
         }
         .gallery-featured img {
             width: 100%;
@@ -347,19 +363,14 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
         }
         .gallery-featured:hover img { transform: scale(1.04); }
         .gallery-side {
-            flex: 1 1 50%;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-auto-rows: 1fr;
-            gap: 0;
-            min-height: 460px;
+            flex: 1 1 25%;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
         .gallery-side .gallery-item {
-            border-bottom: 2px solid #fff;
-            border-right: 2px solid #fff;
+            flex: 1;
         }
-        .gallery-side .gallery-item:nth-child(2n) { border-right: none; }
-        .gallery-side .gallery-item:nth-last-child(-n+2) { border-bottom: none; }
         .gallery-item {
             position: relative;
             overflow: hidden;
@@ -390,61 +401,203 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
         .gallery-item .gallery-more:hover { background: rgba(0, 0, 0, 0.65); }
         .gallery-item .gallery-more i { font-size: 22px; margin-bottom: 2px; }
         .gallery-item .gallery-more small { font-size: 12px; font-weight: 500; opacity: 0.9; }
-        .photo-hint {
-            position: absolute; bottom: 12px; left: 12px;
-            background: rgba(0, 0, 0, 0.55); color: #fff;
-            padding: 6px 12px; border-radius: 6px;
-            font-size: 12px; font-weight: 500;
-            backdrop-filter: blur(4px); z-index: 2;
-            display: flex; align-items: center; gap: 6px;
+        .placeholder-img {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: #e2e8f0; color: #94a3b8; font-size: 32px;
+            z-index: 1;
         }
         @media (max-width: 900px) {
-            .image-gallery { flex-direction: column; min-height: auto; }
+            .image-gallery { flex-direction: column; aspect-ratio: auto; max-height: none; gap: 4px; }
             .gallery-featured {
-                flex: 0 0 auto; max-width: 100%; height: 320px;
-                border-right: none; border-bottom: 2px solid #fff;
+                flex: 0 0 auto; max-width: 100%; aspect-ratio: 16 / 10;
+                border-radius: 8px 8px 0 0;
             }
-            .gallery-side { min-height: auto; }
-            .gallery-side .gallery-item { border-bottom: 2px solid #fff; }
-            .gallery-side .gallery-item:nth-last-child(-n+2) { border-bottom: none; }
+            .gallery-side { flex-direction: row; gap: 4px; }
+            .gallery-side .gallery-item { flex: 1; border-radius: 0; min-height: 100px; }
+            .gallery-side .gallery-item:first-child { border-radius: 0 0 0 8px; }
+            .gallery-side .gallery-item:last-child { border-radius: 0 0 8px 0; }
         }
         @media (max-width: 500px) {
-            .gallery-side .gallery-item { height: 140px; }
+            .gallery-side .gallery-item { min-height: 80px; }
         }
 
         /* ===== IMAGE CAROUSEL MODAL (full screen) ===== */
-        .carousel-modal .modal-dialog { max-width: 100vw; margin: 0; height: 100vh; }
-        .carousel-modal .modal-content { background: #000; border: none; border-radius: 0; height: 100vh; display: flex; flex-direction: column; }
-        .carousel-modal .modal-header { position: absolute; top: 0; left: 0; right: 0; z-index: 10; background: linear-gradient(rgba(0,0,0,0.6), transparent); border: none; padding: 16px 24px; }
-        .carousel-modal .modal-header .counter { font-size: 14px; color: rgba(255,255,255,0.8); font-weight: 500; }
-        .carousel-modal .btn-close { filter: brightness(0) invert(1); opacity: 0.7; }
+        .carousel-modal {
+            --carousel-header-h: 56px;
+            padding: 0 !important;
+        }
+        .carousel-modal .modal-dialog {
+            max-width: 100vw;
+            width: 100vw;
+            height: 100dvh;
+            margin: 0;
+            max-height: 100dvh;
+            padding: 0;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+        }
+        .carousel-modal .modal-content {
+            background: #000;
+            border: none;
+            border-radius: 0;
+            height: 100dvh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .carousel-modal .modal-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1055;
+            background: linear-gradient(rgba(0,0,0,0.65), transparent);
+            border: none;
+            padding: 16px 24px;
+            height: var(--carousel-header-h);
+        }
+        .carousel-modal .modal-header .counter {
+            font-size: 14px; color: rgba(255,255,255,0.9); font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        .carousel-modal .btn-close { filter: brightness(0) invert(1); opacity: 0.8; }
         .carousel-modal .btn-close:hover { opacity: 1; }
-        .carousel-modal .modal-body { padding: 0; flex: 1; overflow: hidden; min-height: 0; }
-        .carousel-modal .carousel { width: 100%; height: 100%; }
-        .carousel-modal .carousel-inner { height: 100%; }
-        .carousel-modal .carousel-item { height: 100%; }
-        .carousel-modal .carousel-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .carousel-modal .modal-body {
+            padding: 0;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .carousel-modal .modal-body .carousel {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            inset: 0;
+        }
+        .carousel-modal .modal-body .carousel-inner {
+            height: 100%;
+        }
+        .carousel-modal .modal-body .carousel-item {
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            position: relative;
+        }
+        .carousel-modal .modal-body .carousel-item.active,
+        .carousel-modal .modal-body .carousel-item-next,
+        .carousel-modal .modal-body .carousel-item-prev {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .carousel-modal .carousel-item img {
+            width: auto;
+            height: auto;
+            max-width: 80%;
+            max-height: 80%;
+            object-fit: contain;
+            border-radius: 12px;
+        }
         .carousel-modal .carousel-control-prev,
-        .carousel-modal .carousel-control-next { width: 48px; height: 48px; top: 50%; transform: translateY(-50%); border-radius: 50%; background: rgba(255,255,255,0.15); border: none; opacity: 0; transition: opacity 0.25s; }
+        .carousel-modal .carousel-control-next {
+            width: 44px;
+            height: 44px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 50%;
+            background: rgba(255,255,255,0.18);
+            border: none;
+            opacity: 0;
+            transition: opacity 0.25s, background 0.25s;
+            backdrop-filter: blur(6px);
+            z-index: 1055;
+        }
         .carousel-modal:hover .carousel-control-prev,
-        .carousel-modal:hover .carousel-control-next { opacity: 1; }
-        .carousel-modal .carousel-control-prev { left: 16px; }
-        .carousel-modal .carousel-control-next { right: 16px; }
+        .carousel-modal:hover .carousel-control-next,
+        .carousel-modal .carousel-control-prev:focus-visible,
+        .carousel-modal .carousel-control-next:focus-visible {
+            opacity: 0.9;
+        }
+        .carousel-modal .carousel-control-prev { left: 12px; }
+        .carousel-modal .carousel-control-next { right: 12px; }
         .carousel-modal .carousel-control-prev:hover,
-        .carousel-modal .carousel-control-next:hover { background: rgba(255,255,255,0.3); }
-        .carousel-modal .carousel-thumbs { display: flex; gap: 6px; overflow-x: auto; padding: 10px 16px; justify-content: center; background: rgba(0,0,0,0.5); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.3) transparent; flex-shrink: 0; }
-        .carousel-modal .carousel-thumbs::-webkit-scrollbar { height: 4px; }
-        .carousel-modal .carousel-thumbs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 2px; }
-        .carousel-modal .carousel-thumbs .thumb { width: 60px; height: 44px; border-radius: 4px; overflow: hidden; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; opacity: 0.5; transition: all 0.2s; background: #1a1a1a; }
-        .carousel-modal .carousel-thumbs .thumb:hover { opacity: 0.8; }
-        .carousel-modal .carousel-thumbs .thumb.active { border-color: #0d4ab4; opacity: 1; }
-        .carousel-modal .carousel-thumbs .thumb img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+        .carousel-modal .carousel-control-next:hover { background: rgba(255,255,255,0.3); opacity: 1; }
+        .carousel-modal .carousel-indicators {
+            position: absolute;
+            bottom: 16px;
+            z-index: 1055;
+            margin: 0;
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            left: 50%;
+            transform: translateX(-50%);
+            overflow-x: auto;
+            max-width: calc(100% - 80px);
+            padding: 4px 8px;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.45);
+            backdrop-filter: blur(6px);
+            scrollbar-width: none;
+        }
+        .carousel-modal .carousel-indicators::-webkit-scrollbar { display: none; }
+        .carousel-modal .carousel-indicators button {
+            width: 56px;
+            height: 40px;
+            border-radius: 4px;
+            border: 2px solid transparent;
+            overflow: hidden;
+            cursor: pointer;
+            flex: none;
+            padding: 0;
+            opacity: 0.55;
+            transition: all 0.2s;
+            background: #1a1a1a;
+        }
+        .carousel-modal .carousel-indicators button:hover { opacity: 0.85; }
+        .carousel-modal .carousel-indicators button.active {
+            border-color: #0d4ab4;
+            opacity: 1;
+        }
+        .carousel-modal .carousel-indicators button img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+            display: block;
+        }
+        body.carousel-modal-open,
+        html.carousel-modal-open {
+            overflow: hidden !important;
+            width: 100%;
+            position: relative;
+        }
         @media (max-width: 768px) {
+            .carousel-modal { --carousel-header-h: 42px; }
+            .carousel-modal .carousel-indicators { bottom: 10px; gap: 4px; padding: 3px 6px; }
+            .carousel-modal .carousel-indicators button { width: 44px; height: 32px; }
             .carousel-modal .carousel-control-prev,
-            .carousel-modal .carousel-control-next { width: 36px; height: 36px; }
-            .carousel-modal .carousel-control-prev { left: 6px; }
-            .carousel-modal .carousel-control-next { right: 6px; }
-            .carousel-modal .carousel-thumbs .thumb { width: 48px; height: 36px; }
+            .carousel-modal .carousel-control-next { width: 32px; height: 32px; opacity: 0.8; }
+            .carousel-modal .carousel-control-prev { left: 4px; }
+            .carousel-modal .carousel-control-next { right: 4px; }
+        }
+        @media (pointer: coarse) {
+            .carousel-modal .carousel-control-prev,
+            .carousel-modal .carousel-control-next { opacity: 0.8; }
+        }
+        @media (orientation: landscape) and (max-height: 480px) {
+            .carousel-modal { --carousel-header-h: 34px; }
+            .carousel-modal .carousel-indicators { bottom: 6px; gap: 4px; padding: 2px 4px; }
+            .carousel-modal .carousel-indicators button { width: 36px; height: 28px; border-width: 1px; }
+            .carousel-modal .carousel-control-prev,
+            .carousel-modal .carousel-control-next { width: 28px; height: 28px; }
         }
 
         /* ===== WORKSPACE NAME ===== */
@@ -761,41 +914,47 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                 <span><?php echo $officeArea ?: $officeCity; ?></span>
             </div>
 
-            <!-- Image Gallery (max 4 images) -->
+            <!-- Image Gallery -->
             <?php
             $totalImages = count($images);
             $firstImage = $images[0] ?? 'https://images.unsplash.com/photo-1497366756111-5c12c1785e86?w=1200';
             $hiddenCount = max(0, $totalImages - 4);
+            $displayedCount = min(4, $totalImages);
             ?>
             <div class="d-flex align-items-center gap-2 mb-2">
-                <span class="fw-semibold" style="font-size:14px;color:#111827;"><i class="fa-regular fa-image me-1"></i>Photos (<?php echo (int)$totalImages; ?>)</span>
-                <?php if ($totalImages > 4): ?>
-                <button onclick="openLightbox(0)" class="btn btn-sm" style="margin-left:auto;background:#0d4ab4;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:13px;font-weight:600;"><i class="fa-solid fa-expand me-1"></i>View all</button>
+                <span class="fw-semibold" style="font-size:14px;color:#111827;cursor:pointer;" onclick="openLightbox(0)" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')openLightbox(0)"><i class="fa-regular fa-image me-1"></i>Photos (<?php echo (int)$totalImages; ?>)</span>
+                <?php if ($totalImages > 1): ?>
+                <span style="font-size:12px;color:#94a3b8;">&middot; Showing <?php echo $displayedCount; ?> of <?php echo (int)$totalImages; ?></span>
                 <?php endif; ?>
+                <button onclick="openLightbox(0)" class="btn btn-sm" style="margin-left:auto;background:#0d4ab4;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:13px;font-weight:600;" aria-label="View all photos"><i class="fa-solid fa-expand me-1"></i>View all</button>
             </div>
             <div class="image-gallery">
                 <div class="gallery-featured" onclick="openLightbox(0)">
-                    <img src="<?php echo htmlspecialchars($firstImage); ?>" alt="<?php echo $officeName; ?>" loading="lazy" onerror="imgErrorToPlaceholder(this)">
+                    <img src="<?php echo htmlspecialchars($firstImage); ?>" alt="<?php echo $officeName; ?> - Photo 1" fetchpriority="high" loading="eager" onerror="imgErrorToPlaceholder(this)">
                 </div>
+                <?php if ($totalImages > 1): ?>
                 <div class="gallery-side">
-                    <?php for ($i = 0; $i < 4; $i++):
+                    <?php $sideCount = min(3, $totalImages - 1); ?>
+                    <?php for ($i = 0; $i < $sideCount; $i++):
                         $img = $images[$i + 1] ?? null;
-                        $isFourth = ($i === 3);
-                        $showOverlay = $isFourth && $hiddenCount > 0;
+                        $isLast = ($i === $sideCount - 1);
+                        $showOverlay = $isLast && $hiddenCount > 0;
+                        $clickIndex = $showOverlay ? 0 : ($i + 1);
                     ?>
-                    <div class="gallery-item" onclick="<?php echo $showOverlay ? 'openLightbox(0)' : ($img ? 'openLightbox(' . ($i + 1) . ')' : ''); ?>">
+                    <div class="gallery-item" onclick="openLightbox(<?php echo $clickIndex; ?>)" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')openLightbox(<?php echo $clickIndex; ?>)">
                         <?php if ($showOverlay): ?>
                         <div class="gallery-more">
                             <i class="fa-solid fa-images"></i>
                             +<?php echo (int)$hiddenCount; ?> more
                             <small>View all</small>
                         </div>
-                        <?php elseif ($img): ?>
-                        <img src="<?php echo htmlspecialchars($img); ?>" alt="<?php echo $officeName; ?>" loading="lazy" onerror="imgErrorToPlaceholder(this)">
+                        <?php else: ?>
+                        <img src="<?php echo htmlspecialchars($img); ?>" alt="<?php echo $officeName; ?> - Photo <?php echo $i + 2; ?>" loading="lazy" onerror="imgErrorToPlaceholder(this)">
                         <?php endif; ?>
                     </div>
                     <?php endfor; ?>
                 </div>
+                <?php endif; ?>
             </div>
 
             <!-- Workspace Header -->
@@ -1068,38 +1227,38 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
 </div>
 
 <!-- IMAGE CAROUSEL MODAL (Bootstrap) -->
-<div class="modal fade carousel-modal" id="imageCarouselModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
+<div class="modal fade carousel-modal" id="imageCarouselModal" tabindex="-1" aria-hidden="true" aria-label="<?php echo $officeName; ?> - Photo Gallery" data-bs-backdrop="static" data-bs-keyboard="true">
+    <div class="modal-dialog modal-fullscreen">
         <div class="modal-content">
             <div class="modal-header">
-                <span class="counter" id="carouselCounter">1 / <?php echo (int)$totalImages; ?></span>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <span class="counter" id="carouselCounter" aria-live="polite">1 / <?php echo (int)$totalImages; ?></span>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close gallery"></button>
             </div>
             <div class="modal-body p-0">
-                <div id="imageCarousel" class="carousel slide" data-bs-ride="false" data-bs-interval="false" data-bs-wrap="true">
+                <div id="imageCarousel" class="carousel slide" data-bs-ride="false" data-bs-interval="false" data-bs-wrap="true" data-bs-touch="true" tabindex="-1" aria-roledescription="carousel" aria-label="<?php echo $officeName; ?> photo gallery">
+                    <div class="carousel-indicators">
+                        <?php foreach ($images as $i => $img): ?>
+                        <button type="button" data-bs-target="#imageCarousel" data-bs-slide-to="<?php echo $i; ?>" class="<?php echo $i === 0 ? 'active' : ''; ?>" aria-current="<?php echo $i === 0 ? 'true' : 'false'; ?>" aria-label="Slide <?php echo $i + 1; ?>">
+                            <img src="<?php echo htmlspecialchars($img); ?>?w=80&h=60&fit=crop" alt="" loading="lazy">
+                        </button>
+                        <?php endforeach; ?>
+                    </div>
                     <div class="carousel-inner" id="carouselInner">
                         <?php foreach ($images as $i => $img): ?>
                         <div class="carousel-item<?php echo $i === 0 ? ' active' : ''; ?>">
-                            <img src="<?php echo htmlspecialchars($img); ?>" alt="<?php echo $officeName; ?> - Image <?php echo $i + 1; ?>" loading="<?php echo $i === 0 ? 'eager' : 'lazy'; ?>">
+                            <img src="<?php echo htmlspecialchars($img); ?>" class="d-block w-100" alt="<?php echo $officeName; ?> - Photo <?php echo $i + 1; ?>" loading="<?php echo $i === 0 ? 'eager' : 'lazy'; ?>">
                         </div>
                         <?php endforeach; ?>
                     </div>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#imageCarousel" data-bs-slide="prev">
+                    <button class="carousel-control-prev" type="button" data-bs-target="#imageCarousel" data-bs-slide="prev" aria-label="Previous photo">
                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                         <span class="visually-hidden">Previous</span>
                     </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#imageCarousel" data-bs-slide="next">
+                    <button class="carousel-control-next" type="button" data-bs-target="#imageCarousel" data-bs-slide="next" aria-label="Next photo">
                         <span class="carousel-control-next-icon" aria-hidden="true"></span>
                         <span class="visually-hidden">Next</span>
                     </button>
                 </div>
-            </div>
-            <div class="carousel-thumbs" id="carouselThumbs">
-                <?php foreach ($images as $i => $img): ?>
-                <div class="thumb<?php echo $i === 0 ? ' active' : ''; ?>" data-index="<?php echo $i; ?>">
-                    <img src="<?php echo htmlspecialchars($img); ?>" alt="" loading="lazy">
-                </div>
-                <?php endforeach; ?>
             </div>
         </div>
     </div>
@@ -1209,21 +1368,130 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
     }
 </script>
 <script>
-    function imgErrorToPlaceholder(img) {
-        if (!img || !img.parentElement) return;
-        img.parentElement.innerHTML = '<div class="placeholder-img"><i class="fa-solid fa-building"></i></div>';
+(function () {
+    'use strict';
+    var officeId = <?php echo json_encode($officeId); ?>;
+    var carouselModalEl = document.getElementById('imageCarouselModal');
+    var carouselEl = document.getElementById('imageCarousel');
+    var counterEl = document.getElementById('carouselCounter');
+
+    if (!carouselModalEl || !carouselEl || !counterEl) return;
+
+    var totalImages = <?php echo (int)$totalImages; ?>;
+    var bsCarouselInstance = null;
+    var ac = null;
+
+    function syncCounter(idx) {
+        idx = parseInt(idx, 10) || 0;
+        if (counterEl) {
+            counterEl.textContent = (idx + 1) + ' / ' + totalImages;
+        }
     }
 
-</script>
-<script>
-const officeId = <?php echo json_encode($officeId); ?>;
+    function cleanupPreloads() {
+        var links = document.head.querySelectorAll('link[rel="preload"][as="image"][data-carousel]');
+        links.forEach(function (l) { l.parentNode.removeChild(l); });
+    }
 
-function openLightbox(i) {
-    if (typeof CubeSpaceLightbox !== 'undefined') CubeSpaceLightbox.open(i);
-}
-function closeLightbox() {
-    if (typeof CubeSpaceLightbox !== 'undefined') CubeSpaceLightbox.close();
-}
+    function preloadCarouselImages(idx) {
+        idx = parseInt(idx, 10) || 0;
+        var items = carouselEl.querySelectorAll('.carousel-item img');
+        if (!items.length) return;
+        var indices = [idx];
+        if (idx > 0) indices.push(idx - 1);
+        if (idx < items.length - 1) indices.push(idx + 1);
+        indices.forEach(function (i) {
+            var src = items[i].getAttribute('src');
+            if (!src) return;
+            var exists = false;
+            var links = document.head.querySelectorAll('link[rel="preload"][as="image"]');
+            for (var l = 0; l < links.length; l++) {
+                if (links[l].getAttribute('href') === src) { exists = true; break; }
+            }
+            if (!exists) {
+                var link = document.createElement('link');
+                link.rel = 'preload';
+                link.as = 'image';
+                link.href = src;
+                link.setAttribute('data-carousel', '');
+                document.head.appendChild(link);
+            }
+        });
+    }
+
+    function lockScroll() {
+        document.body.classList.add('carousel-modal-open');
+        document.documentElement.classList.add('carousel-modal-open');
+    }
+
+    function unlockScroll() {
+        document.body.classList.remove('carousel-modal-open');
+        document.documentElement.classList.remove('carousel-modal-open');
+    }
+
+    function openLightbox(index) {
+        index = parseInt(index, 10) || 0;
+        if (index < 0) index = 0;
+        if (index >= totalImages) index = totalImages - 1;
+        if (index < 0) index = 0;
+
+        cleanupPreloads();
+
+        bsCarouselInstance = bootstrap.Carousel.getOrCreateInstance(carouselEl, {
+            ride: false,
+            interval: false,
+            wrap: true
+        });
+        bsCarouselInstance.to(index);
+        syncCounter(index);
+        preloadCarouselImages(index);
+
+        var modal = bootstrap.Modal.getOrCreateInstance(carouselModalEl);
+        modal.show();
+        lockScroll();
+    }
+
+    window.openLightbox = openLightbox;
+
+    function initEvents() {
+        if (ac) ac.abort();
+        ac = new AbortController();
+        var signal = ac.signal;
+
+        carouselModalEl.addEventListener('shown.bs.modal', function () {
+            lockScroll();
+            if (carouselEl) {
+                var items = carouselEl.querySelectorAll('.carousel-item');
+                var activeItem = carouselEl.querySelector('.carousel-item.active');
+                var activeIdx = 0;
+                if (activeItem && items.length) {
+                    for (var ci = 0; ci < items.length; ci++) {
+                        if (items[ci] === activeItem) { activeIdx = ci; break; }
+                    }
+                }
+                preloadCarouselImages(activeIdx);
+            }
+        }, { signal: signal });
+
+        carouselModalEl.addEventListener('hidden.bs.modal', function () {
+            unlockScroll();
+            cleanupPreloads();
+            bsCarouselInstance = null;
+        }, { signal: signal });
+
+        carouselEl.addEventListener('slid.bs.carousel', function (e) {
+            var idx = e.to;
+            syncCounter(idx);
+            preloadCarouselImages(idx);
+        }, { signal: signal });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initEvents);
+    } else {
+        initEvents();
+    }
+})();
 </script>
 
 <div class="modal fade" id="alertModal" tabindex="-1">
