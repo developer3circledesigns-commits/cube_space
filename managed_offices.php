@@ -134,7 +134,7 @@ if (isset($conn) && $conn) {
             flex-wrap: wrap;
             position: sticky;
             top: 70px;
-            z-index: 1030;
+            z-index: 90;
         }
         .filter-bar .filter-select {
             border-color: #0d4ab4;
