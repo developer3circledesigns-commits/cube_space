@@ -1506,8 +1506,8 @@ if (isset($conn) && $conn) {
             const val = document.getElementById('filterSeats').value;
             if (!val) return {};
             
-            if (val === '200+') {
-                return { min_seats: 200 };
+            if (val === '200-9999') {
+                return { min_seats: 201 };
             }
             
             const parts = val.split('-');

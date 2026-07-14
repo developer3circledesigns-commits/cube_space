@@ -1761,6 +1761,7 @@ if (isset($conn) && $conn) {
         function getSeatsFilter() {
             const val = document.getElementById('filterSeats').value;
             if (!val) return {};
+            if (val === '200-') return { min_seats: 201 };
             const parts = val.split('-');
             if (parts.length === 2) {
                 if (parts[1] === '') return { min_seats: parseInt(parts[0]) };
