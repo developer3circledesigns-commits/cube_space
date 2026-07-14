@@ -101,8 +101,8 @@ if ($action === 'forgot_password' || $action === 'reset_password') {
 
         <div class="hero-content">
 
-            <div class="leasing-title" style="padding-bottom:0;margin-bottom:0; ">www.cubespaces.in</div>
-            <p class="leasing-title" style="padding-top:0;font-weight:400;">Online Office Space Search Platform</p>
+            <div class="leasing-title" style="padding-bottom:0;margin-bottom:0; font-size: 45px; font-weight: 1200;">www.cubespaces.in</div>
+            <p class="leasing-title" style="padding-top:0;font-weight:150;">Online office space search platform</p>
             <h1>Find your Perfect Workspace</h1>
 
             <p>Flexible office solutions for startups, SMEs and Enterprises</p>
@@ -152,10 +152,10 @@ if ($action === 'forgot_password' || $action === 'reset_password') {
 
                 <h3 class="about-title">ABOUT US</h3>
 
-                <h2 style="text-align: justify;">Welcome to CUBE SPACES, online office space search platform of Falcon Leasing And Real Estate Solutions, Chennai</h2>
+                <h2 style="text-align: justify;">Welcome to cubespaces.in, online office space search platform of Falcon Leasing And Real Estate Solutions, Chennai</h2>
 
                 <p style="font-family: 'Segoe UI', sans-serif; text-align: justify;">
-    Cube Spaces simplifies workspace discovery with flexible leasing options, managed offices and customized solutions. We primarily serve IT, ITES, Corporate sectors for their office space expansions and consolidations in Chennai.
+    cubespaces.in simplifies workspace discovery with flexible leasing options, managed offices and customized solutions. We primarily serve IT, ITES, Corporate sectors for their office space expansions and consolidations in Chennai.
 </p>
 
 <p style="font-family: 'Segoe UI', sans-serif; text-align: justify;">

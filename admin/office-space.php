@@ -28,7 +28,7 @@ $editTable = get_listing_table($editType) ?: 'furnished_offices';
 $searchQuery = trim($_GET['search'] ?? '');
 
 if ($mode === 'add' || $mode === 'edit'):
-    $listing = ['title'=>'', 'listing_type'=>'', 'description'=>'', 'city'=>'', 'area'=>'', 'address'=>'', 'price'=>'', 'price_label'=>'', 'total_seats'=>'', 'total_area_sqft'=>'', 'available_sqft'=>'', 'min_inventory'=>'', 'inventory_type'=>'', 'amenities'=>'[]', 'images'=>'[]', 'status'=>'published', 'featured'=>0, 'office_space_type'=>'rent', 'feature_highlights'=>'[]', 'seo_text'=>'', 'remarks'=>'', 'latitude'=>null, 'longitude'=>null, 'listing_code'=>'', 'slug'=>''];
+    $listing = ['title'=>'', 'listing_type'=>'', 'description'=>'', 'city'=>'', 'area'=>'', 'address'=>'', 'price'=>'', 'price_label'=>'', 'total_seats'=>'', 'total_area_sqft'=>'', 'available_sqft'=>'', 'min_inventory'=>'', 'inventory_type'=>'', 'amenities'=>'[]', 'images'=>'[]', 'status'=>'active', 'featured'=>0, 'office_space_type'=>'rent', 'feature_highlights'=>'[]', 'seo_text'=>'', 'remarks'=>'', 'latitude'=>null, 'longitude'=>null, 'listing_code'=>'', 'slug'=>''];
     if ($mode === 'edit' && $editId && $editTable) {
         $stmt = mysqli_prepare($conn, "SELECT * FROM $editTable WHERE id=?");
         mysqli_stmt_bind_param($stmt, 'i', $editId);
@@ -79,7 +79,7 @@ if ($mode === 'add' || $mode === 'edit'):
 
             <div class="col-md-3 position-relative">
                 <label for="city" class="form-label small fw-semibold">City <span class="text-danger">*</span></label>
-                <select name="city" id="city" class="form-select form-select-sm" required>
+                <select name="city" id="city" class="form-select form-select-sm" required onchange="filterAreasByCity()">
                     <option value="">- Select -</option>
                     <?php if ($cities && mysqli_num_rows($cities)): mysqli_data_seek($cities, 0); while ($c = mysqli_fetch_assoc($cities)): ?>
                     <option value="<?= htmlspecialchars($c['city']) ?>" <?= $listing['city']===$c['city']?'selected':'' ?>><?= htmlspecialchars(ucfirst($c['city'])) ?></option>
@@ -96,6 +96,7 @@ if ($mode === 'add' || $mode === 'edit'):
 
             <div class="col-md-3 position-relative">
                 <label for="area" class="form-label small fw-semibold">Area / Locality <span class="text-danger">*</span></label>
+                <input type="text" id="areaSearch" class="form-control form-control-sm mb-1" placeholder="Type area to filter..." oninput="filterAreasByText(this)" style="font-size:0.75rem;">
                 <select name="area" id="area" class="form-select form-select-sm" required>
                     <option value="">- Select -</option>
                     <?php if ($areas && mysqli_num_rows($areas)): mysqli_data_seek($areas, 0); while ($a = mysqli_fetch_assoc($areas)): ?>
@@ -123,13 +124,15 @@ if ($mode === 'add' || $mode === 'edit'):
             </div>
 
             <div class="col-md-3 position-relative">
-                <label for="total_area_sqft" class="form-label small fw-semibold">Total Building Leasable Area</label>
+                <label for="total_area_sqft" class="form-label small fw-semibold">Current Available Rental Area</label>
                 <input type="number" name="total_area_sqft" id="total_area_sqft" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['total_area_sqft'] ?? '') ?>" placeholder="e.g. 5000">
+                <div id="totalAreaSqftFeedback" class="small text-danger mt-1" style="display:none;"></div>
             </div>
 
             <div class="col-md-3 position-relative">
                 <label for="inventory_type" class="form-label small fw-semibold">Current Status</label>
-                <input type="text" name="inventory_type" id="inventory_type" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['inventory_type'] ?? '') ?>" placeholder="e.g. Ready to move in">
+                <input type="text" name="inventory_type" id="inventory_type" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['inventory_type'] ?? '') ?>" placeholder="e.g. Ready to move in" oninput="validateInventoryType(this)">
+                <div id="inventoryTypeFeedback" class="invalid-feedback"></div>
             </div>
 
             <div class="col-12 position-relative">
@@ -187,14 +190,14 @@ if ($mode === 'add' || $mode === 'edit'):
 
             <div class="col-md-6 position-relative">
                 <label for="price" class="form-label small fw-semibold">Quoted Rent</label>
-                <input type="number" step="0.01" name="price" id="price" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price']??'') ?>" placeholder="Enter quoted rent">
+                <input type="text" name="price" id="price" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price']??'') ?>" placeholder="Enter quoted rent">
             </div>
 
             <div class="col-md-3 position-relative">
                 <label for="status" class="form-label small fw-semibold">Status</label>
                 <select name="status" id="status" class="form-select form-select-sm">
-                    <option value="published" <?= ($listing['status']??'published')==='published'?'selected':'' ?>>Published</option>
-                    <option value="draft" <?= ($listing['status']??'published')==='draft'?'selected':'' ?>>Draft</option>
+                    <option value="active" <?= ($listing['status']??'active')==='active'?'selected':'' ?>>Active</option>
+                    <option value="inactive" <?= ($listing['status']??'active')==='inactive'?'selected':'' ?>>Inactive</option>
                 </select>
             </div>
 
@@ -228,7 +231,7 @@ if ($mode === 'add' || $mode === 'edit'):
     $params = [];
     $types = '';
 
-    if ($statusFilter && in_array($statusFilter, ['draft','published'])) {
+    if ($statusFilter && in_array($statusFilter, ['inactive','active'])) {
         $conditions[] = "status = ?";
         $params[] = $statusFilter;
         $types .= 's';
@@ -249,10 +252,13 @@ if ($mode === 'add' || $mode === 'edit'):
         $types .= 's';
     }
     if ($searchQuery) {
-        $conditions[] = "(title LIKE ? OR city LIKE ? OR area LIKE ? OR address LIKE ?)";
+        $conditions[] = "(id = ? OR listing_code LIKE ? OR title LIKE ? OR slug LIKE ? OR city LIKE ? OR area LIKE ? OR address LIKE ? OR description LIKE ? OR remarks LIKE ? OR status LIKE ?)";
+        $idVal = is_numeric($searchQuery) ? (int)$searchQuery : 0;
         $sp = "%$searchQuery%";
+        $params[] = $idVal; $params[] = $sp; $params[] = $sp; $params[] = $sp;
         $params[] = $sp; $params[] = $sp; $params[] = $sp; $params[] = $sp;
-        $types .= 'ssss';
+        $params[] = $sp; $params[] = $sp;
+        $types .= 'isssssssss';
     }
     $whereClause = !empty($conditions) ? ' WHERE ' . implode(' AND ', $conditions) : '';
 
@@ -272,16 +278,28 @@ if ($mode === 'add' || $mode === 'edit'):
     }
 
     $columns = "id, title, slug, city, area, address, price, price_label, total_seats, total_area_sqft, available_sqft, min_inventory, inventory_type, office_space_type, amenities, images, featured, status, listing_code, created_at";
-    $orderSql = " ORDER BY created_at DESC LIMIT $adminPerPage OFFSET $adminOffset";
+    $orderDir = " ORDER BY ";
+    $orderParams = [];
+    $orderTypes = '';
+    if ($searchQuery) {
+        $orderDir .= "listing_code = ? DESC, title = ? DESC, ";
+        $prefix = "$searchQuery%";
+        $orderDir .= "listing_code LIKE ? DESC, title LIKE ? DESC, ";
+        $orderParams = [$searchQuery, $searchQuery, $prefix, $prefix];
+        $orderTypes = 'ssss';
+    }
+    $orderDir .= "created_at DESC";
+    $orderSql = "$orderDir LIMIT $adminPerPage OFFSET $adminOffset";
+
     $unionSql = "SELECT $columns, 'furnished' as listing_type_db FROM furnished_offices $whereClause UNION ALL SELECT $columns, 'unfurnished' as listing_type_db FROM unfurnished_offices $whereClause";
     $listSql = "SELECT t.*, (SELECT COUNT(*) FROM contacts c WHERE (c.listing_code != '' AND c.listing_code = t.listing_code) OR (c.office_id = t.id AND (c.listing_code IS NULL OR c.listing_code = ''))) as enq_cnt FROM ($unionSql) t $orderSql";
     
     $result = false;
     $dbError = '';
+    $allListParams = array_merge($params, $params, $orderParams);
+    $allListTypes = str_repeat('s', count($allListParams));
     $listStmt = mysqli_prepare($conn, $listSql);
     if ($listStmt) {
-        $allListParams = array_merge($params, $params);
-        $allListTypes = str_repeat('s', count($allListParams));
         if (!empty($allListParams)) {
             mysqli_stmt_bind_param($listStmt, $allListTypes, ...$allListParams);
         }
@@ -329,8 +347,8 @@ if ($mode === 'add' || $mode === 'edit'):
             <input type="search" name="search" class="form-control form-control-sm" style="width:150px" placeholder="Search..." value="<?= htmlspecialchars($searchQuery) ?>">
             <select name="status" class="form-select form-select-sm" style="width:110px;" onchange="this.form.submit()">
                 <option value="">Status</option>
-                <option value="draft" <?= $statusFilter === 'draft' ? 'selected' : '' ?>>Draft</option>
-                <option value="published" <?= $statusFilter === 'published' ? 'selected' : '' ?>>Published</option>
+                <option value="inactive" <?= $statusFilter === 'inactive' ? 'selected' : '' ?>>Inactive</option>
+                <option value="active" <?= $statusFilter === 'active' ? 'selected' : '' ?>>Active</option>
             </select>
             <select name="city" class="form-select form-select-sm" style="width:120px;" onchange="this.form.submit()">
                 <option value="">City</option>
@@ -362,8 +380,8 @@ if ($mode === 'add' || $mode === 'edit'):
     <select id="bulkActionSelect" class="form-select form-select-sm" aria-label="Bulk actions">
         <option value="">-- Bulk Actions --</option>
         <option value="delete">Delete Selected</option>
-        <option value="status-draft">Mark as Draft</option>
-        <option value="status-published">Mark as Published</option>
+        <option value="status-inactive">Mark as Inactive</option>
+        <option value="status-active">Mark as Active</option>
     </select>
     <button class="btn btn-sm btn-secondary" onclick="applyBulkAction()">Apply</button>
 </div>
@@ -405,9 +423,9 @@ if ($mode === 'add' || $mode === 'edit'):
                             <td><?= htmlspecialchars($row['city']) ?></td>
                             <td><?= htmlspecialchars($row['area'] ?? '—') ?></td>
                             <td><?= $row['total_area_sqft'] ? number_format($row['total_area_sqft']) : '—' ?></td>
-                            <td><?= $row['price'] ? '₹' . number_format($row['price']) . '<small class="text-muted ms-1">Sq Ft / Month</small>' : '—' ?></td>
+                            <td><?= $row['price'] ? ($row['price'] !== '' ? '₹' . (is_numeric($row['price']) ? number_format($row['price']) : $row['price']) . '<small class="text-muted ms-1">Sq Ft / Month</small>' : '—') : '—' ?></td>
                             <td><span class="badge bg-<?= ($row['office_space_type'] ?? 'rent') === 'lease' ? 'info' : 'secondary' ?>"><?= htmlspecialchars(($row['office_space_type'] ?? 'rent')) ?></span></td>
-                            <td><span class="badge bg-<?= $row['status'] === 'published' ? 'success' : 'secondary' ?>"><?= $row['status'] ?></span></td>
+                            <td><span class="badge bg-<?= $row['status'] === 'active' ? 'success' : 'secondary' ?>"><?= $row['status'] ?></span></td>
                             <td class="text-center">
                                 <?php if ($enqCnt > 0): ?>
                                 <a href="contacts.php?search=<?= urlencode($row['title']) ?>" class="badge bg-info text-decoration-none" title="View enquiries"><?= $enqCnt ?></a>
@@ -416,7 +434,7 @@ if ($mode === 'add' || $mode === 'edit'):
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php if ($row['status'] === 'published'): ?>
+                                <?php if ($row['status'] === 'active'): ?>
                                 <a href="/office_detail.php?slug=<?= htmlspecialchars($row['slug']) ?>&type=<?= $row['listing_type_db'] ?>" target="_blank" class="btn btn-sm btn-outline-secondary" title="View on site"><i class="fa-solid fa-eye"></i></a>
                                 <?php endif; ?>
                                 <a href="office-space.php?mode=edit&id=<?= $row['id'] ?>&type=<?= $row['listing_type_db'] ?>" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a>

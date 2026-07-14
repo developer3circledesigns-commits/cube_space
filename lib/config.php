@@ -8,7 +8,7 @@ const ALLOWED_LISTING_TABLES = [
     'unfurnished'  => 'unfurnished_offices',
 ];
 
-const ALLOWED_LISTING_STATUSES = ['draft', 'published', 'archived'];
+const ALLOWED_LISTING_STATUSES = ['inactive', 'active', 'archived'];
 
 const ALLOWED_CONTACT_STATUSES = ['new', 'contacted', 'closed'];
 

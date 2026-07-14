@@ -60,7 +60,7 @@ if ($action === 'create' || $action === 'update') {
     $city = trim($_POST['city'] ?? 'chennai');
     $area = trim($_POST['area'] ?? '');
     $address = trim($_POST['address'] ?? '');
-    $price = isset($_POST['price']) && $_POST['price'] !== '' ? (float)$_POST['price'] : null;
+    $price = isset($_POST['price']) && $_POST['price'] !== '' ? trim($_POST['price']) : null;
     
     // Validate latitude and longitude if provided
     $latitude = isset($_POST['latitude']) && $_POST['latitude'] !== '' ? (float)$_POST['latitude'] : null;
@@ -76,10 +76,10 @@ if ($action === 'create' || $action === 'update') {
     $priceLabel = trim($_POST['price_label'] ?? '');
     $officeSpaceType = in_array(trim($_POST['office_space_type'] ?? ''), ['rent', 'lease']) ? trim($_POST['office_space_type']) : 'rent';
     $totalSeats = isset($_POST['total_seats']) && $_POST['total_seats'] !== '' ? (int)$_POST['total_seats'] : null;
-    $billableSeats = isset($_POST['billable_seats']) && $_POST['billable_seats'] !== '' ? (int)$_POST['billable_seats'] : null;
+    $billableSeats = isset($_POST['billable_seats']) && $_POST['billable_seats'] !== '' ? (int)$_POST['billable_seats'] : 0;
     $remarks = trim($_POST['remarks'] ?? '');
     $totalAreaSqft = isset($_POST['total_area_sqft']) && $_POST['total_area_sqft'] !== '' ? (int)$_POST['total_area_sqft'] : 0;
-    $status = trim($_POST['status'] ?? 'draft');
+    $status = trim($_POST['status'] ?? 'inactive');
     $featured = !empty($_POST['featured']) ? 1 : 0;
     $featureHighlights = [];
     if (!empty($_POST['feature_highlights'])) {
@@ -107,6 +107,12 @@ if ($action === 'create' || $action === 'update') {
     $isFurnished = in_array($table, ['furnished_offices', 'unfurnished_offices']);
     $hasBillableSeats = $table === 'managed_offices';
 
+    $inventoryType = trim($_POST['inventory_type'] ?? '');
+    if ($inventoryType !== '' && is_numeric($inventoryType)) {
+        http_response_code(400);
+        die(json_encode(['error' => 'Current Status must be a text value, cannot be a number']));
+    }
+
     $validator = new Validator($_POST);
     if (!$validator->validate([
         'title'            => 'required|max:255',
@@ -114,13 +120,13 @@ if ($action === 'create' || $action === 'update') {
         'city'             => 'required|max:100',
         'area'             => 'max:100',
         'address'          => 'max:1000',
-        'price'            => 'numeric|min:0',
         'price_label'      => 'max:120',
         'total_seats'      => 'integer|min:0',
         'billable_seats'   => 'integer|min:0',
         'remarks'          => 'max:5000',
         'total_area_sqft'  => 'integer|min:0',
-        'status'           => 'required|in:draft,published,archived',
+        'status'           => 'required|in:inactive,active,archived',
+        'inventory_type'   => 'max:255',
         'office_space_type'=> 'required|in:rent,lease',
         'featured'         => 'in:0,1',
         'seo_text'         => 'max:2000',
@@ -375,7 +381,7 @@ if ($action === 'create' || $action === 'update') {
                 }
             }
             if (!mysqli_stmt_execute($stmt)) {
-                throw new Exception('Failed to update listing');
+                throw new Exception('Failed to update listing: ' . mysqli_stmt_error($stmt));
             }
             log_activity($conn, 'update', $table, $id, ['title' => $title, 'type' => $listingType]);
             publish_event('listing_updated', $listingType, $id, $title);
@@ -414,7 +420,7 @@ if ($action === 'export') {
     $params = [];
     $types = '';
 
-    if ($statusFilter && in_array($statusFilter, ['draft','published','archived'])) {
+    if ($statusFilter && in_array($statusFilter, ['inactive','active','archived'])) {
         $conditions[] = "status = ?"; $params[] = $statusFilter; $types .= 's';
     }
     if ($cityFilter) {

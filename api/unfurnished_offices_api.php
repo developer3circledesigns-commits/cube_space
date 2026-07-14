@@ -155,7 +155,7 @@ if ($action === 'autocomplete') {
     $like = $query . '%';
     $stmt = mysqli_prepare($conn,
         "SELECT DISTINCT title, area, city FROM unfurnished_offices
-         WHERE status='published' AND (title LIKE ? OR area LIKE ? OR city LIKE ?)
+         WHERE status='active' AND (title LIKE ? OR area LIKE ? OR city LIKE ?)
          LIMIT 10"
     );
     mysqli_stmt_bind_param($stmt, 'sss', $like, $like, $like);
@@ -202,7 +202,7 @@ if ($action === 'list') {
     $cached = $cache->get($cacheKey);
     if ($cached) { echo json_encode($cached); exit; }
 
-    $where = ["status='published'"];
+    $where = ["status='active'"];
     $params = [];
     $types = '';
 
@@ -313,7 +313,7 @@ if ($action === 'list') {
     // Facets — combined into 2 queries instead of 5
     $facets = [];
 
-    $cityRes = mysqli_query($conn, "SELECT city, COUNT(*) as cnt FROM unfurnished_offices WHERE status='published' GROUP BY city ORDER BY cnt DESC");
+    $cityRes = mysqli_query($conn, "SELECT city, COUNT(*) as cnt FROM unfurnished_offices WHERE status='active' GROUP BY city ORDER BY cnt DESC");
     while ($r = mysqli_fetch_assoc($cityRes)) {
         $facets['cities'][] = $r;
     }
@@ -334,7 +334,7 @@ if ($action === 'list') {
             MIN(price) as min_price,
             MAX(price) as max_price
          FROM unfurnished_offices
-         WHERE status='published' $areaFilterSql"
+         WHERE status='active' $areaFilterSql"
     );
     if (!empty($areaParams)) {
         mysqli_stmt_bind_param($facetStmt, $areaTypes, ...$areaParams);
@@ -347,7 +347,7 @@ if ($action === 'list') {
 
     // Area facets (separate query since it's dynamic)
     $areaStmt = mysqli_prepare($conn,
-        "SELECT area, COUNT(*) as cnt FROM unfurnished_offices WHERE status='published' $areaFilterSql AND area IS NOT NULL GROUP BY area ORDER BY cnt DESC"
+        "SELECT area, COUNT(*) as cnt FROM unfurnished_offices WHERE status='active' $areaFilterSql AND area IS NOT NULL GROUP BY area ORDER BY cnt DESC"
     );
     if (!empty($areaParams)) {
         mysqli_stmt_bind_param($areaStmt, $areaTypes, ...$areaParams);
@@ -379,7 +379,7 @@ if ($action === 'list') {
             $placeholders = implode(',', array_fill(0, count($excludeIds), '?'));
             $nearSql = "SELECT id, title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code
                         FROM unfurnished_offices
-                        WHERE status='published' AND latitude IS NOT NULL AND id NOT IN ($placeholders)
+                        WHERE status='active' AND latitude IS NOT NULL AND id NOT IN ($placeholders)
                         ORDER BY (POW(latitude - ?, 2) + POW(longitude - ?, 2))
                         LIMIT 6";
             $nearParams = array_merge($excludeIds, [$centerLat, $centerLng]);
@@ -431,7 +431,7 @@ if ($action === 'map') {
     $maxSeats = $_GET['max_seats'] ?? '';
     $limit = min(200, max(1, (int)($_GET['limit'] ?? 100)));
 
-    $where = ["status='published'", "latitude IS NOT NULL", "longitude IS NOT NULL"];
+    $where = ["status='active'", "latitude IS NOT NULL", "longitude IS NOT NULL"];
     $params = [];
     $types = '';
 

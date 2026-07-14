@@ -218,6 +218,10 @@ body {
     border-color: var(--admin-primary);
     box-shadow: 0 0 0 3px rgba(13,74,180,0.1);
 }
+.form-control-sm.is-invalid, .form-select-sm.is-invalid {
+    border-color: #dc3545;
+    background-color: #fff5f5;
+}
 
 /* ===== BULK ACTION BAR ===== */
 .bulk-bar {

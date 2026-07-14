@@ -56,7 +56,7 @@ $office = null;
 if ($typeParam && in_array($typeParam, ['managed', 'furnished', 'unfurnished'])) {
     $tableMap = ['managed' => 'managed_offices', 'furnished' => 'furnished_offices', 'unfurnished' => 'unfurnished_offices'];
     $table = $tableMap[$typeParam];
-    $stmt = mysqli_prepare($conn, "SELECT *, ? as listing_type_db FROM $table WHERE slug = ? AND status = 'published'");
+    $stmt = mysqli_prepare($conn, "SELECT *, ? as listing_type_db FROM $table WHERE slug = ? AND status = 'active'");
     if (!$stmt) { http_response_code(500); echo json_encode(['error' => 'Database error']); exit; }
     mysqli_stmt_bind_param($stmt, 'ss', $typeParam, $slug);
     mysqli_stmt_execute($stmt);
@@ -65,11 +65,11 @@ if ($typeParam && in_array($typeParam, ['managed', 'furnished', 'unfurnished']))
 }
 
 if (!$office) {
-    $unionSql = "(SELECT *, 'managed' as listing_type_db FROM managed_offices WHERE slug = ? AND status = 'published')
+    $unionSql = "(SELECT *, 'managed' as listing_type_db FROM managed_offices WHERE slug = ? AND status = 'active')
                  UNION ALL
-                 (SELECT *, 'furnished' as listing_type_db FROM furnished_offices WHERE slug = ? AND status = 'published')
+                 (SELECT *, 'furnished' as listing_type_db FROM furnished_offices WHERE slug = ? AND status = 'active')
                  UNION ALL
-                 (SELECT *, 'unfurnished' as listing_type_db FROM unfurnished_offices WHERE slug = ? AND status = 'published')
+                 (SELECT *, 'unfurnished' as listing_type_db FROM unfurnished_offices WHERE slug = ? AND status = 'active')
                  LIMIT 1";
     $stmt = mysqli_prepare($conn, $unionSql);
     if (!$stmt) { http_response_code(500); echo json_encode(['error' => 'Database error']); exit; }

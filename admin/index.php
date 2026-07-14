@@ -224,6 +224,7 @@ document.getElementById('resetPasswordForm').addEventListener('submit', async fu
 document.getElementById('togglePassword').addEventListener('click', function() {
     const pw = document.getElementById('password');
     const icon = document.getElementById('togglePasswordIcon');
+    if (!pw || !icon) return;
     if (pw.type === 'password') {
         pw.type = 'text';
         icon.className = 'fa-regular fa-eye-slash';

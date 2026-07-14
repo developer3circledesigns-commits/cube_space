@@ -3,7 +3,7 @@ require_once __DIR__ . '/layout.php';
 
 $detailTab = $_GET['tab'] ?? 'leasing';
 $selectedOffice = (int)($_GET['office_id'] ?? 0);
-$allOffices = mysqli_query($conn, "SELECT id, title, slug FROM managed_offices WHERE status='published' ORDER BY title");
+$allOffices = mysqli_query($conn, "SELECT id, title, slug FROM managed_offices WHERE status='active' ORDER BY title");
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="fw-bold mb-0">Office Details Management</h4>

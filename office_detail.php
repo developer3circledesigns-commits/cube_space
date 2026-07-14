@@ -103,7 +103,7 @@ $typeParam = isset($_GET['type']) ? trim($_GET['type']) : '';
 if ($typeParam && in_array($typeParam, ['managed', 'furnished', 'unfurnished'])) {
     $tableMap = ['managed' => 'managed_offices', 'furnished' => 'furnished_offices', 'unfurnished' => 'unfurnished_offices'];
     $table = $tableMap[$typeParam];
-    $stmt = mysqli_prepare($conn, "SELECT * FROM $table WHERE slug = ? AND status = 'published'");
+    $stmt = mysqli_prepare($conn, "SELECT * FROM $table WHERE slug = ? AND status = 'active'");
     mysqli_stmt_bind_param($stmt, 's', $slug);
     mysqli_stmt_execute($stmt);
     $office = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
@@ -112,7 +112,7 @@ if ($typeParam && in_array($typeParam, ['managed', 'furnished', 'unfurnished']))
 }
 
 if (!$office) {
-    $stmt = mysqli_prepare($conn, "SELECT * FROM managed_offices WHERE slug = ? AND status = 'published'");
+    $stmt = mysqli_prepare($conn, "SELECT * FROM managed_offices WHERE slug = ? AND status = 'active'");
     mysqli_stmt_bind_param($stmt, 's', $slug);
     mysqli_stmt_execute($stmt);
     $officeResult = mysqli_stmt_get_result($stmt);
@@ -122,7 +122,7 @@ if (!$office) {
 }
 
 if (!$office) {
-    $stmt = mysqli_prepare($conn, "SELECT * FROM furnished_offices WHERE slug = ? AND status = 'published'");
+    $stmt = mysqli_prepare($conn, "SELECT * FROM furnished_offices WHERE slug = ? AND status = 'active'");
     mysqli_stmt_bind_param($stmt, 's', $slug);
     mysqli_stmt_execute($stmt);
     $officeResult = mysqli_stmt_get_result($stmt);
@@ -132,7 +132,7 @@ if (!$office) {
 }
 
 if (!$office) {
-    $stmt = mysqli_prepare($conn, "SELECT * FROM unfurnished_offices WHERE slug = ? AND status = 'published'");
+    $stmt = mysqli_prepare($conn, "SELECT * FROM unfurnished_offices WHERE slug = ? AND status = 'active'");
     mysqli_stmt_bind_param($stmt, 's', $slug);
     mysqli_stmt_execute($stmt);
     $officeResult = mysqli_stmt_get_result($stmt);
@@ -246,11 +246,11 @@ $officeLat = $office['latitude'] ?? null;
 $officeLng = $office['longitude'] ?? null;
 if ($officeLat && $officeLng) {
     $nearStmt = mysqli_prepare($conn,
-        "(SELECT id, title, slug, city, area, address, price, total_seats, images, featured, latitude, longitude, 'managed' as listing_type_db FROM managed_offices WHERE status='published' AND slug != ? AND latitude IS NOT NULL)
+        "(SELECT id, title, slug, city, area, address, price, total_seats, images, featured, latitude, longitude, 'managed' as listing_type_db FROM managed_offices WHERE status='active' AND slug != ? AND latitude IS NOT NULL)
         UNION ALL
-        (SELECT id, title, slug, city, area, address, price, total_seats, images, featured, latitude, longitude, 'furnished' as listing_type_db FROM furnished_offices WHERE status='published' AND slug != ? AND latitude IS NOT NULL)
+        (SELECT id, title, slug, city, area, address, price, total_seats, images, featured, latitude, longitude, 'furnished' as listing_type_db FROM furnished_offices WHERE status='active' AND slug != ? AND latitude IS NOT NULL)
         UNION ALL
-        (SELECT id, title, slug, city, area, address, price, total_seats, images, featured, latitude, longitude, 'unfurnished' as listing_type_db FROM unfurnished_offices WHERE status='published' AND slug != ? AND latitude IS NOT NULL)
+        (SELECT id, title, slug, city, area, address, price, total_seats, images, featured, latitude, longitude, 'unfurnished' as listing_type_db FROM unfurnished_offices WHERE status='active' AND slug != ? AND latitude IS NOT NULL)
         ORDER BY (POW(latitude - ?, 2) + POW(longitude - ?, 2))
         LIMIT 6"
     );
@@ -685,7 +685,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
         .amenity-item .icon i { font-size: 16px; color: #0d4ab4; }
         .amenity-item span { font-size: 14px; font-weight: 500; color: #374151; }
         .amenities-tnc {
-            margin-top: 16px; padding: 12px 16px; background: #212121; color: #fff;
+            margin-top: 16px; padding: 12px 16px; background: #F1F5FB; color: #292828;
             font-size: 12px; display: flex; align-items: center; gap: 8px;
             border: 1px solid #212121;
         }
@@ -1019,7 +1019,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                         <div class="cd-icon"><i class="fa-solid fa-people-group"></i></div>
                         <div>
                             <div class="cd-label">Current Available Billable Seats</div>
-                            <div class="cd-value"><?php echo fmt_seats($totalSeats); ?> Seats</div>
+                            <div class="cd-value"><?php echo htmlspecialchars($office['billable_seats'] ?? ''); ?> Seats</div>
                         </div>
                     </div>
                     <div class="cd-item">
@@ -1040,11 +1040,11 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                     <div class="cd-item">
                         <div class="cd-icon"><i class="fa-solid fa-building"></i></div>
                         <div>
-                            <div class="cd-label">Current Available Area on Rent</div>
+                            <div class="cd-label">Current Available Rental Area</div>
                             <div class="cd-value"><?php echo $totalSqft ? number_format($totalSqft) . ' Sq Ft.' : '-'; ?></div>
                         </div>
                     </div>
-                    <?php if ($availableSqft): ?>
+                    <!-- <?php if ($availableSqft): ?>
                     <div class="cd-item">
                         <div class="cd-icon"><i class="fa-solid fa-ruler-combined"></i></div>
                         <div>
@@ -1052,7 +1052,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                             <div class="cd-value"><?php echo htmlspecialchars($availableSqft); ?> Sq Ft.</div>
                         </div>
                     </div>
-                    <?php endif; ?>
+                    <?php endif; ?> -->
                     <?php if ($inventoryType): ?>
                     <div class="cd-item">
                         <div class="cd-icon"><i class="fa-solid <?php echo $inventoryType === 'Ready to move in' ? 'fa-circle-check' : 'fa-clock'; ?>" style="color:<?php echo $inventoryType === 'Ready to move in' ? '#166534' : '#92400e'; ?>;"></i></div>
@@ -1129,7 +1129,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
             <?php endif; ?> -->
 
             <!-- SEO Content -->
-            <?php if (!empty($officeSeoText)): ?>
+            <!-- <?php if (!empty($officeSeoText)): ?>
             <div class="section">
                 <div class="seo-text">
                     <?php
@@ -1140,7 +1140,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                     ?>
                 </div>
             </div>
-            <?php endif; ?>
+            <?php endif; ?> -->
 
             <?php if (!empty($nearestOffices)): ?>
             <div class="nearby-section">

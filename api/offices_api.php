@@ -146,11 +146,11 @@ if ($action === 'autocomplete') {
     $like = $query . '%';
     $stmt = mysqli_prepare($conn,
         "(SELECT DISTINCT title, area, city FROM furnished_offices
-          WHERE status='published' AND (title LIKE ? OR area LIKE ? OR city LIKE ?)
+          WHERE status='active' AND (title LIKE ? OR area LIKE ? OR city LIKE ?)
           LIMIT 10)
          UNION ALL
          (SELECT DISTINCT title, area, city FROM unfurnished_offices
-          WHERE status='published' AND (title LIKE ? OR area LIKE ? OR city LIKE ?)
+          WHERE status='active' AND (title LIKE ? OR area LIKE ? OR city LIKE ?)
           LIMIT 10)
          LIMIT 10"
     );
@@ -199,7 +199,7 @@ if ($action === 'list') {
     $cached = $cache->get($cacheKey);
     if ($cached) { echo json_encode($cached); exit; }
 
-    $where = ["status='published'"];
+    $where = ["status='active'"];
     $params = [];
     $types = '';
 
@@ -323,7 +323,7 @@ if ($action === 'list') {
 
     $facets = [];
 
-    $facetWhere = ["status='published'"];
+    $facetWhere = ["status='active'"];
     $facetParams = [];
     $facetTypes = '';
 
@@ -373,7 +373,7 @@ if ($action === 'list') {
 
     $facetWhereClause = implode(' AND ', $facetWhere);
 
-    $cityRes = mysqli_query($conn, "(SELECT city, COUNT(*) as cnt FROM furnished_offices WHERE status='published' GROUP BY city) UNION ALL (SELECT city, COUNT(*) as cnt FROM unfurnished_offices WHERE status='published' GROUP BY city)");
+    $cityRes = mysqli_query($conn, "(SELECT city, COUNT(*) as cnt FROM furnished_offices WHERE status='active' GROUP BY city) UNION ALL (SELECT city, COUNT(*) as cnt FROM unfurnished_offices WHERE status='active' GROUP BY city)");
     $cityCounts = [];
     while ($r = mysqli_fetch_assoc($cityRes)) {
         $cityCounts[$r['city']] = ($cityCounts[$r['city']] ?? 0) + (int)$r['cnt'];
@@ -461,11 +461,11 @@ if ($action === 'list') {
                          FROM (
                              SELECT id, title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code, 'furnished' as listing_type_db
                              FROM furnished_offices
-                             WHERE status='published' AND latitude IS NOT NULL
+                             WHERE status='active' AND latitude IS NOT NULL
                              UNION ALL
                              SELECT id, title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code, 'unfurnished' as listing_type_db
                              FROM unfurnished_offices
-                             WHERE status='published' AND latitude IS NOT NULL
+                             WHERE status='active' AND latitude IS NOT NULL
                          ) combined
                          ORDER BY (POW(latitude - ?, 2) + POW(longitude - ?, 2))
                          LIMIT 10";

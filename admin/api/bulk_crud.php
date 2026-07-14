@@ -198,7 +198,7 @@ if ($action === 'bulk_status') {
     }
 
     if ($page === 'office-space' && !empty($types)) {
-        if (!in_array($status, ['draft', 'published', 'archived'])) {
+        if (!in_array($status, ['inactive', 'active', 'archived'])) {
             http_response_code(400);
             die(json_encode(['error' => 'Invalid status for listings']));
         }
@@ -251,7 +251,7 @@ if ($action === 'bulk_status') {
         }
         exit;
     } elseif (in_array($table, ['managed_offices', 'office_spaces', 'furnished_offices', 'unfurnished_offices'])) {
-        if (!in_array($status, ['draft', 'published', 'archived'])) {
+        if (!in_array($status, ['inactive', 'active', 'archived'])) {
             http_response_code(400);
             die(json_encode(['error' => 'Invalid status for listings']));
         }

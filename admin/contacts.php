@@ -10,7 +10,7 @@ function office_link($office_id) {
     global $conn;
     static $cache = [];
     if (isset($cache[$office_id])) return $cache[$office_id];
-    $stmt = mysqli_prepare($conn, "SELECT id, title, 'managed' as tbl FROM managed_offices WHERE id = ? AND status='published' UNION SELECT id, title, 'furnished' as tbl FROM furnished_offices WHERE id = ? AND status='published' UNION SELECT id, title, 'unfurnished' as tbl FROM unfurnished_offices WHERE id = ? AND status='published' LIMIT 1");
+    $stmt = mysqli_prepare($conn, "SELECT id, title, 'managed' as tbl FROM managed_offices WHERE id = ? AND status='active' UNION SELECT id, title, 'furnished' as tbl FROM furnished_offices WHERE id = ? AND status='active' UNION SELECT id, title, 'unfurnished' as tbl FROM unfurnished_offices WHERE id = ? AND status='active' LIMIT 1");
     mysqli_stmt_bind_param($stmt, 'iii', $office_id, $office_id, $office_id);
     mysqli_stmt_execute($stmt);
     $r = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));

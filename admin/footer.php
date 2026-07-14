@@ -221,11 +221,9 @@ async function addNewArea() {
     if (!selectedCity) { showAlertModal('Select a city first before adding an area.', 'info'); return; }
     var ok = await postOption('area', lower, selectedCity);
     if (!ok) return;
-    var opt = document.createElement('option');
-    opt.value = lower;
-    opt.text = val.charAt(0).toUpperCase() + val.slice(1);
-    opt.setAttribute('data-city', selectedCity);
-    select.add(opt);
+    var displayText = val.charAt(0).toUpperCase() + val.slice(1);
+    if (allAreaOptions) allAreaOptions.push({ value: lower, text: displayText, city: selectedCity });
+    filterAreasByCity();
     select.value = lower;
     input.value = '';
 }
@@ -242,6 +240,7 @@ async function deleteCity() {
             break;
         }
     }
+    filterAreasByCity();
 }
 async function deleteArea() {
     var select = document.getElementById('area');
@@ -249,13 +248,10 @@ async function deleteArea() {
     var val = select.value;
     var ok = await deleteOption('area', val);
     if (!ok) return;
-    for (var i = 0; i < select.options.length; i++) {
-        if (select.options[i].value === val && i > 0) {
-            select.remove(i);
-            select.value = '';
-            break;
-        }
+    if (allAreaOptions) {
+        allAreaOptions = allAreaOptions.filter(function(a) { return a.value !== val; });
     }
+    filterAreasByCity();
 }
 async function postOption(type, value, city) {
     var fd = new FormData();
@@ -315,37 +311,106 @@ function syncAmenities() {
     if (input) input.value = JSON.stringify(checked);
 }
 syncAmenities();
-function filterAreasByCity(city) {
-    var select = document.getElementById('area');
-    if (!select) return;
-    var currentVal = select.value;
-    select.value = '';
-    for (var i = 0; i < select.options.length; i++) {
-        var opt = select.options[i];
-        if (!opt.value) continue;
-        var optCity = opt.getAttribute('data-city') || '';
-        var show = !city || optCity === city || optCity === '';
-        opt.style.display = show ? '' : 'none';
-    }
-    if (currentVal) {
-        for (var i = 0; i < select.options.length; i++) {
-            if (select.options[i].value === currentVal && select.options[i].style.display !== 'none') {
-                select.value = currentVal; break;
-            }
-        }
-    }
+var seatRanges = { '50': {min:10, max:50}, '100': {min:51, max:100}, '200': {min:101, max:200}, '500': {min:201, max:null} };
+function updateBillableSeatsRange() {
+    var cat = document.getElementById('total_seats');
+    var inp = document.getElementById('billable_seats');
+    var feedback = document.getElementById('billableSeatsFeedback');
+    if (!cat || !inp) return;
+    var range = seatRanges[cat.value];
+    inp.placeholder = range ? range.min + (range.max ? ' - ' + range.max : '+') : 'e.g. 30';
+    inp.setCustomValidity('');
+    if (feedback) { feedback.style.display = 'none'; feedback.textContent = ''; }
+    inp.classList.remove('is-invalid');
 }
 document.addEventListener('change', function(e) {
-    if (e.target.id === 'city') filterAreasByCity(e.target.value);
+    if (e.target.id === 'total_seats') updateBillableSeatsRange();
 });
-document.addEventListener('DOMContentLoaded', function() {
-    var citySel = document.getElementById('city');
-    if (citySel && citySel.value) filterAreasByCity(citySel.value);
+document.addEventListener('DOMContentLoaded', updateBillableSeatsRange);
+updateBillableSeatsRange();
+function validateBillableSeats() {
+    var inp = document.getElementById('billable_seats');
+    var cat = document.getElementById('total_seats');
+    var feedback = document.getElementById('billableSeatsFeedback');
+    if (!inp || !cat || !feedback) return true;
+    var val = inp.value.trim();
+    if (!val || !cat.value) { feedback.style.display = 'none'; inp.classList.remove('is-invalid'); return true; }
+    var range = seatRanges[cat.value];
+    if (!range) { feedback.style.display = 'none'; inp.classList.remove('is-invalid'); return true; }
+    var num = parseInt(val, 10);
+    if (isNaN(num) || num < range.min || (range.max !== null && num > range.max)) {
+        feedback.textContent = 'Billable seats must be between ' + range.min + (range.max ? ' and ' + range.max : '+') + ' for the selected category.';
+        feedback.style.display = 'block';
+        inp.classList.add('is-invalid');
+        return false;
+    }
+    feedback.style.display = 'none';
+    inp.classList.remove('is-invalid');
+    return true;
+}
+document.addEventListener('input', function(e) {
+    if (e.target.id === 'billable_seats') validateBillableSeats();
+    if (e.target.id === 'total_area_sqft') validateTotalAreaSqft();
 });
-(function() {
-    var citySel = document.getElementById('city');
-    if (citySel && citySel.value) filterAreasByCity(citySel.value);
-})();
+
+var sqftRanges = { '1000-5000': {min:1000, max:5000}, '5000-10000': {min:5000, max:10000}, '10000-20000': {min:10000, max:20000}, '20000-': {min:20000, max:null} };
+function updateTotalAreaSqftRange() {
+    var cat = document.getElementById('available_sqft');
+    var inp = document.getElementById('total_area_sqft');
+    var feedback = document.getElementById('totalAreaSqftFeedback');
+    if (!cat || !inp) return;
+    var range = sqftRanges[cat.value];
+    inp.placeholder = range ? range.min + (range.max ? ' - ' + range.max : '+') + ' Sq Ft' : 'e.g. 5000';
+    inp.setCustomValidity('');
+    if (feedback) { feedback.style.display = 'none'; feedback.textContent = ''; }
+    inp.classList.remove('is-invalid');
+}
+document.addEventListener('change', function(e) {
+    if (e.target.id === 'available_sqft') updateTotalAreaSqftRange();
+});
+document.addEventListener('DOMContentLoaded', updateTotalAreaSqftRange);
+updateTotalAreaSqftRange();
+function validateTotalAreaSqft() {
+    var inp = document.getElementById('total_area_sqft');
+    var cat = document.getElementById('available_sqft');
+    var feedback = document.getElementById('totalAreaSqftFeedback');
+    if (!inp || !cat || !feedback) return true;
+    var val = inp.value.trim();
+    if (!val || !cat.value) { feedback.style.display = 'none'; inp.classList.remove('is-invalid'); return true; }
+    var range = sqftRanges[cat.value];
+    if (!range) { feedback.style.display = 'none'; inp.classList.remove('is-invalid'); return true; }
+    var num = parseInt(val, 10);
+    if (isNaN(num) || num < range.min || (range.max !== null && num > range.max)) {
+        feedback.textContent = 'Value must be between ' + range.min + (range.max ? ' and ' + range.max : '+') + ' Sq Ft for the selected range.';
+        feedback.style.display = 'block';
+        inp.classList.add('is-invalid');
+        return false;
+    }
+    feedback.style.display = 'none';
+    inp.classList.remove('is-invalid');
+    return true;
+}
+
+function validateInventoryType(input) {
+    if (!input) input = document.getElementById('inventory_type');
+    if (!input) return true;
+    var val = input.value.trim();
+    var feedback = document.getElementById('inventoryTypeFeedback');
+    if (val && !isNaN(Number(val))) {
+        input.setCustomValidity('Current Status must be a text value, cannot be a number');
+        input.classList.add('is-invalid');
+        if (feedback) { feedback.textContent = 'Current Status must be a text value, cannot be a number'; feedback.style.display = 'block'; }
+        return false;
+    }
+    input.setCustomValidity('');
+    input.classList.remove('is-invalid');
+    if (feedback) { feedback.style.display = 'none'; feedback.textContent = ''; }
+    return true;
+}
+document.addEventListener('input', function(e) {
+    if (e.target.id === 'inventory_type') validateInventoryType(e.target);
+});
+
 function handleListingForm(e) {
     e.preventDefault();
     const form = e.target;
@@ -360,12 +425,11 @@ function handleListingForm(e) {
         result.className = 'alert alert-danger mt-2'; result.textContent = 'Title is required'; result.classList.remove('d-none');
         return;
     }
+    if (!validateInventoryType()) return;
     const price = fd.get('price');
     const officeType = fd.get('office_space_type');
-    if (price && parseFloat(price) <= 0) {
-        result.className = 'alert alert-danger mt-2'; result.textContent = 'Price must be greater than 0'; result.classList.remove('d-none');
-        return;
-    }
+    if (!validateBillableSeats()) return;
+    if (!validateTotalAreaSqft()) return;
     function proceedSubmit() {
         btn.disabled = true;
         btn.textContent = isEdit ? 'Updating...' : 'Creating...';
@@ -528,6 +592,50 @@ async function applyBulkAction() {
         doAction();
     }
 }
+var allAreaOptions = null;
+function collectAreaOptions() {
+    if (allAreaOptions) return;
+    var areaSelect = document.getElementById('area');
+    if (!areaSelect) return;
+    allAreaOptions = [];
+    for (var i = 1; i < areaSelect.options.length; i++) {
+        var o = areaSelect.options[i];
+        allAreaOptions.push({ value: o.value, text: o.text, city: o.getAttribute('data-city') || '' });
+    }
+}
+function rebuildAreaOptions(selectedCity, textFilter) {
+    var areaSelect = document.getElementById('area');
+    if (!areaSelect) return;
+    collectAreaOptions();
+    var currentVal = areaSelect.value;
+    while (areaSelect.options.length > 1) areaSelect.remove(1);
+    var q = (textFilter || '').toLowerCase().trim();
+    for (var i = 0; i < allAreaOptions.length; i++) {
+        var a = allAreaOptions[i];
+        var optCity = a.city.toLowerCase().trim();
+        if (selectedCity && optCity !== selectedCity) continue;
+        if (q && a.text.toLowerCase().indexOf(q) === -1) continue;
+        var opt = document.createElement('option');
+        opt.value = a.value; opt.text = a.text;
+        opt.setAttribute('data-city', a.city);
+        areaSelect.add(opt);
+    }
+    areaSelect.value = (areaSelect.options.length > 1 && Array.from(areaSelect.options).some(function(o) { return o.value === currentVal; })) ? currentVal : '';
+}
+function filterAreasByCity() {
+    var citySelect = document.getElementById('city');
+    if (!citySelect) return;
+    var searchInput = document.getElementById('areaSearch');
+    rebuildAreaOptions(citySelect.value.toLowerCase().trim(), searchInput ? searchInput.value : '');
+}
+function filterAreasByText(input) {
+    var citySelect = document.getElementById('city');
+    if (!citySelect) return;
+    rebuildAreaOptions(citySelect.value.toLowerCase().trim(), input.value);
+}
+// run on page load for edit mode
+(function() { var c = document.getElementById('city'); if (c) { filterAreasByCity(); } })();
+
 if (getToken()) {
     CubeRealtime.init({ adminMode: true, interval: 30000 });
     CubeRealtime.on('*', function(eventType, eventData) {

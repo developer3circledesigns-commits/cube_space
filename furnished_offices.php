@@ -68,16 +68,16 @@ $cities = [];
 $cityAreas = [];
 
 if (isset($conn) && $conn) {
-    $countRes = mysqli_query($conn, "SELECT SUM(cnt) as total FROM ((SELECT COUNT(*) as cnt FROM furnished_offices WHERE status='published') UNION ALL (SELECT COUNT(*) as cnt FROM unfurnished_offices WHERE status='published')) t");
+    $countRes = mysqli_query($conn, "SELECT SUM(cnt) as total FROM ((SELECT COUNT(*) as cnt FROM furnished_offices WHERE status='active') UNION ALL (SELECT COUNT(*) as cnt FROM unfurnished_offices WHERE status='active')) t");
     if ($countRes) $totalCount = (int)mysqli_fetch_assoc($countRes)['total'];
 
-    $aRes = mysqli_query($conn, "(SELECT DISTINCT area FROM furnished_offices WHERE status='published' AND area IS NOT NULL AND area != '') UNION (SELECT DISTINCT area FROM unfurnished_offices WHERE status='published' AND area IS NOT NULL AND area != '') ORDER BY area");
+    $aRes = mysqli_query($conn, "(SELECT DISTINCT area FROM furnished_offices WHERE status='active' AND area IS NOT NULL AND area != '') UNION (SELECT DISTINCT area FROM unfurnished_offices WHERE status='active' AND area IS NOT NULL AND area != '') ORDER BY area");
     if ($aRes) while ($r = mysqli_fetch_assoc($aRes)) { $areas[] = $r['area']; }
 
-    $cRes = mysqli_query($conn, "(SELECT DISTINCT city FROM furnished_offices WHERE status='published' AND city IS NOT NULL AND city != '') UNION (SELECT DISTINCT city FROM unfurnished_offices WHERE status='published' AND city IS NOT NULL AND city != '') ORDER BY city");
+    $cRes = mysqli_query($conn, "(SELECT DISTINCT city FROM furnished_offices WHERE status='active' AND city IS NOT NULL AND city != '') UNION (SELECT DISTINCT city FROM unfurnished_offices WHERE status='active' AND city IS NOT NULL AND city != '') ORDER BY city");
     if ($cRes) while ($r = mysqli_fetch_assoc($cRes)) { $cities[] = $r['city']; }
 
-    $caRes = mysqli_query($conn, "(SELECT city, area FROM furnished_offices WHERE status='published' AND city IS NOT NULL AND city != '' AND area IS NOT NULL AND area != '') UNION (SELECT city, area FROM unfurnished_offices WHERE status='published' AND city IS NOT NULL AND city != '' AND area IS NOT NULL AND area != '') ORDER BY city, area");
+    $caRes = mysqli_query($conn, "(SELECT city, area FROM furnished_offices WHERE status='active' AND city IS NOT NULL AND city != '' AND area IS NOT NULL AND area != '') UNION (SELECT city, area FROM unfurnished_offices WHERE status='active' AND city IS NOT NULL AND city != '' AND area IS NOT NULL AND area != '') ORDER BY city, area");
     if ($caRes) while ($r = mysqli_fetch_assoc($caRes)) { $cityAreas[$r['city']][] = $r['area']; }
     $cityAreas['__all__'] = $areas;
 }
@@ -1195,7 +1195,7 @@ if (isset($conn) && $conn) {
             <div>
                 <label class="form-label" style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:2px;white-space:nowrap;">Product</label>
                 <select class="form-select form-select-sm filter-select filter-product-select" id="filterProduct" aria-label="Filter by Product">
-                    <option value="">All Products</option>
+                    <!-- <option value="">All Products</option> -->
                     <option value="managed">Managed Furnished Office</option>
                     <option value="commercial" selected>Furnished / Unfurnished Office</option>
                 </select>
@@ -1768,8 +1768,7 @@ if (isset($conn) && $conn) {
 
                 let statsHtml = '';
                 const statItems = [
-                    { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Current Available Rental Area ' + o.available_sqft: null },
-                    { icon: 'fa-building', value: o.total_area_sqft ? 'Current Available Space on Rent ' + o.total_area_sqft + ' Sq Ft.' : null },
+                    { icon: 'fa-ruler-combined', value: o.total_area_sqft ? 'Current Available Rental Area ' + o.total_area_sqft + ' Sq Ft.' : null },
 
                 ];
                 statItems.forEach(s => {
@@ -1783,9 +1782,11 @@ if (isset($conn) && $conn) {
                     statsHtml += `<span class="stat-item inv-badge ${isReady ? 'inv-ready' : 'inv-processing'}"><i class="fa-solid ${isReady ? 'fa-circle-check' : 'fa-clock'}"></i> <span class="stat-value">${escHtml(o.inventory_type)}</span></span>`;
                 }
 
-                const period = o.office_space_type === 'lease' ? 'Sq Ft / Month' : 'Sq Ft / Month';
-                const price = o.price != null ?
-                    `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span> <span class="period">${period}</span>` :
+                const period = o.office_space_type === 'lease' ? 'per sq ft / month' : 'per sq ft / month';
+                const price = o.price != null && o.price !== '' ?
+                    (isNaN(Number(o.price)) ?
+                        `<span class="amount" style="font-size:0.85rem;">${escHtml(o.price)} <span class="period">${period}</span></span>` :
+                        `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span> <span class="period">${period}</span>`) :
                     `<span class="contact-price">Contact for Price</span>`;
 
                 const descId = 'desc-' + o.id;
@@ -1926,8 +1927,8 @@ if (isset($conn) && $conn) {
                 const address = o.address || o.area || o.city || '';
                 let statsHtml = '';
                 const statItems = [
-                    { icon: 'fa-ruler-combined', value: o.available_sqft ? 'Current Available Rental Area ' + o.available_sqft + ' Sq Ft.' : null },
-                    { icon: 'fa-building', value: o.total_area_sqft ? 'Current Available Space on Rent ' + o.total_area_sqft + ' Sq Ft.' : null },
+                    { icon: 'fa-ruler-combined', value: o.total_area_sqft ? 'Current Available Rental Area ' + o.total_area_sqft + 'per Sq Ft.' : null },
+                    // { icon: 'fa-building', value: o.total_area_sqft ? 'Current Available Space on Rent ' + o.total_area_sqft + ' Sq Ft.' : null },
 
                 ];
                 statItems.forEach(s => {
@@ -1941,9 +1942,11 @@ if (isset($conn) && $conn) {
                     statsHtml += `<span class="stat-item inv-badge ${isReady ? 'inv-ready' : 'inv-processing'}"><i class="fa-solid ${isReady ? 'fa-circle-check' : 'fa-clock'}"></i> <span class="stat-value">${escHtml(o.inventory_type)}</span></span>`;
                 }
 
-                const period = o.office_space_type === 'lease' ? ' seat / year' : 'seat / month';
-                const price = o.price != null ?
-                    `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span> <span class="period">${period}</span>` :
+                const period = o.office_space_type === 'lease' ? 'per sq ft / month' : 'per sq ft / month';
+                const price = o.price != null && o.price !== '' ?
+                    (isNaN(Number(o.price)) ?
+                        `<span class="amount" style="font-size:0.85rem;">${escHtml(o.price)} <span class="period">${period}</span></span>` :
+                        `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span> <span class="period">${period}</span>`) :
                     `<span class="contact-price">Contact for Price</span>`;
 
                 const descId = 'ndesc-' + o.id;

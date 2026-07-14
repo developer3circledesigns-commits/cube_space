@@ -75,7 +75,7 @@ try {
     $officeIdVal = $officeId !== '' ? (int)$officeId : null;
 
     if ($officeIdVal !== null) {
-        $checkStmt = mysqli_prepare($conn, "SELECT id FROM managed_offices WHERE id = ? AND status = 'published' UNION SELECT id FROM furnished_offices WHERE id = ? AND status = 'published' UNION SELECT id FROM unfurnished_offices WHERE id = ? AND status = 'published'");
+        $checkStmt = mysqli_prepare($conn, "SELECT id FROM managed_offices WHERE id = ? AND status = 'active' UNION SELECT id FROM furnished_offices WHERE id = ? AND status = 'active' UNION SELECT id FROM unfurnished_offices WHERE id = ? AND status = 'active'");
         mysqli_stmt_bind_param($checkStmt, 'iii', $officeIdVal, $officeIdVal, $officeIdVal);
         mysqli_stmt_execute($checkStmt);
         if (mysqli_num_rows(mysqli_stmt_get_result($checkStmt)) === 0) {

@@ -62,16 +62,16 @@ $cities = [];
 $cityAreas = [];
 
 if (isset($conn) && $conn) {
-    $countRes = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM managed_offices WHERE status='published'");
+    $countRes = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM managed_offices WHERE status='active'");
     if ($countRes) $totalCount = (int)mysqli_fetch_assoc($countRes)['cnt'];
 
-    $aRes = mysqli_query($conn, "SELECT DISTINCT area FROM managed_offices WHERE status='published' AND area IS NOT NULL AND area != '' ORDER BY area");
+    $aRes = mysqli_query($conn, "SELECT DISTINCT area FROM managed_offices WHERE status='active' AND area IS NOT NULL AND area != '' ORDER BY area");
     if ($aRes) while ($r = mysqli_fetch_assoc($aRes)) { $areas[] = $r['area']; }
 
-    $cRes = mysqli_query($conn, "SELECT DISTINCT city FROM managed_offices WHERE status='published' AND city IS NOT NULL AND city != '' ORDER BY city");
+    $cRes = mysqli_query($conn, "SELECT DISTINCT city FROM managed_offices WHERE status='active' AND city IS NOT NULL AND city != '' ORDER BY city");
     if ($cRes) while ($r = mysqli_fetch_assoc($cRes)) { $cities[] = $r['city']; }
 
-    $caRes = mysqli_query($conn, "SELECT city, area FROM managed_offices WHERE status='published' AND city IS NOT NULL AND city != '' AND area IS NOT NULL AND area != '' GROUP BY city, area ORDER BY city, area");
+    $caRes = mysqli_query($conn, "SELECT city, area FROM managed_offices WHERE status='active' AND city IS NOT NULL AND city != '' AND area IS NOT NULL AND area != '' GROUP BY city, area ORDER BY city, area");
     if ($caRes) while ($r = mysqli_fetch_assoc($caRes)) { $cityAreas[$r['city']][] = $r['area']; }
     $cityAreas['__all__'] = $areas;
 }
@@ -1196,7 +1196,7 @@ if (isset($conn) && $conn) {
             <div>
                 <label class="form-label" style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:2px;white-space:nowrap;">Product</label>
                 <select class="form-select form-select-sm filter-select filter-product-select" id="filterProduct" aria-label="Filter by Product">
-                    <option value="">All Products</option>
+                    <!-- <option value="">All Products</option> -->
                     <option value="managed" selected>Managed Furnished Office</option>
                     <option value="commercial">Furnished / Unfurnished Office</option>
                 </select>
@@ -1790,7 +1790,7 @@ if (isset($conn) && $conn) {
 
                 let statsHtml = '';
                 const statItems = [
-                    { icon: 'fa-users', value: o.billable_seats ? 'Current Available Billable Seats <strong>' + o.billable_seats + '</strong>' : null },
+                    { icon: 'fa-users', value: o.billable_seats ? '<span style="font-size: 15px;">Current Available Billable Seats</span> <strong>' + o.billable_seats + '</strong>' : null },
                     { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + String(o.min_inventory).replace(/\b(cabin|office|floor|seats?|people|persons?|none)\b\s*\+?\s*/gi, '').trim() + ' Seats' : null},
                 ];
                 statItems.forEach(s => {
@@ -1801,9 +1801,11 @@ if (isset($conn) && $conn) {
                 });
                 statsHtml += `<span class="stat-item inv-badge inv-ready"><i class="fa-solid fa-circle-check"></i> <span class="stat-value">Ready to move in</span></span>`;
 
-                const period = o.office_space_type === 'lease' ? 'seat / year' : 'seat / month';
-                const price = o.price != null ?
-                    `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span> <span class="period">${period}</span>` :
+                const period = o.office_space_type === 'lease' ? 'seat / year' : 'per seat / month';
+                const price = o.price != null && o.price !== '' ?
+                    (isNaN(Number(o.price)) ?
+                        `<span class="amount" style="font-size:0.85rem;">${escHtml(o.price)} <span class="period">${period}</span></span>` :
+                        `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span> <span class="period">${period}</span>`) :
                     `<span class="contact-price">Contact for Price</span>`;
 
                 const descId = 'desc-' + o.id;
@@ -1940,7 +1942,7 @@ if (isset($conn) && $conn) {
                 const address = o.address || o.area || o.city || '';
                 let statsHtml = '';
                 const statItems = [
-                    { icon: 'fa-users', value: o.total_seats ? 'Available seating capacity ' + formatSeats(o.total_seats) : null },
+                    { icon: 'fa-users', value: o.billable_seats ? 'Current Available Billable Seats <strong>' + o.billable_seats + '</strong>' : null },
                     { icon: 'fa-boxes-stacked', value: o.min_inventory ? 'Min Inventory ' + String(o.min_inventory).replace(/\b(cabin|office|floor|seats?|people|persons?|none)\b\s*\+?\s*/gi, '').trim() + ' Seats' : null },
                 ];
                 statItems.forEach(s => {
@@ -1951,9 +1953,11 @@ if (isset($conn) && $conn) {
                 });
                 statsHtml += `<span class="stat-item inv-badge inv-ready"><i class="fa-solid fa-circle-check"></i> <span class="stat-value">Ready to move in</span></span>`;
 
-                const period = o.office_space_type === 'lease' ? ' seat / year' : 'seat / month';
-                const price = o.price != null ?
-                    `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span> <span class="period">${period}</span>` :
+                const period = o.office_space_type === 'lease' ? 'seat / year' : 'per seat / month';
+                const price = o.price != null && o.price !== '' ?
+                    (isNaN(Number(o.price)) ?
+                        `<span class="amount" style="font-size:0.85rem;">${escHtml(o.price)} <span class="period">${period}</span></span>` :
+                        `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span> <span class="period">${period}</span>`) :
                     `<span class="contact-price">Contact for Price</span>`;
 
                 const descId = 'ndesc-' + o.id;

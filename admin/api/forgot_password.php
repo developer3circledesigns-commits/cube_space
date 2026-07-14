@@ -89,6 +89,6 @@ try {
         echo json_encode(['success' => true, 'message' => 'If the username exists, a reset link has been sent to the registered email.']);
     }
 } catch (Exception $e) {
-    log_app_error('forgot_password.php: ' . $e->getMessage());
-    echo json_encode(['success' => false, 'error' => 'An error occurred. Please try again later.']);
+    error_log('forgot_password.php: ' . $e->getMessage());
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }

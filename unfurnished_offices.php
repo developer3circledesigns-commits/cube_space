@@ -60,10 +60,10 @@ $totalCount = 0;
 $areas = [];
 
 if (isset($conn) && $conn) {
-    $countRes = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM unfurnished_offices WHERE status='published'");
+    $countRes = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM unfurnished_offices WHERE status='active'");
     if ($countRes) $totalCount = (int)mysqli_fetch_assoc($countRes)['cnt'];
 
-    $aRes = mysqli_query($conn, "SELECT DISTINCT area FROM unfurnished_offices WHERE status='published' AND area IS NOT NULL AND area != '' ORDER BY area");
+    $aRes = mysqli_query($conn, "SELECT DISTINCT area FROM unfurnished_offices WHERE status='active' AND area IS NOT NULL AND area != '' ORDER BY area");
     if ($aRes) while ($r = mysqli_fetch_assoc($aRes)) { $areas[] = $r['area']; }
 }
 ?>
@@ -2030,8 +2030,10 @@ if (isset($conn) && $conn) {
                 }
 
                 const period = o.office_space_type === 'lease' ? 'seat / year' : 'seat / month';
-                const price = o.price != null ?
-                    `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span> <span class="period">${period}</span>` :
+                const price = o.price != null && o.price !== '' ?
+                    (isNaN(Number(o.price)) ?
+                        `<span class="amount" style="font-size:0.85rem;">${escHtml(o.price)}</span>` :
+                        `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span> <span class="period">${period}</span>`) :
                     `<span class="contact-price">Contact for Price</span>`;
 
                 const descId = 'desc-' + o.id;
@@ -2187,8 +2189,10 @@ if (isset($conn) && $conn) {
                 }
 
                 const period = o.office_space_type === 'lease' ? ' seat / year' : 'seat / month';
-                const price = o.price != null ?
-                    `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span> <span class="period">${period}</span>` :
+                const price = o.price != null && o.price !== '' ?
+                    (isNaN(Number(o.price)) ?
+                        `<span class="amount" style="font-size:0.85rem;">${escHtml(o.price)}</span>` :
+                        `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span> <span class="period">${period}</span>`) :
                     `<span class="contact-price">Contact for Price</span>`;
 
                 const descId = 'ndesc-' + o.id;

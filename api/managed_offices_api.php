@@ -155,7 +155,7 @@ if ($action === 'autocomplete') {
     $like = $query . '%';
     $stmt = mysqli_prepare($conn,
         "SELECT DISTINCT title, area, city FROM managed_offices
-         WHERE status='published' AND (title LIKE ? OR area LIKE ? OR city LIKE ?)
+         WHERE status='active' AND (title LIKE ? OR area LIKE ? OR city LIKE ?)
          LIMIT 10"
     );
     mysqli_stmt_bind_param($stmt, 'sss', $like, $like, $like);
@@ -202,7 +202,7 @@ if ($action === 'list') {
     $cached = $cache->get($cacheKey);
     if ($cached) { echo json_encode($cached); exit; }
 
-    $where = ["status='published'"];
+    $where = ["status='active'"];
     $params = [];
     $types = '';
 
@@ -313,7 +313,7 @@ if ($action === 'list') {
     // Facets — apply same filters as main query for accurate counts
     $facets = [];
 
-    $facetWhere = ["status='published'"];
+    $facetWhere = ["status='active'"];
     $facetParams = [];
     $facetTypes = '';
 
@@ -428,7 +428,7 @@ if ($action === 'list') {
             $placeholders = implode(',', array_fill(0, count($excludeIds), '?'));
             $nearSql = "SELECT id, title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, billable_seats, remarks, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code
                         FROM managed_offices
-                        WHERE status='published' AND latitude IS NOT NULL AND id NOT IN ($placeholders)
+                        WHERE status='active' AND latitude IS NOT NULL AND id NOT IN ($placeholders)
                         ORDER BY (POW(latitude - ?, 2) + POW(longitude - ?, 2))
                         LIMIT 6";
             $nearParams = array_merge($excludeIds, [$centerLat, $centerLng]);
@@ -480,7 +480,7 @@ if ($action === 'map') {
     $maxSeats = $_GET['max_seats'] ?? '';
     $limit = min(200, max(1, (int)($_GET['limit'] ?? 100)));
 
-    $where = ["status='published'", "latitude IS NOT NULL", "longitude IS NOT NULL"];
+    $where = ["status='active'", "latitude IS NOT NULL", "longitude IS NOT NULL"];
     $params = [];
     $types = '';
 
