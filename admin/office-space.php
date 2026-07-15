@@ -112,7 +112,7 @@ if ($mode === 'add' || $mode === 'edit'):
             </div>
 
             <div class="col-md-3 position-relative">
-                <label for="available_sqft" class="form-label small fw-semibold">Available Leasable Area <span class="text-danger">*</span></label>
+                <label for="available_sqft" class="form-label small fw-semibold">Sq Ft <span class="text-danger">*</span></label>
                 <select name="available_sqft" id="available_sqft" class="form-select form-select-sm" required>
                     <option value="">- Select -</option>
                     <option value="1000-5000" <?= ($listing['available_sqft'] ?? '') === '1000-5000' ? 'selected' : '' ?>>1000 - 5000 Sq.ft</option>
