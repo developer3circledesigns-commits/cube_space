@@ -685,6 +685,7 @@ if (isset($conn) && $conn) {
             box-shadow: 0 2px 6px rgba(0,0,0,0.05);
             background: #ffffff;
             transition: var(--transition);
+            margin-top: 20px;
         }
         .aside-card:hover {
             box-shadow: var(--shadow-md);
