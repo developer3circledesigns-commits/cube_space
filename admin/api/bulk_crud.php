@@ -4,6 +4,7 @@ require_once __DIR__ . '/../jwt_helper.php';
 admin_require_lib('csrf.php');
 admin_require_lib('cache.php');
 admin_require_lib('events.php');
+cubespace_require_project('src/autoload.php');
 
 header('Content-Type: application/json');
 
@@ -79,6 +80,7 @@ if ($action === 'bulk_delete') {
             }
             log_activity($conn, 'bulk_delete', 'office_spaces', 0, ['ids' => $ids, 'count' => $af]);
             publish_event('bulk_operation', 'office_spaces', 0, "$af record(s) deleted");
+            try { (new \CubeSpace\EmailService())->notifyAdminAction('bulk_delete', 'listings', "$af office-space record(s) deleted"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
             JsonCache::incrementGlobalVersion();
             mysqli_commit($conn);
             echo json_encode(['success' => true, 'message' => "$af record(s) deleted successfully"]);
@@ -138,6 +140,7 @@ if ($action === 'bulk_delete') {
             $affected = mysqli_stmt_affected_rows($stmt);
             log_activity($conn, 'bulk_delete', $table, 0, ['ids' => $idList, 'count' => $affected]);
             publish_event('bulk_operation', $table, 0, "$affected record(s) deleted");
+            try { (new \CubeSpace\EmailService())->notifyAdminAction('bulk_delete', $table, "$affected record(s) deleted"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
             JsonCache::incrementGlobalVersion();
             mysqli_commit($conn);
             echo json_encode(['success' => true, 'message' => "$affected record(s) deleted successfully"]);
@@ -175,6 +178,7 @@ function bulk_dual_table_update($conn, $ids, $types, $field, $value, $actionName
         }
         log_activity($conn, $actionName, 'office_spaces', 0, ['ids' => $ids, 'count' => $af]);
         publish_event('bulk_operation', 'office_spaces', 0, "$af record(s) updated");
+        try { (new \CubeSpace\EmailService())->notifyAdminAction($actionName, 'listings', "$af record(s) updated ($field=$value)"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
         JsonCache::incrementGlobalVersion();
         mysqli_commit($conn);
         echo json_encode(['success' => true, 'message' => "$af record(s) updated successfully"]);
@@ -238,6 +242,7 @@ if ($action === 'bulk_status') {
                 $affected = mysqli_stmt_affected_rows($stmt);
                 log_activity($conn, 'bulk_status', $table, 0, ['ids' => $idList, 'status' => $status, 'count' => $affected]);
                 publish_event('bulk_operation', $table, 0, "$affected record(s) updated to $status");
+                try { (new \CubeSpace\EmailService())->notifyAdminAction('bulk_status', $table, "$affected contact(s) marked as $status"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
                 JsonCache::incrementGlobalVersion();
                 mysqli_commit($conn);
                 echo json_encode(['success' => true, 'message' => "$affected record(s) updated to $status"]);
@@ -271,6 +276,7 @@ if ($action === 'bulk_status') {
             $affected = mysqli_stmt_affected_rows($stmt);
             log_activity($conn, 'bulk_status', $table, 0, ['ids' => $idList, 'status' => $status, 'count' => $affected]);
             publish_event('bulk_operation', $table, 0, "$affected record(s) updated to $status");
+            try { (new \CubeSpace\EmailService())->notifyAdminAction('bulk_status', $table, "$affected listing(s) set to $status"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
             JsonCache::incrementGlobalVersion();
             mysqli_commit($conn);
             echo json_encode(['success' => true, 'message' => "$affected record(s) updated to $status"]);
@@ -331,6 +337,7 @@ if ($action === 'bulk_featured') {
             $label = $featured ? 'featured' : 'unfeatured';
             log_activity($conn, 'bulk_featured', $table, 0, ['ids' => $idList, 'featured' => $featured, 'count' => $affected]);
             publish_event('bulk_operation', $table, 0, "$affected record(s) marked as $label");
+            try { (new \CubeSpace\EmailService())->notifyAdminAction('bulk_featured', $table, "$affected listing(s) marked as $label"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
             JsonCache::incrementGlobalVersion();
             mysqli_commit($conn);
             echo json_encode(['success' => true, 'message' => "$affected record(s) marked as $label"]);
@@ -362,6 +369,7 @@ if ($action === 'bulk_delete_activity') {
     if (mysqli_stmt_execute($stmt)) {
         $affected = mysqli_stmt_affected_rows($stmt);
         log_activity($conn, 'bulk_delete', 'activity_log', 0, ['ids' => $idList, 'count' => $affected]);
+        try { (new \CubeSpace\EmailService())->notifyAdminAction('bulk_delete', 'activity_log', "$affected log entry(s) deleted"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
         echo json_encode(['success' => true, 'message' => "$affected activity log entry(s) deleted"]);
     } else {
         http_response_code(500);
@@ -388,6 +396,7 @@ if ($action === 'bulk_toggle_active') {
             $af = mysqli_stmt_affected_rows($stmt);
             log_activity($conn, 'bulk_toggle_active', 'admins', 0, ['ids' => $idList, 'is_active' => $value, 'count' => $af]);
             publish_event('bulk_operation', 'admins', 0, "$af admin(s) " . ($value ? 'activated' : 'deactivated'));
+            try { (new \CubeSpace\EmailService())->notifyAdminAction('bulk_toggle_active', 'admins', "$af admin(s) " . ($value ? 'activated' : 'deactivated')); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
             JsonCache::incrementGlobalVersion();
             mysqli_commit($conn);
             echo json_encode(['success' => true, 'message' => "$af admin(s) " . ($value ? 'activated' : 'deactivated') . " successfully"]);

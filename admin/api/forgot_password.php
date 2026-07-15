@@ -51,9 +51,25 @@ try {
     
     if (!empty($admin['email'])) {
         $mail = new \CubeSpace\EmailService();
-        $mail->send($admin['email'], 'Password Reset', 'Your reset token: ' . $resetToken . ' (expires in 1 hour)');
+        $resetLink = 'https://' . ($_SERVER['HTTP_HOST'] ?? 'cubespaces.in') . '/admin/';
+        $htmlBody = '
+            <h2>Password Reset Request</h2>
+            <p>You requested a password reset for your CubeSpace admin account.</p>
+            <p>Your reset token: <strong style="font-size:24px;letter-spacing:3px;background:#f5f5f5;padding:10px 20px;display:inline-block;font-family:monospace;">' . htmlspecialchars($resetToken) . '</strong></p>
+            <p>This token expires in <strong>1 hour</strong>.</p>
+            <p style="margin-top:20px;">Go to the admin login page, click "Forgot Password?", then "Have a token? Reset password", and enter:</p>
+            <ul>
+                <li><strong>Token:</strong> <span style="font-family:monospace;">' . htmlspecialchars($resetToken) . '</span></li>
+                <li><strong>Your new password</strong></li>
+            </ul>
+            <p>Or visit: <a href="' . $resetLink . '">' . $resetLink . '</a></p>
+            <p style="margin-top:20px;color:#888;font-size:12px;">If you did not request a password reset, please ignore this email.</p>
+            <hr><p style="color:#888;font-size:12px;">CubeSpace Admin</p>
+        ';
+        $mail->send($admin['email'], 'Password Reset - CubeSpace Admin', $htmlBody);
+        try { (new \CubeSpace\EmailService())->notifyAdminAction('password_reset_request', 'admin', "Admin ID #{$admin['id']} ($username) requested a password reset"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
     }
-    echo json_encode(['success' => true, 'reset_token' => $resetToken, 'message' => 'Reset token generated. It expires in 1 hour.']);
+    echo json_encode(['success' => true, 'message' => 'If the username exists, a reset link has been sent to the registered email.']);
 } catch (Exception $e) {
     error_log('forgot_password.php: ' . $e->getMessage());
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);

@@ -5,6 +5,7 @@ require_once __DIR__ . '/../jwt_helper.php';
 admin_require_lib('csrf.php');
 admin_require_lib('cache.php');
 admin_require_lib('events.php');
+cubespace_require_project('src/autoload.php');
 
 header('Content-Type: application/json');
 
@@ -64,6 +65,7 @@ if ($action === 'create') {
         $newId = mysqli_insert_id($conn);
         log_activity($conn, 'create', 'admins', $newId, ['username' => $username, 'email' => $email]);
         publish_event('admin_created', 'admins', $newId, "Admin '$username' created");
+        try { (new \CubeSpace\EmailService())->notifyAdminAction('create', "admin #$newId", "Username: $username\nEmail: $email\nStatus: " . ($isActive ? 'Active' : 'Inactive')); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
         echo json_encode(['success' => true, 'message' => 'Admin created successfully', 'id' => $newId]);
     } else {
         $err = mysqli_errno($conn) === 1062 ? 'Username or email already exists' : 'Database error: ' . mysqli_error($conn);
@@ -113,6 +115,7 @@ if ($action === 'update') {
     if (mysqli_stmt_execute($stmt)) {
         log_activity($conn, 'update', 'admins', $id, ['username' => $username, 'email' => $email, 'is_active' => $isActive, 'password_changed' => !!$password]);
         publish_event('admin_updated', 'admins', $id, "Admin '$username' updated");
+        try { (new \CubeSpace\EmailService())->notifyAdminAction('update', "admin #$id", "Username: $username\nEmail: $email\nStatus: " . ($isActive ? 'Active' : 'Inactive') . ($password ? '\nPassword: Changed' : '')); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
         echo json_encode(['success' => true, 'message' => 'Admin updated successfully']);
     } else {
         http_response_code(500); die(json_encode(['error' => 'Update failed: ' . mysqli_error($conn)]));
@@ -142,6 +145,7 @@ if ($action === 'delete') {
     if (mysqli_stmt_execute($stmt) && mysqli_stmt_affected_rows($stmt) > 0) {
         log_activity($conn, 'delete', 'admins', $id, ['username' => $row['username']]);
         publish_event('admin_deleted', 'admins', $id, "Admin '{$row['username']}' deleted");
+        try { (new \CubeSpace\EmailService())->notifyAdminAction('delete', "admin #$id", "Username: {$row['username']}\nAction: Account deleted"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
         echo json_encode(['success' => true, 'message' => 'Admin deleted successfully']);
     } else {
         http_response_code(500); die(json_encode(['error' => 'Delete failed: ' . mysqli_error($conn)]));
@@ -173,6 +177,7 @@ if ($action === 'toggle_active') {
         $label = $newActive ? 'activated' : 'deactivated';
         log_activity($conn, 'toggle_active', 'admins', $id, ['username' => $row['username'], 'is_active' => $newActive]);
         publish_event('admin_updated', 'admins', $id, "Admin '{$row['username']}' $label");
+        try { (new \CubeSpace\EmailService())->notifyAdminAction('toggle_active', "admin #$id", "Username: {$row['username']}\nNew Status: $label\nPrevious Status: " . ($row['is_active'] ? 'Active' : 'Inactive')); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
         echo json_encode(['success' => true, 'message' => "Admin $label successfully", 'is_active' => $newActive]);
     } else {
         http_response_code(500); die(json_encode(['error' => 'Toggle failed: ' . mysqli_error($conn)]));

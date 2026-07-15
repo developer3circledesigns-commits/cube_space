@@ -4,6 +4,7 @@ require_once __DIR__ . '/../jwt_helper.php';
 admin_require_lib('csrf.php');
 admin_require_lib('cache.php');
 admin_require_lib('events.php');
+cubespace_require_project('src/autoload.php');
 
 header('Content-Type: application/json');
 
@@ -91,6 +92,7 @@ if ($action === 'create_leasing') {
         $newId = mysqli_insert_id($conn);
         log_activity($conn, 'create', 'office_leasing_options', $newId, ['office_id' => $officeId, 'option_title' => $optionTitle]);
         publish_event('leasing_created', 'leasing', $newId, $optionTitle);
+        try { (new \CubeSpace\EmailService())->notifyAdminAction('create', "leasing option #$newId", "Office ID: $officeId\nTitle: $optionTitle\nDescription: $optionDesc\nPrice: $optionPrice\nSort Order: $sortOrder\nActive: " . ($isActive ? 'Yes' : 'No')); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
         JsonCache::incrementGlobalVersion();
         echo json_encode(['success' => true, 'message' => 'Leasing option created successfully', 'id' => $newId]);
     } else {
@@ -124,6 +126,7 @@ if ($action === 'update_leasing') {
     if (mysqli_stmt_execute($stmt)) {
         log_activity($conn, 'update', 'office_leasing_options', $id, ['office_id' => $officeId, 'option_title' => $optionTitle]);
         publish_event('leasing_updated', 'leasing', $id, $optionTitle);
+        try { (new \CubeSpace\EmailService())->notifyAdminAction('update', "leasing option #$id", "Office ID: $officeId\nTitle: $optionTitle\nDescription: $optionDesc\nPrice: $optionPrice\nSort Order: $sortOrder\nActive: " . ($isActive ? 'Yes' : 'No')); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
         JsonCache::incrementGlobalVersion();
         echo json_encode(['success' => true, 'message' => 'Leasing option updated successfully']);
     } else {
@@ -159,6 +162,7 @@ if ($action === 'delete_leasing') {
     if (mysqli_stmt_execute($stmt)) {
         log_activity($conn, 'delete', 'office_leasing_options', $id, ['office_id' => $row['office_id']]);
         publish_event('leasing_deleted', 'leasing', $id);
+        try { (new \CubeSpace\EmailService())->notifyAdminAction('delete', "leasing option #$id", "Office ID: {$row['office_id']}"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
         JsonCache::incrementGlobalVersion();
         echo json_encode(['success' => true, 'message' => 'Leasing option deleted successfully']);
     } else {
@@ -197,6 +201,7 @@ if ($action === 'update_extras') {
     if (mysqli_stmt_execute($stmt)) {
         log_activity($conn, 'update', 'managed_offices', $officeId, ['office_id' => $officeId, 'fields' => ['feature_highlights', 'seo_text']]);
         publish_event('listing_updated', 'managed_offices', $officeId, 'Extras updated');
+        try { (new \CubeSpace\EmailService())->notifyAdminAction('update', "managed office #$officeId", 'Extras (feature highlights, SEO text) updated'); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
         JsonCache::incrementGlobalVersion();
         echo json_encode(['success' => true, 'message' => 'Office extras updated successfully']);
     } else {

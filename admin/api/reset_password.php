@@ -3,6 +3,7 @@
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/init.php';
+cubespace_require_project('src/autoload.php');
 
 $token = trim($_POST['token'] ?? '');
 $password = trim($_POST['password'] ?? '');
@@ -51,6 +52,7 @@ try {
     mysqli_stmt_bind_param($stmt, 'si', $hashedPassword, $admin['id']);
     mysqli_stmt_execute($stmt);
     
+    try { (new \CubeSpace\EmailService())->notifyAdminAction('password_reset', 'admin', "Admin ID #{$admin['id']} reset their password"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
     echo json_encode(['success' => true, 'message' => 'Password reset successfully']);
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);

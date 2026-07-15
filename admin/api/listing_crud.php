@@ -16,6 +16,7 @@ admin_require_lib('config.php');
 admin_require_lib('validator.php');
 admin_require_lib('cache.php');
 admin_require_lib('events.php');
+cubespace_require_project('src/autoload.php');
 
 $jwtPayload = require_jwt_auth();
 secure_session_start();
@@ -304,6 +305,10 @@ if ($action === 'create' || $action === 'update') {
             $newId = mysqli_insert_id($conn);
             log_activity($conn, 'create', $table, $newId, ['title' => $title, 'type' => $listingType]);
             publish_event('listing_created', $listingType, $newId, $title);
+            try {
+                $listingDetail = "Title: $title\nCode: $listingCode\nType: $listingType\nCity: $city\nArea: $area\nAddress: $address\nPrice: $price ($priceLabel)\nSeats: $totalSeats\nSqft: $totalAreaSqft\nStatus: $status\nFeatured: " . ($featured ? 'Yes' : 'No') . "\nSpace Type: $officeSpaceType\nRemarks: $remarks";
+                (new \CubeSpace\EmailService())->notifyAdminAction('create', "$listingType listing #$newId", $listingDetail);
+            } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
             JsonCache::incrementGlobalVersion();
             mysqli_commit($conn);
             echo json_encode(['success' => true, 'message' => 'Listing created successfully', 'id' => $newId]);
@@ -385,6 +390,10 @@ if ($action === 'create' || $action === 'update') {
             }
             log_activity($conn, 'update', $table, $id, ['title' => $title, 'type' => $listingType]);
             publish_event('listing_updated', $listingType, $id, $title);
+            try {
+                $listingDetail = "Title: $title\nCode: $listingCode\nType: $listingType\nCity: $city\nArea: $area\nAddress: $address\nPrice: $price ($priceLabel)\nSeats: $totalSeats\nSqft: $totalAreaSqft\nStatus: $status\nFeatured: " . ($featured ? 'Yes' : 'No') . "\nSpace Type: $officeSpaceType\nRemarks: $remarks";
+                (new \CubeSpace\EmailService())->notifyAdminAction('update', "$listingType listing #$id", $listingDetail);
+            } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
             JsonCache::incrementGlobalVersion();
             mysqli_commit($conn);
             echo json_encode(['success' => true, 'message' => 'Listing updated successfully']);
@@ -514,6 +523,7 @@ if ($action === 'delete') {
     if (mysqli_stmt_execute($stmt)) {
         log_activity($conn, 'delete', $table, $id, ['title' => $row['title']]);
         publish_event('listing_deleted', $listingType, $id, $row['title']);
+        try { (new \CubeSpace\EmailService())->notifyAdminAction('delete', "$listingType listing #$id", "Title: {$row['title']}"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
         JsonCache::incrementGlobalVersion();
         echo json_encode(['success' => true, 'message' => 'Listing deleted successfully']);
     } else {

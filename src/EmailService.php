@@ -36,13 +36,13 @@ class EmailService {
         }
 
         $this->host = defined('MAIL_HOST') ? MAIL_HOST : (getenv('MAIL_HOST') ?: '');
-        $this->port = (int)(defined('MAIL_PORT') ? MAIL_PORT : (getenv('MAIL_PORT') ?: '587'));
+        $this->port = (int)(defined('MAIL_PORT') ? MAIL_PORT : (getenv('MAIL_PORT') ?: '465'));
         $this->username = defined('MAIL_USERNAME') ? MAIL_USERNAME : (getenv('MAIL_USERNAME') ?: '');
         $this->password = defined('MAIL_PASSWORD') ? MAIL_PASSWORD : (getenv('MAIL_PASSWORD') ?: '');
-        $this->encryption = defined('MAIL_ENCRYPTION') ? MAIL_ENCRYPTION : (getenv('MAIL_ENCRYPTION') ?: 'tls');
-        $this->fromEmail = defined('MAIL_FROM') ? MAIL_FROM : (getenv('MAIL_FROM') ?: 'noreply@cubespaces.in');
+        $this->encryption = defined('MAIL_ENCRYPTION') ? MAIL_ENCRYPTION : (getenv('MAIL_ENCRYPTION') ?: 'ssl');
+        $this->fromEmail = defined('MAIL_FROM') ? MAIL_FROM : (getenv('MAIL_FROM') ?: 'hafiz@cubespaces.in');
         $this->fromName = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : (getenv('MAIL_FROM_NAME') ?: 'CubeSpace');
-        $this->adminEmail = defined('ADMIN_EMAIL') ? ADMIN_EMAIL : (getenv('ADMIN_EMAIL') ?: 'sales@falconlease.com');
+        $this->adminEmail = defined('ADMIN_EMAIL') ? ADMIN_EMAIL : (getenv('ADMIN_EMAIL') ?: 'hafiz@cubespaces.in');
     }
 
     public function isEnabled(): bool {
@@ -125,6 +125,11 @@ class EmailService {
             'company' => $contact['company'] ?? 'N/A',
             'seats' => $contact['seats'] ?? 'N/A',
             'message' => $contact['message'] ?? 'N/A',
+            'office_id' => $contact['office_id'] ?? 'N/A',
+            'listing_code' => $contact['listing_code'] ?? 'N/A',
+            'source' => $contact['source'] ?? 'N/A',
+            'ip' => $contact['ip'] ?? 'N/A',
+            'user_agent' => $contact['user_agent'] ?? 'N/A',
         ]);
 
         $result = $this->send($this->adminEmail, $subject, $body);
@@ -159,6 +164,40 @@ class EmailService {
         return $result;
     }
 
+    public function sendTest(string $to): bool {
+        $subject = 'Test Email - CubeSpace SMTP Configuration';
+        $body = '
+            <h2>SMTP Test Successful!</h2>
+            <p>Your Outlook SMTP configuration is working correctly.</p>
+            <table style="width:100%;border-collapse:collapse;">
+                <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Server</td><td style="padding:8px;border:1px solid #ddd;">' . $this->host . ':' . $this->port . '</td></tr>
+                <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Encryption</td><td style="padding:8px;border:1px solid #ddd;">' . $this->encryption . '</td></tr>
+                <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">From</td><td style="padding:8px;border:1px solid #ddd;">' . $this->fromEmail . '</td></tr>
+                <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Time</td><td style="padding:8px;border:1px solid #ddd;">' . date('Y-m-d H:i:s') . '</td></tr>
+            </table>
+            <hr><p style="color:#888;font-size:12px;">CubeSpace - ' . date('Y-m-d H:i:s') . '</p>
+        ';
+        return $this->send($to, $subject, $body);
+    }
+
+    public function notifyAdminAction(string $action, string $entity, string $details, ?string $actor = null): bool {
+        $actorStr = $actor ? " by $actor" : '';
+        $subject = "Admin Action: $action $entity - CubeSpace";
+        $detailsHtml = nl2br(htmlspecialchars($details));
+        $body = "
+            <h2>Admin Action Notification</h2>
+            <table style=\"width:100%;border-collapse:collapse;\">
+                <tr><td style=\"padding:8px;border:1px solid #ddd;font-weight:600;\">Action</td><td style=\"padding:8px;border:1px solid #ddd;\">$action</td></tr>
+                <tr><td style=\"padding:8px;border:1px solid #ddd;font-weight:600;\">Entity</td><td style=\"padding:8px;border:1px solid #ddd;\">$entity</td></tr>
+                <tr><td style=\"padding:8px;border:1px solid #ddd;font-weight:600;\">Details</td><td style=\"padding:8px;border:1px solid #ddd;\">$detailsHtml</td></tr>
+                <tr><td style=\"padding:8px;border:1px solid #ddd;font-weight:600;\">Actor</td><td style=\"padding:8px;border:1px solid #ddd;\">$actorStr</td></tr>
+                <tr><td style=\"padding:8px;border:1px solid #ddd;font-weight:600;\">Time</td><td style=\"padding:8px;border:1px solid #ddd;\">" . date('Y-m-d H:i:s') . "</td></tr>
+            </table>
+            <hr><p style=\"color:#888;font-size:12px;\">CubeSpace - Admin Notification</p>
+        ";
+        return $this->send($this->adminEmail, $subject, $body);
+    }
+
     public function notifyPartnerApproved(array $partner): bool {
         if (empty($partner['email'])) {
             return false;
@@ -191,7 +230,12 @@ class EmailService {
                     <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Email</td><td style="padding:8px;border:1px solid #ddd;">{{email}}</td></tr>
                     <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Interest</td><td style="padding:8px;border:1px solid #ddd;">{{interest}}</td></tr>
                     <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Company</td><td style="padding:8px;border:1px solid #ddd;">{{company}}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Seats</td><td style="padding:8px;border:1px solid #ddd;">{{seats}}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Seats Required</td><td style="padding:8px;border:1px solid #ddd;">{{seats}}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Office ID</td><td style="padding:8px;border:1px solid #ddd;">{{office_id}}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Listing Code</td><td style="padding:8px;border:1px solid #ddd;">{{listing_code}}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Source</td><td style="padding:8px;border:1px solid #ddd;">{{source}}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">IP Address</td><td style="padding:8px;border:1px solid #ddd;">{{ip}}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">User Agent</td><td style="padding:8px;border:1px solid #ddd;word-break:break-all;">{{user_agent}}</td></tr>
                     <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Message</td><td style="padding:8px;border:1px solid #ddd;">{{message}}</td></tr>
                 </table>
                 <p style="margin-top:20px;color:#888;font-size:12px;">View in admin: <a href="https://cubespaces.in/admin/?page=contacts">cubespaces.in/admin</a></p>

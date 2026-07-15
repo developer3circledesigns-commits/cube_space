@@ -16,6 +16,7 @@ $jwtPayload = require_jwt_auth();
 secure_session_start();
 $_SESSION['admin_id'] = $jwtPayload['sub'];
 $_SESSION['admin_user'] = $jwtPayload['user'];
+cubespace_require_project('src/autoload.php');
 
 $action = $_GET['action'] ?? '';
 $type = $_POST['type'] ?? ''; // 'city' or 'area'
@@ -55,6 +56,7 @@ if ($action === 'add') {
     }
     mysqli_stmt_execute($stmt);
     if (mysqli_stmt_affected_rows($stmt) > 0) {
+        try { (new \CubeSpace\EmailService())->notifyAdminAction('add', "$type: $value", "Added new $type"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
         echo json_encode(['success' => true, 'id' => mysqli_stmt_insert_id($stmt), 'value' => $value]);
     } else {
         http_response_code(409);
@@ -75,6 +77,7 @@ if ($action === 'add') {
     mysqli_stmt_execute($stmt);
     $deleted = mysqli_stmt_affected_rows($stmt);
     mysqli_stmt_close($stmt);
+    try { (new \CubeSpace\EmailService())->notifyAdminAction('delete', "$type: $value", "Deleted $type"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
     echo json_encode(['success' => true, 'deleted' => $deleted]);
 
 } else {

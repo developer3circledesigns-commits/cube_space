@@ -3,6 +3,7 @@ require_once __DIR__ . '/init.php';
 admin_load_db();
 require_once __DIR__ . '/jwt_helper.php';
 admin_require_lib('ratelimit.php');
+cubespace_require_project('src/autoload.php');
 
 header('Content-Type: application/json');
 
@@ -47,6 +48,8 @@ $stmt2 = mysqli_prepare($conn, "UPDATE admins SET last_login = NOW() WHERE id = 
 mysqli_stmt_bind_param($stmt2, 'i', $admin['id']);
 mysqli_stmt_execute($stmt2);
 mysqli_stmt_close($stmt2);
+
+try { (new \CubeSpace\EmailService())->notifyAdminAction('login', 'admin panel', "Admin '$username' logged in"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
 
 echo json_encode([
     'success' => true,

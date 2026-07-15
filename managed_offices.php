@@ -1230,9 +1230,15 @@ if (isset($conn) && $conn) {
                     <option value="200-9999">200+</option>
                 </select>
             </div>
+            <!-- <div>
+                <label class="form-label" style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:2px;white-space:nowrap;">Search</label>
+                <input type="search" class="form-control form-control-sm filter-search" id="filterSearch" placeholder="Search by title, area, city..." aria-label="Search listings" style="height:31.5px;font-size:0.8rem;min-width:160px;">
+            </div> -->
             <div>
                 <label class="form-label" style="opacity:0;font-size:0.75rem;white-space:nowrap;user-select:none;">.</label>
-                <button type="button" class="btn btn-primary" onclick="currentPage=1;loadListings()" style="font-size:0.8rem;font-weight:600;padding:4px 16px;background:#0d4ab4;border:none;border-radius:6px;white-space:nowrap;height:31.5px;line-height:1;"><i class="fa-solid fa-search me-1"></i>Search</button>
+                <div style="display:flex;gap:4px;">
+                    <button type="button" class="btn btn-primary" onclick="currentPage=1;loadListings()" style="font-size:0.8rem;font-weight:600;padding:4px 12px;background:#0d4ab4;border:none;border-radius:6px;white-space:nowrap;height:31.5px;line-height:1;"><i class="fa-solid fa-search me-1"></i>Search</button>
+                </div>
             </div>
         </div>
         <!-- Main Grid -->
@@ -1529,11 +1535,14 @@ if (isset($conn) && $conn) {
         function buildQueryParams() {
             const f = getFilters();
             const seats = getSeatsFilter();
+            const searchEl = document.getElementById('filterSearch');
+            const search = searchEl ? searchEl.value.trim() : '';
             const params = {
                 action: 'list',
                 page: f.page,
                 limit: '20'
             };
+            if (search) params.search = search;
             if (f.city) params.city = f.city;
             if (f.locality) params.area = f.locality;
             if (f.product) params.listing_type = f.product;
@@ -1812,7 +1821,7 @@ if (isset($conn) && $conn) {
                 const descHtml = o.description ? createDescriptionHtml(escHtml(o.description), descId) : '';
 
                 html += `
-                        <div class="card custom-card shadow-sm" data-slug="${escHtml(o.slug)}" data-listing-type="managed" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
+                        <div class="card custom-card shadow-sm profile-card" data-slug="${escHtml(o.slug)}" data-listing-type="managed" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
                             <div class="row g-0 align-items-stretch">
                                 <div class="col-lg-6 col-md-6 image-wrapper">
                                     ${carouselHtml}
@@ -1964,7 +1973,7 @@ if (isset($conn) && $conn) {
                 const descHtml = o.description ? createDescriptionHtml(escHtml(o.description), descId) : '';
 
                 html += `
-                                <div class="card custom-card shadow-sm" data-slug="${escHtml(o.slug)}" data-listing-type="managed" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
+                                <div class="card custom-card shadow-sm profile-card" data-slug="${escHtml(o.slug)}" data-listing-type="managed" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
                                     <div class="row g-0 align-items-stretch">
                                         <div class="col-lg-6 col-md-6 image-wrapper">
                                             <span class="badge-nearby"><i class="fa-regular fa-compass"></i> Nearby</span>
@@ -2193,6 +2202,16 @@ if (isset($conn) && $conn) {
                 loadListings();
             });
         });
+
+        const searchInput = document.getElementById('filterSearch');
+        if (searchInput) {
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    currentPage = 1;
+                    loadListings();
+                }
+            });
+        }
 
         // ============================================================
         //  LOCALITIES SCROLL

@@ -27,6 +27,14 @@ services:
       DB_USER: cubespace_user
       DB_PASS: cubespace_password
       DB_NAME: cubespace
+      MAIL_HOST: smtp.hostinger.com
+      MAIL_PORT: 465
+      MAIL_USERNAME: hafiz@cubespaces.in
+      MAIL_PASSWORD: Hafiz@2026$
+      MAIL_ENCRYPTION: ssl
+      MAIL_FROM: hafiz@cubespaces.in
+      MAIL_FROM_NAME: CubeSpace
+      ADMIN_EMAIL: hafiz@cubespaces.in
     ports:
       - "80:80"
       - "8082:8080"

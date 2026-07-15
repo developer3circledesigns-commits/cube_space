@@ -1486,6 +1486,7 @@ if (isset($conn) && $conn) {
                 <option value="101-200">101-200</option>
                 <option value="200-">200+</option>
             </select>
+            <input type="search" class="form-control form-control-sm filter-search" id="filterSearch" placeholder="Search by title, area, city..." aria-label="Search listings" style="height:31.5px;font-size:0.8rem;min-width:160px;flex-shrink:0;">
         </div>
 
         <!-- Localities -->
@@ -1773,11 +1774,14 @@ if (isset($conn) && $conn) {
         function buildQueryParams() {
             const f = getFilters();
             const seats = getSeatsFilter();
+            const searchEl = document.getElementById('filterSearch');
+            const search = searchEl ? searchEl.value.trim() : '';
             const params = {
                 action: 'list',
                 page: f.page,
                 limit: '20'
             };
+            if (search) params.search = search;
             if (f.city) params.city = f.city;
             if (f.locality) params.area = f.locality;
             if (f.product) params.listing_type = f.product;
@@ -2045,7 +2049,7 @@ if (isset($conn) && $conn) {
                     </div>` : '';
 
                 html += `
-                        <div class="card office-card flex-lg-row" data-slug="${escHtml(o.slug)}" data-listing-type="unfurnished" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
+                        <div class="card office-card flex-lg-row profile-card" data-slug="${escHtml(o.slug)}" data-listing-type="unfurnished" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
                             <div class="card-img-top office-card-img">
                                 ${carouselHtml}
                                 ${imgCount}
@@ -2204,7 +2208,7 @@ if (isset($conn) && $conn) {
                     </div>` : '';
 
                 html += `
-                                <div class="card office-card" data-slug="${escHtml(o.slug)}" data-listing-type="unfurnished" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
+                                <div class="card office-card profile-card" data-slug="${escHtml(o.slug)}" data-listing-type="unfurnished" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
                                     <div class="card-img-top office-card-img position-relative overflow-hidden">
                                         <span class="badge-nearby"><i class="fa-regular fa-compass"></i> Nearby</span>
                                         ${carouselHtml}
@@ -2422,6 +2426,16 @@ if (isset($conn) && $conn) {
                 loadListings();
             });
         });
+
+        const searchInput = document.getElementById('filterSearch');
+        if (searchInput) {
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    currentPage = 1;
+                    loadListings();
+                }
+            });
+        }
 
         // ============================================================
         //  LOCALITIES SCROLL

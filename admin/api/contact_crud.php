@@ -4,6 +4,7 @@ require_once __DIR__ . '/../jwt_helper.php';
 admin_require_lib('csrf.php');
 admin_require_lib('cache.php');
 admin_require_lib('events.php');
+cubespace_require_project('src/autoload.php');
 
 header('Content-Type: application/json');
 
@@ -65,8 +66,14 @@ if ($action === 'update') {
     }
     mysqli_stmt_bind_param($stmt, 'ssi', $status, $adminNotes, $id);
     if (mysqli_stmt_execute($stmt)) {
+        $cStmt = mysqli_prepare($conn, "SELECT name, email FROM contacts WHERE id = ?");
+        mysqli_stmt_bind_param($cStmt, 'i', $id);
+        mysqli_stmt_execute($cStmt);
+        $cRow = mysqli_fetch_assoc(mysqli_stmt_get_result($cStmt));
+        mysqli_stmt_close($cStmt);
         log_activity($conn, 'update', 'contacts', $id, ['status' => $status]);
         publish_event('contact_updated', 'contact', $id, "Status changed to $status");
+        try { (new \CubeSpace\EmailService())->notifyAdminAction('update', "contact #$id", "Name: " . ($cRow['name'] ?? 'N/A') . "\nEmail: " . ($cRow['email'] ?? 'N/A') . "\nStatus: changed to $status\nAdmin Notes: $adminNotes"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
         echo json_encode(['success' => true, 'message' => 'Updated successfully']);
     } else {
         http_response_code(500);
@@ -168,6 +175,7 @@ if ($action === 'reply') {
 
     if ($sent) {
         log_activity($conn, 'email_reply', 'contacts', $id, ['to' => $contact['email'], 'subject' => $subject]);
+        try { (new \CubeSpace\EmailService())->notifyAdminAction('reply', "contact #$id", "Name: {$contact['name']}\nEmail: {$contact['email']}\nSubject: $subject\nBody: $body"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
         echo json_encode(['success' => true, 'message' => 'Email sent to ' . $contact['email']]);
     } else {
         http_response_code(500);
@@ -180,7 +188,7 @@ if ($action === 'delete') {
     CSRFManager::require();
     $id = (int)($_POST['id'] ?? 0);
 
-    $stmt = mysqli_prepare($conn, "SELECT id FROM contacts WHERE id = ?");
+    $stmt = mysqli_prepare($conn, "SELECT id, name, email, interest, phone, listing_code FROM contacts WHERE id = ?");
     mysqli_stmt_bind_param($stmt, 'i', $id);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
@@ -196,6 +204,7 @@ if ($action === 'delete') {
     if (mysqli_stmt_execute($stmt)) {
         log_activity($conn, 'delete', 'contacts', $id, []);
         publish_event('contact_deleted', 'contact', $id, 'Contact deleted');
+        try { (new \CubeSpace\EmailService())->notifyAdminAction('delete', "contact #$id", "Name: {$row['name']}\nEmail: {$row['email']}\nPhone: {$row['phone']}\nInterest: {$row['interest']}\nListing Code: {$row['listing_code']}"); } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
         echo json_encode(['success' => true, 'message' => 'Deleted successfully']);
     } else {
         http_response_code(500);

@@ -104,6 +104,11 @@ try {
             'company' => $company,
             'seats' => $seats,
             'message' => $message,
+            'office_id' => $officeIdVal,
+            'listing_code' => $listingCode,
+            'source' => $source,
+            'ip' => $submittedIp,
+            'user_agent' => $userAgent,
         ];
 
         publish_event('contact_created', 'contact', $newId, "$name - $interest");

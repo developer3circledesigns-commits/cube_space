@@ -107,6 +107,50 @@ if ($action === 'forgot_password' || $action === 'reset_password') {
 
             <p>Flexible office solutions for startups, SMEs and Enterprises</p>
 
+            <!-- <div class="home-search-bar" style="background:white;border-radius:12px;padding:16px;margin-bottom:20px;box-shadow:0 4px 20px rgba(0,0,0,0.1);max-width:600px;margin-left:auto;margin-right:auto;">
+                <div class="d-flex gap-2 align-items-center" style="flex-wrap:wrap;justify-content:center;">
+                    <input type="search" class="form-control" id="homeSearch" placeholder="Search by city, area or title..." aria-label="Search office spaces" style="flex:1;min-width:180px;border-radius:8px;font-size:0.9rem;padding:8px 12px;">
+                    <select class="form-select" id="homeCity" aria-label="Filter by city" style="width:auto;border-radius:8px;font-size:0.9rem;padding:8px 12px;">
+                        <option value="">All Cities</option>
+                        <option value="chennai">Chennai</option>
+                        <option value="bangalore">Bangalore</option>
+                    </select>
+                    <button type="button" class="btn btn-primary" onclick="homeSearch()" style="border-radius:8px;padding:8px 20px;font-weight:600;white-space:nowrap;"><i class="fa-solid fa-search me-1"></i>Search</button>
+                </div>
+            </div> -->
+            <script>
+            function homeSearch() {
+                var q = document.getElementById('homeSearch').value.trim();
+                var city = document.getElementById('homeCity').value;
+                var url = 'managed_offices.php';
+                var params = [];
+                if (q) params.push('search=' + encodeURIComponent(q));
+                if (city) params.push('city=' + encodeURIComponent(city));
+                if (params.length) url += '?' + params.join('&');
+                window.location.href = url;
+            }
+            var _allFeaturedCards = [];
+            function filterFeaturedCards() {
+                var city = document.getElementById('homeCity').value.toLowerCase();
+                var container = document.getElementById('featuredCards');
+                if (_allFeaturedCards.length === 0) {
+                    _allFeaturedCards = Array.from(container.querySelectorAll('.profile-card'));
+                }
+                var matching = _allFeaturedCards.filter(function(card) {
+                    var address = (card.querySelector('.property-address span') || {}).textContent || '';
+                    return !city || address.toLowerCase().indexOf(city) !== -1;
+                });
+                container.innerHTML = '';
+                matching.forEach(function(card) { container.appendChild(card); });
+            }
+            document.addEventListener('DOMContentLoaded', function() {
+                var homeCity = document.getElementById('homeCity');
+                if (homeCity) {
+                    homeCity.addEventListener('change', filterFeaturedCards);
+                }
+            });
+            </script>
+
             <div class="leasing-box">
 
                 <div class="leasing-title">Long-term Leasing</div>
@@ -131,6 +175,72 @@ if ($action === 'forgot_password' || $action === 'reset_password') {
         </div>
 
     </section>
+
+    <!-- =========================
+     FEATURED LISTINGS
+    ========================= -->
+
+    <!-- <section class="container py-4" id="featuredListings">
+        <h2 class="text-center mb-4" style="font-size:1.5rem;font-weight:700;">Featured Office Spaces</h2>
+        <div class="row g-4" id="featuredCards">
+            <div class="col-md-4">
+                <div class="card custom-card shadow-sm profile-card" data-slug="featured-1" tabindex="0" style="cursor:pointer;" onclick="cubeNavigate('managed_offices.php?search=Guindy')">
+                    <img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=400&h=200&fit=crop" alt="Managed Office Guindy" style="width:100%;height:140px;object-fit:cover;border-radius:8px 8px 0 0;" loading="lazy">
+                    <div class="card-body">
+                        <h5 class="card-title">Managed Office in Guindy</h5>
+                        <p class="property-address"><i class="fa-solid fa-location-dot"></i> <span>Guindy, Chennai</span></p>
+                        <p class="text-muted small description-text">Fully furnished managed office space with all amenities including power backup, security, pantry and meeting rooms.</p>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="fw-bold text-primary">Contact for Price</span>
+                            <span class="badge bg-primary">Managed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card custom-card shadow-sm profile-card" data-slug="featured-2" tabindex="0" style="cursor:pointer;" onclick="cubeNavigate('managed_offices.php?search=OMR')">
+                    <img src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=400&h=200&fit=crop" alt="Commercial Space OMR" style="width:100%;height:140px;object-fit:cover;border-radius:8px 8px 0 0;" loading="lazy">
+                    <div class="card-body">
+                        <h5 class="card-title">Commercial Space on OMR</h5>
+                        <p class="property-address"><i class="fa-solid fa-location-dot"></i> <span>OMR, Chennai</span></p>
+                        <p class="text-muted small description-text">Prime commercial office space on OMR with high visibility, ample parking and easy access to IT corridor.</p>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="fw-bold text-primary">Contact for Price</span>
+                            <span class="badge bg-secondary">Commercial</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card custom-card shadow-sm profile-card" data-slug="featured-3" tabindex="0" style="cursor:pointer;" onclick="cubeNavigate('unfurnished_offices.php')">
+                    <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=400&h=200&fit=crop" alt="Unfurnished Office Velachery" style="width:100%;height:140px;object-fit:cover;border-radius:8px 8px 0 0;" loading="lazy">
+                    <div class="card-body">
+                        <h5 class="card-title">Unfurnished Office in Velachery</h5>
+                        <p class="property-address"><i class="fa-solid fa-location-dot"></i> <span>Velachery, Chennai</span></p>
+                        <p class="text-muted small description-text">Shell space ready for custom fit-out in Velachery. Ideal for businesses wanting to design their own workspace.</p>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="fw-bold text-primary">Contact for Price</span>
+                            <span class="badge bg-secondary">Unfurnished</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card custom-card shadow-sm profile-card" data-slug="featured-4" tabindex="0" style="cursor:pointer;" onclick="cubeNavigate('managed_offices.php?city=bangalore')">
+                    <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=200&fit=crop" alt="Managed Office Bangalore" style="width:100%;height:140px;object-fit:cover;border-radius:8px 8px 0 0;" loading="lazy">
+                    <div class="card-body">
+                        <h5 class="card-title">Managed Office in Bangalore</h5>
+                        <p class="property-address"><i class="fa-solid fa-location-dot"></i> <span>MG Road, Bangalore</span></p>
+                        <p class="text-muted small description-text">Premium managed office space on MG Road, Bangalore with world-class amenities and excellent connectivity.</p>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="fw-bold text-primary">Contact for Price</span>
+                            <span class="badge bg-primary">Managed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section> -->
 
     <!-- =========================
      ABOUT US
