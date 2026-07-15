@@ -1037,6 +1037,14 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                             <div class="cd-value" style="color:#166534;"><?php echo htmlspecialchars($inventoryType ?: 'Ready to move in'); ?></div>
                         </div>
                     </div>
+                    <div class="cd-item">
+                        <div class="cd-icon"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+                        <div>
+                            <div class="cd-label">Quoted Rent</div>
+                            <?php $rentPeriod = $officeSpaceType === 'lease' ? ($isManaged ? 'seat / year' : 'per sq ft / month') : ($isManaged ? 'per seat / month' : 'per sq ft / month'); ?>
+                            <div class="cd-value">₹<?php echo format_number($officePrice); ?> <span style="font-size:13px;font-weight:400;color:#64748b;"><?php echo $rentPeriod; ?></span></div>
+                        </div>
+                    </div>
                     <?php else: ?>
                     <div class="cd-item">
                         <div class="cd-icon"><i class="fa-solid fa-building"></i></div>
@@ -1056,13 +1064,20 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                     <?php endif; ?> -->
                     <?php if ($inventoryType): ?>
                     <div class="cd-item">
-                        <div class="cd-icon"><i class="fa-solid <?php echo $inventoryType === 'Ready to move in' ? 'fa-circle-check' : 'fa-clock'; ?>" style="color:<?php echo $inventoryType === 'Ready to move in' ? '#166534' : '#92400e'; ?>;"></i></div>
+                        <div class="cd-icon"><i class="fa-solid <?php echo $inventoryType === 'Ready to move in' ? 'fa-circle-check' : 'fa-clock'; ?>" style="color:#166534;"></i></div>
                         <div>
                             <div class="cd-label">Status</div>
-                            <div class="cd-value" style="color:<?php echo $inventoryType === 'Ready to move in' ? '#166534' : '#92400e'; ?>;"><?php echo htmlspecialchars($inventoryType); ?></div>
+                            <div class="cd-value" style="color:#166534;"><?php echo htmlspecialchars($inventoryType); ?></div>
                         </div>
                     </div>
                     <?php endif; ?>
+                    <div class="cd-item">
+                        <div class="cd-icon"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+                        <div>
+                            <div class="cd-label">Quoted Rent</div>
+                            <div class="cd-value">₹<?php echo format_number($officePrice); ?> <span style="font-size:13px;font-weight:400;color:#64748b;">per sq ft / month</span></div>
+                        </div>
+                    </div>
                     <?php endif; ?>
                 </div>
             </div>
