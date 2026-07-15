@@ -35,14 +35,14 @@ class EmailService {
             }
         }
 
-        $this->host = defined('MAIL_HOST') ? MAIL_HOST : (getenv('MAIL_HOST') ?: '');
-        $this->port = (int)(defined('MAIL_PORT') ? MAIL_PORT : (getenv('MAIL_PORT') ?: '465'));
-        $this->username = defined('MAIL_USERNAME') ? MAIL_USERNAME : (getenv('MAIL_USERNAME') ?: '');
-        $this->password = defined('MAIL_PASSWORD') ? MAIL_PASSWORD : (getenv('MAIL_PASSWORD') ?: '');
-        $this->encryption = defined('MAIL_ENCRYPTION') ? MAIL_ENCRYPTION : (getenv('MAIL_ENCRYPTION') ?: 'ssl');
-        $this->fromEmail = defined('MAIL_FROM') ? MAIL_FROM : (getenv('MAIL_FROM') ?: 'hafiz@cubespaces.in');
-        $this->fromName = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : (getenv('MAIL_FROM_NAME') ?: 'CubeSpace');
-        $this->adminEmail = defined('ADMIN_EMAIL') ? ADMIN_EMAIL : (getenv('ADMIN_EMAIL') ?: 'hafiz@cubespaces.in');
+        $this->host = defined('MAIL_HOST') ? MAIL_HOST : (getenv('MAIL_HOST') ?: ($_ENV['MAIL_HOST'] ?? ''));
+        $this->port = (int)(defined('MAIL_PORT') ? MAIL_PORT : (getenv('MAIL_PORT') ?: ($_ENV['MAIL_PORT'] ?? '465')));
+        $this->username = defined('MAIL_USERNAME') ? MAIL_USERNAME : (getenv('MAIL_USERNAME') ?: ($_ENV['MAIL_USERNAME'] ?? ''));
+        $this->password = defined('MAIL_PASSWORD') ? MAIL_PASSWORD : (getenv('MAIL_PASSWORD') ?: ($_ENV['MAIL_PASSWORD'] ?? ''));
+        $this->encryption = defined('MAIL_ENCRYPTION') ? MAIL_ENCRYPTION : (getenv('MAIL_ENCRYPTION') ?: ($_ENV['MAIL_ENCRYPTION'] ?? 'ssl'));
+        $this->fromEmail = defined('MAIL_FROM') ? MAIL_FROM : (getenv('MAIL_FROM') ?: ($_ENV['MAIL_FROM'] ?? 'noreply@cubespaces.in'));
+        $this->fromName = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : (getenv('MAIL_FROM_NAME') ?: ($_ENV['MAIL_FROM_NAME'] ?? 'CubeSpace'));
+        $this->adminEmail = defined('ADMIN_EMAIL') ? ADMIN_EMAIL : (getenv('ADMIN_EMAIL') ?: ($_ENV['ADMIN_EMAIL'] ?? 'hafiz@cubespaces.in'));
     }
 
     public function isEnabled(): bool {

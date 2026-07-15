@@ -25,6 +25,10 @@ if (empty($host) || empty($user) || $pass === null || empty($db)) {
     }
 }
 
+if (empty($host) || $host === 'db') {
+    $host = file_exists('/.dockerenv') ? 'mysql' : 'localhost';
+}
+
 if (empty($host) || empty($user) || $pass === null || empty($db)) {
     error_log('CubeSpace: Missing database configuration');
     http_response_code(500);
