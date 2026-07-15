@@ -1779,8 +1779,7 @@ if (isset($conn) && $conn) {
                     }
                 });
                 if (o.inventory_type) {
-                    const isReady = o.inventory_type.toLowerCase() === 'ready to move in';
-                    statsHtml += `<span class="stat-item inv-badge ${isReady ? 'inv-ready' : 'inv-processing'}"><i class="fa-solid ${isReady ? 'fa-circle-check' : 'fa-clock'}"></i> <span class="stat-value">${escHtml(o.inventory_type)}</span></span>`;
+                    statsHtml += `<span class="stat-item inv-badge inv-ready"><i class="fa-solid fa-circle-check"></i> <span class="stat-value">${escHtml(o.inventory_type)}</span></span>`;
                 }
 
                 const period = o.office_space_type === 'lease' ? 'per sq ft / month' : 'per sq ft / month';
@@ -1939,8 +1938,7 @@ if (isset($conn) && $conn) {
                     }
                 });
                 if (o.inventory_type) {
-                    const isReady = o.inventory_type.toLowerCase() === 'ready to move in';
-                    statsHtml += `<span class="stat-item inv-badge ${isReady ? 'inv-ready' : 'inv-processing'}"><i class="fa-solid ${isReady ? 'fa-circle-check' : 'fa-clock'}"></i> <span class="stat-value">${escHtml(o.inventory_type)}</span></span>`;
+                    statsHtml += `<span class="stat-item inv-badge inv-ready"><i class="fa-solid fa-circle-check"></i> <span class="stat-value">${escHtml(o.inventory_type)}</span></span>`;
                 }
 
                 const period = o.office_space_type === 'lease' ? 'per sq ft / month' : 'per sq ft / month';
