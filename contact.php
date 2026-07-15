@@ -4,6 +4,7 @@ mysqli_report(MYSQLI_REPORT_OFF);
 $action = $_GET['action'] ?? '';
 if ($action === 'forgot_password' || $action === 'reset_password') {
     header('Content-Type: application/json');
+    ob_start();
     if ($action === 'forgot_password') {
         $username = trim($_POST['username'] ?? '');
         if (!$username) { http_response_code(400); die(json_encode(['success'=>false,'error'=>'Username required'])); }
@@ -15,19 +16,19 @@ if ($action === 'forgot_password' || $action === 'reset_password') {
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
         $admin = mysqli_fetch_assoc($result);
-        if (!$admin) { http_response_code(404); die(json_encode(['success'=>false,'error'=>'Admin not found'])); }
+        if (!$admin) { die(json_encode(['success'=>true,'message'=>'If the username exists, a reset token has been generated.'])); }
         $token = bin2hex(random_bytes(16));
         $expiry = date('Y-m-d H:i:s', strtotime('+1 hour'));
         $stmt = mysqli_prepare($conn, "UPDATE admins SET reset_token = ?, reset_token_expiry = ? WHERE id = ?");
         if (!$stmt) { http_response_code(500); die(json_encode(['success'=>false,'error'=>mysqli_error($conn)])); }
         mysqli_stmt_bind_param($stmt, 'ssi', $token, $expiry, $admin['id']);
         if (!mysqli_stmt_execute($stmt)) { http_response_code(500); die(json_encode(['success'=>false,'error'=>mysqli_error($conn)])); }
-        die(json_encode(['success'=>true,'message'=>'Use this token. Expires in 1 hour.','reset_token'=>$token]));
+        die(json_encode(['success'=>true,'message'=>'If the username exists, a reset token has been generated.']));
     }
     if ($action === 'reset_password') {
         $token = trim($_POST['token'] ?? ''); $password = trim($_POST['password'] ?? '');
         if (!$token||!$password) { http_response_code(400); die(json_encode(['success'=>false,'error'=>'Token and password required'])); }
-        if (strlen($password)<6) { http_response_code(400); die(json_encode(['success'=>false,'error'=>'Password min 6 chars'])); }
+        if (strlen($password)<8) { http_response_code(400); die(json_encode(['success'=>false,'error'=>'Password must be at least 8 characters'])); }
         cubespace_load_db_config();
         if (!$conn) { http_response_code(500); die(json_encode(['success'=>false,'error'=>'DB unavailable'])); }
         $stmt = mysqli_prepare($conn, "SELECT id FROM admins WHERE reset_token = ? AND reset_token_expiry > NOW()");

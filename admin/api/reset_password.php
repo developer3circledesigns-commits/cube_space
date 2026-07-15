@@ -17,6 +17,13 @@ if (strlen($password) < 8) {
     exit;
 }
 
+$r = @mysqli_query($conn, "SHOW COLUMNS FROM admins LIKE 'reset_token'");
+if (!$r || mysqli_num_rows($r) == 0) {
+    @mysqli_query($conn, "ALTER TABLE admins ADD COLUMN reset_token VARCHAR(64) DEFAULT NULL AFTER email");
+    @mysqli_query($conn, "ALTER TABLE admins ADD COLUMN reset_token_expiry DATETIME DEFAULT NULL AFTER reset_token");
+    @mysqli_query($conn, "CREATE INDEX idx_reset_token ON admins (reset_token)");
+}
+
 try {
     if (!isset($conn) || !$conn) {
         throw new Exception('Database connection not available');

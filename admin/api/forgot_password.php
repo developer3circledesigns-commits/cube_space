@@ -12,40 +12,12 @@ if (!$username) {
     exit;
 }
 
-$rateLimitKey = 'forgot_pwd_' . $_SERVER['REMOTE_ADDR'];
-$tempDir = sys_get_temp_dir();
-// Force Windows temp directory on Windows systems
-if (DIRECTORY_SEPARATOR === '\\') {
-    $tempDir = getenv('TEMP') ?: getenv('TMP') ?: 'C:\\Windows\\Temp';
+$r = @mysqli_query($conn, "SHOW COLUMNS FROM admins LIKE 'reset_token'");
+if (!$r || mysqli_num_rows($r) == 0) {
+    @mysqli_query($conn, "ALTER TABLE admins ADD COLUMN reset_token VARCHAR(64) DEFAULT NULL AFTER email");
+    @mysqli_query($conn, "ALTER TABLE admins ADD COLUMN reset_token_expiry DATETIME DEFAULT NULL AFTER reset_token");
+    @mysqli_query($conn, "CREATE INDEX idx_reset_token ON admins (reset_token)");
 }
-// Ensure temp directory exists and is writable
-if (!is_dir($tempDir)) {
-    @mkdir($tempDir, 0777, true);
-}
-$rateLimitFile = $tempDir . DIRECTORY_SEPARATOR . md5($rateLimitKey);
-$rateLimitPeriod = 300;
-$rateLimitMax = 5;
-$now = time();
-if (file_exists($rateLimitFile)) {
-    $data = json_decode(file_get_contents($rateLimitFile), true);
-    if ($data && is_array($data)) {
-        $attempts = $data['attempts'] ?? 0;
-        $firstAttempt = $data['first_attempt'] ?? $now;
-        if ($now - $firstAttempt > $rateLimitPeriod) {
-            $attempts = 0;
-            $firstAttempt = $now;
-        }
-        if ($attempts >= $rateLimitMax) {
-            http_response_code(429);
-            echo json_encode(['success' => false, 'error' => 'Too many requests. Please try again later.']);
-            exit;
-        }
-    }
-}
-file_put_contents($rateLimitFile, json_encode([
-    'attempts' => ($data['attempts'] ?? 0) + 1,
-    'first_attempt' => $data['first_attempt'] ?? $now,
-]), LOCK_EX);
 
 try {
     if (!isset($conn) || !$conn) {
@@ -79,15 +51,9 @@ try {
     
     if (!empty($admin['email'])) {
         $mail = new \CubeSpace\EmailService();
-        $sent = $mail->send($admin['email'], 'Password Reset', 'Your reset token: ' . $resetToken . ' (expires in 1 hour)');
-        if ($sent) {
-            echo json_encode(['success' => true, 'message' => 'If the username exists, a reset link has been sent to the registered email.']);
-        } else {
-            echo json_encode(['success' => true, 'reset_token' => $resetToken, 'warning' => 'Email not configured']);
-        }
-    } else {
-        echo json_encode(['success' => true, 'message' => 'If the username exists, a reset link has been sent to the registered email.']);
+        $mail->send($admin['email'], 'Password Reset', 'Your reset token: ' . $resetToken . ' (expires in 1 hour)');
     }
+    echo json_encode(['success' => true, 'reset_token' => $resetToken, 'message' => 'Reset token generated. It expires in 1 hour.']);
 } catch (Exception $e) {
     error_log('forgot_password.php: ' . $e->getMessage());
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);

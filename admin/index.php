@@ -173,8 +173,12 @@ document.getElementById('forgotPasswordForm').addEventListener('submit', async f
             return;
         }
         if (d.success) {
-            msg.className = 'alert alert-success'; msg.classList.remove('d-none');
-            msg.innerHTML = 'Reset Token: <strong>' + d.reset_token + '</strong><br><small>Copy this token. It expires in 1 hour.</small>';
+            document.getElementById('resetToken').value = d.reset_token || '';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+            document.getElementById('resetPasswordForm').style.display = 'block';
+            const resetMsg = document.getElementById('resetMsg');
+            resetMsg.className = 'alert alert-success'; resetMsg.classList.remove('d-none');
+            resetMsg.textContent = d.message || 'Token generated. Enter your new password below.';
             this.reset();
         } else {
             msg.className = 'alert alert-danger'; msg.classList.remove('d-none'); msg.textContent = d.error;
