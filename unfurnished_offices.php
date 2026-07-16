@@ -106,6 +106,7 @@ if (isset($conn) && $conn) {
             background: #fafbff;
             color: #1a1a2e;
             -webkit-font-smoothing: antialiased;
+            padding-top: 70px;
         }
 
         /* Ensure page content has proper padding for fixed navbar */
@@ -938,8 +939,7 @@ if (isset($conn) && $conn) {
             margin-bottom: 10px;
             text-align: right;
         }
-        .gp-modal-logo img {
-            height: 70px;
+        .gp-modal-logo img { height: 70px;
             width: auto;
             max-width: 100%;
             object-fit: contain;
@@ -1422,19 +1422,60 @@ if (isset($conn) && $conn) {
                 font-size: 0.5rem;
             }
             .filter-bar {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                overflow-x: visible !important;
                 padding: 8px;
-                gap: 4px;
+                gap: 8px !important;
             }
+            .filter-bar > span.text-muted { display: none !important; }
             .filter-bar .filter-select {
+                width: 100%;
+                max-width: 100%;
                 font-size: 0.72rem;
                 padding: 2px 18px 2px 6px;
                 min-height: 28px;
             }
             .filter-bar .form-control {
+                width: 100%;
                 font-size: 0.72rem;
                 padding: 2px 6px;
                 min-height: 28px;
             }
+        }
+
+        @media (max-width: 480px) {
+            body { padding-top: 56px; }
+            .filter-bar { top: 56px; }
+        }
+        @media (max-width: 540px) {
+            .office-card .card-body { text-align: left; }
+            .office-card .card-body .property-address { justify-content: flex-start; }
+            .office-card .card-body .stats-row { justify-content: flex-start; }
+            .gp-modal-logo img { height: 120px !important; }
+            .results-counter { flex-direction: column; align-items: flex-start; gap: 6px; }
+        }
+        @media (max-width: 400px) {
+            body { padding-top: 56px; }
+            .gp-modal-logo img { height: 80px !important; }
+            .office-card .card-body { padding: 2px 8px 3px; }
+            .office-card .card-body .property-name { font-size: 0.78rem; }
+            .office-card .card-body .property-address { font-size: 0.68rem; }
+            .office-card .card-body .stats-row .stat-item { font-size: 0.6rem; }
+            .office-card .card-body .card-price .amount { font-size: 0.75rem; }
+            .office-card .card-body .card-actions .btn { font-size: 0.58rem; padding: 3px 8px; }
+            .office-card .office-card-img { max-height: 50px; }
+        }
+        @media (max-width: 360px) {
+            body { padding-top: 50px; }
+            .filter-bar { top: 50px; }
+            .gp-modal-logo img { height: 60px !important; }
+            .office-card .card-body { padding: 1px 6px 2px; }
+            .office-card .card-body .property-name { font-size: 0.72rem; }
+            .office-card .card-body .stats-row .stat-item { font-size: 0.55rem; }
+            .office-card .card-body .card-actions .btn { font-size: 0.52rem; padding: 2px 6px; }
+            .office-card .office-card-img { max-height: 40px; min-height: 28px; }
+            .filter-bar .filter-select { font-size: 0.65rem; padding: 2px 14px 2px 4px; min-height: 24px; }
         }
     </style>
 </head>

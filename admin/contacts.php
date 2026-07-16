@@ -192,39 +192,50 @@ if ($mode === 'view'):
         <a href="<?= $exportUrl ?>" class="btn btn-outline-success btn-sm" title="Export CSV"><i class="fa-solid fa-download"></i> CSV</a>
     </div>
 </div>
-<div class="row g-2 mb-3">
-    <div class="col-md-5">
-        <form method="get" class="d-flex gap-2">
+<button class="btn btn-sm btn-outline-primary admin-filter-toggle mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#contactsFilters" aria-expanded="true">
+    <i class="fa-solid fa-sliders-h"></i> Filters
+</button>
+<div class="collapse show admin-filter-section" id="contactsFilters">
+    <form method="get" class="d-flex flex-wrap gap-2">
+        <div>
+            <div class="filter-label">Search</div>
             <input type="search" name="search" class="form-control form-control-sm" placeholder="Search by name, phone, email, company..." value="<?= htmlspecialchars($searchQuery) ?>">
-            <button type="submit" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-search"></i></button>
-            <?php if ($searchQuery): ?>
-            <a href="contacts.php<?= $statusFilter ? '?status=' . urlencode($statusFilter) : '' ?>" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-times"></i></a>
-            <?php endif; ?>
-        </form>
-    </div>
-    <div class="col-md-7">
-        <div class="d-flex gap-2 flex-wrap align-items-center">
-            <span class="small text-muted">Filter:</span>
-            <a href="contacts.php<?= $searchQuery ? '?search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= !$statusFilter && !$interestFilter ? 'btn-primary' : 'btn-outline-primary' ?>">All</a>
-            <a href="contacts.php?status=new<?= $interestFilter ? '&interest=' . urlencode($interestFilter) : '' ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $statusFilter === 'new' ? 'btn-primary' : 'btn-outline-primary' ?>">New</a>
-            <a href="contacts.php?status=contacted<?= $interestFilter ? '&interest=' . urlencode($interestFilter) : '' ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $statusFilter === 'contacted' ? 'btn-primary' : 'btn-outline-primary' ?>">Contacted</a>
-            <a href="contacts.php?status=closed<?= $interestFilter ? '&interest=' . urlencode($interestFilter) : '' ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $statusFilter === 'closed' ? 'btn-primary' : 'btn-outline-primary' ?>">Closed</a>
-            <span class="small text-muted ms-2">Type:</span>
-            <a href="contacts.php<?= $statusFilter ? '?status=' . urlencode($statusFilter) : '' ?><?= $searchQuery ? ($statusFilter ? '&' : '?') . 'search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= !$interestFilter ? 'btn-primary' : 'btn-outline-primary' ?>">All</a>
-            <a href="contacts.php?interest=managed<?= $statusFilter ? '&status=' . urlencode($statusFilter) : '' ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $interestFilter === 'managed' ? 'btn-primary' : 'btn-outline-primary' ?>">Managed</a>
-            <a href="contacts.php?interest=furnished<?= $statusFilter ? '&status=' . urlencode($statusFilter) : '' ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $interestFilter === 'furnished' ? 'btn-primary' : 'btn-outline-primary' ?>">Furnished</a>
         </div>
-    </div>
-</div>
-<div class="bulk-bar">
-    <select id="bulkActionSelect" class="form-select form-select-sm" aria-label="Bulk actions">
-        <option value="">-- Bulk Actions --</option>
-        <option value="delete">Delete Selected</option>
-        <option value="status-new">Mark as New</option>
-        <option value="status-contacted">Mark as Contacted</option>
-        <option value="status-closed">Mark as Closed</option>
-    </select>
-    <button class="btn btn-sm btn-secondary" onclick="applyBulkAction()">Apply</button>
+        <div>
+            <div class="filter-label">Status</div>
+            <div class="filter-btn-group">
+                <a href="contacts.php<?= $searchQuery ? '?search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= !$statusFilter && !$interestFilter ? 'btn-primary' : 'btn-outline-primary' ?>">All</a>
+                <a href="contacts.php?status=new<?= $interestFilter ? '&interest=' . urlencode($interestFilter) : '' ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $statusFilter === 'new' ? 'btn-primary' : 'btn-outline-primary' ?>">New</a>
+                <a href="contacts.php?status=contacted<?= $interestFilter ? '&interest=' . urlencode($interestFilter) : '' ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $statusFilter === 'contacted' ? 'btn-primary' : 'btn-outline-primary' ?>">Contacted</a>
+                <a href="contacts.php?status=closed<?= $interestFilter ? '&interest=' . urlencode($interestFilter) : '' ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $statusFilter === 'closed' ? 'btn-primary' : 'btn-outline-primary' ?>">Closed</a>
+            </div>
+        </div>
+        <div>
+            <div class="filter-label">Type</div>
+            <div class="filter-btn-group">
+                <a href="contacts.php<?= $statusFilter ? '?status=' . urlencode($statusFilter) : '' ?><?= $searchQuery ? ($statusFilter ? '&' : '?') . 'search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= !$interestFilter ? 'btn-primary' : 'btn-outline-primary' ?>">All</a>
+                <a href="contacts.php?interest=managed<?= $statusFilter ? '&status=' . urlencode($statusFilter) : '' ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $interestFilter === 'managed' ? 'btn-primary' : 'btn-outline-primary' ?>">Managed</a>
+                <a href="contacts.php?interest=furnished<?= $statusFilter ? '&status=' . urlencode($statusFilter) : '' ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" class="btn btn-sm <?= $interestFilter === 'furnished' ? 'btn-primary' : 'btn-outline-primary' ?>">Furnished</a>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-search"></i> Search</button>
+            <?php if ($searchQuery): ?>
+            <a href="contacts.php<?= $statusFilter ? '?status=' . urlencode($statusFilter) : '' ?>" class="btn btn-sm btn-outline-secondary">&times; Clear</a>
+            <?php endif; ?>
+        </div>
+        <hr class="my-1">
+        <div class="bulk-bar p-0 mb-0 border-0 bg-transparent">
+            <select id="bulkActionSelect" class="form-select form-select-sm" aria-label="Bulk actions">
+                <option value="">-- Bulk Actions --</option>
+                <option value="delete">Delete Selected</option>
+                <option value="status-new">Mark as New</option>
+                <option value="status-contacted">Mark as Contacted</option>
+                <option value="status-closed">Mark as Closed</option>
+            </select>
+            <button class="btn btn-sm btn-secondary" onclick="applyBulkAction()">Apply</button>
+        </div>
+    </form>
 </div>
 <?php if (isset($_GET['deleted'])): ?><div class="alert alert-success py-2">Deleted successfully.</div><?php endif; ?>
 <div class="admin-card">

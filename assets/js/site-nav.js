@@ -112,6 +112,7 @@
         nav.classList.add('active');
         button.setAttribute('aria-expanded', 'true');
         button.classList.add('active');
+        button.style.display = 'none';
         toggleBodyScroll(true);
     }
 
@@ -119,6 +120,7 @@
         nav.classList.remove('active');
         button.setAttribute('aria-expanded', 'false');
         button.classList.remove('active');
+        button.style.display = '';
         toggleBodyScroll(false);
     }
 
@@ -149,7 +151,6 @@
 
         button.addEventListener('click', function(e) {
             e.preventDefault();
-            e.stopPropagation();
             toggleNav();
         });
 
@@ -181,13 +182,6 @@
             }
         });
 
-        document.addEventListener('click', function(e) {
-            if (!nav.classList.contains('active')) return;
-            if (!isMobileView()) return;
-            if (backdrop && backdrop.contains(e.target)) {
-                closeNav();
-            }
-        });
     });
 
     var desktopMql = window.matchMedia('(min-width: 993px)');

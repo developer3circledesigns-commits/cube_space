@@ -246,6 +246,28 @@ ob_start();
                 padding: 20px;
             }
         }
+        @media (max-width: 400px) {
+            .contact-hero { min-height: 150px; padding: 70px 10px 24px; }
+            .contact-hero h1 { font-size: 20px; }
+            .contact-hero p { font-size: 13px; }
+            .contact-section { padding: 20px 10px; }
+            .contact-form-card, .contact-info-card { padding: 16px; }
+            .contact-form-card h2 { font-size: 17px; }
+            .contact-form-card input,
+            .contact-form-card select,
+            .contact-form-card textarea { height: 42px; font-size: 13px; }
+            .contact-form-card textarea { height: auto; }
+            .contact-form-card .phone-group { flex-direction: column; }
+            .contact-form-card .phone-prefix { border-right: 1px solid #d2d3ee; border-bottom: none; width: 100%; justify-content: center; }
+            .contact-form-card .btn-submit-form { height: 42px; font-size: 14px; }
+            .contact-info-card h3 { font-size: 14px; }
+        }
+        @media (max-width: 320px) {
+            .contact-hero { padding: 60px 8px 20px; min-height: 130px; }
+            .contact-hero h1 { font-size: 18px; margin-bottom: 10px; }
+            .contact-section { padding: 16px 8px; }
+            .contact-form-card, .contact-info-card { padding: 12px; }
+        }
     </style>
 </head>
 <body>

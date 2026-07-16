@@ -175,7 +175,10 @@ if ($statusFilter) $exportUrl .= '&status=' . urlencode($statusFilter);
 ?>
 <div class="page-header">
     <h4><i class="fa-solid fa-user-shield me-2"></i>Admins <span class="badge bg-primary"><?= $total ?></span></h4>
-    <a href="admins.php?mode=add" class="btn btn-primary btn-sm" id="showCreateForm"><i class="fa-solid fa-plus me-1"></i>Add Admin</a>
+    <div class="d-flex align-items-center gap-2">
+        <a href="<?= $exportUrl ?>" class="btn btn-outline-success btn-sm"><i class="fa-solid fa-download me-1"></i>CSV</a>
+        <a href="admins.php?mode=add" class="btn btn-primary btn-sm" id="showCreateForm"><i class="fa-solid fa-plus me-1"></i>Add Admin</a>
+    </div>
 </div>
 <?php if ($successMsg): ?>
 <div class="alert alert-success py-2"><?= $successMsg ?></div>
@@ -231,30 +234,42 @@ if ($statusFilter) $exportUrl .= '&status=' . urlencode($statusFilter);
                     <hr>
                 </div>
 
-                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                    <form method="GET" action="admins.php" class="d-flex gap-2 align-items-center flex-grow-1" style="max-width:400px">
-                        <input type="search" name="search" class="form-control form-control-sm" placeholder="Search by username or email..." value="<?= htmlspecialchars($search) ?>">
-                        <button type="submit" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-search"></i></button>
-                        <?php if ($search): ?>
-                        <a href="admins.php" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-times"></i></a>
-                        <?php endif; ?>
-                    </form>
-                    <div class="btn-group btn-group-sm" role="group">
-                        <a href="<?= mkUrl(['status' => '', 'p' => 1]) ?>" class="btn <?= !$statusFilter ? 'btn-primary' : 'btn-outline-primary' ?>">All</a>
-                        <a href="<?= mkUrl(['status' => 'active', 'p' => 1]) ?>" class="btn <?= $statusFilter === 'active' ? 'btn-primary' : 'btn-outline-primary' ?>">Active</a>
-                        <a href="<?= mkUrl(['status' => 'inactive', 'p' => 1]) ?>" class="btn <?= $statusFilter === 'inactive' ? 'btn-primary' : 'btn-outline-primary' ?>">Inactive</a>
+                <button class="btn btn-sm btn-outline-primary admin-filter-toggle mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#adminsFilters" aria-expanded="true">
+                    <i class="fa-solid fa-sliders-h"></i> Filters
+                </button>
+                <div class="collapse show admin-filter-section" id="adminsFilters">
+                    <div class="d-flex flex-wrap gap-2">
+                        <div>
+                            <div class="filter-label">Search</div>
+                            <form method="GET" action="admins.php">
+                                <div class="d-flex gap-2">
+                                    <input type="search" name="search" class="form-control form-control-sm" placeholder="Search by username or email..." value="<?= htmlspecialchars($search) ?>">
+                                    <button type="submit" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-search"></i></button>
+                                    <?php if ($search): ?>
+                                    <a href="admins.php" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-times"></i></a>
+                                    <?php endif; ?>
+                                </div>
+                            </form>
+                        </div>
+                        <div>
+                            <div class="filter-label">Status</div>
+                            <div class="filter-btn-group">
+                                <a href="<?= mkUrl(['status' => '', 'p' => 1]) ?>" class="btn btn-sm <?= !$statusFilter ? 'btn-primary' : 'btn-outline-primary' ?>">All</a>
+                                <a href="<?= mkUrl(['status' => 'active', 'p' => 1]) ?>" class="btn btn-sm <?= $statusFilter === 'active' ? 'btn-primary' : 'btn-outline-primary' ?>">Active</a>
+                                <a href="<?= mkUrl(['status' => 'inactive', 'p' => 1]) ?>" class="btn btn-sm <?= $statusFilter === 'inactive' ? 'btn-primary' : 'btn-outline-primary' ?>">Inactive</a>
+                            </div>
+                        </div>
+                        <hr class="my-1">
+                        <div class="bulk-bar <?= $total > 0 ? '' : 'd-none' ?> p-0 mb-0 border-0 bg-transparent">
+                            <select class="form-select form-select-sm">
+                                <option value="">Bulk actions</option>
+                                <option value="delete">Delete</option>
+                                <option value="activate">Activate</option>
+                                <option value="deactivate">Deactivate</option>
+                            </select>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="applyAdminBulkAction()">Apply</button>
+                        </div>
                     </div>
-                    <a href="<?= $exportUrl ?>" class="btn btn-outline-success btn-sm"><i class="fa-solid fa-download me-1"></i>CSV</a>
-                </div>
-
-                <div class="bulk-bar <?= $total > 0 ? '' : 'd-none' ?> d-flex align-items-center gap-2 mb-2 p-2 bg-light">
-                    <select class="form-select form-select-sm" style="width:auto">
-                        <option value="">Bulk actions</option>
-                        <option value="delete">Delete</option>
-                        <option value="activate">Activate</option>
-                        <option value="deactivate">Deactivate</option>
-                    </select>
-                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="applyAdminBulkAction()">Apply</button>
                 </div>
 
                 <div class="table-wrap">

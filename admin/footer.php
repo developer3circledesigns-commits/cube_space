@@ -42,6 +42,18 @@
 </div>
 
 <script src="<?= htmlspecialchars('/assets/js/site-nav.js', ENT_QUOTES, 'UTF-8') ?>"></script>
+<script>
+document.addEventListener('click', function(e) {
+    var link = e.target.closest('.admin-offcanvas .nav-link');
+    if (link) {
+        var offcanvas = document.getElementById('adminOffcanvas');
+        if (offcanvas && window.bootstrap && window.bootstrap.Offcanvas) {
+            var instance = bootstrap.Offcanvas.getInstance(offcanvas);
+            if (instance) instance.hide();
+        }
+    }
+});
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="<?= htmlspecialchars('/assets/js/api-client.js', ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="<?= htmlspecialchars('/assets/js/toast.js', ENT_QUOTES, 'UTF-8') ?>"></script>

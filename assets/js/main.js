@@ -19,15 +19,6 @@
         });
     });
 
-    // Mobile menu toggle
-    var menuBtn = document.querySelector('.mobile-menu-btn');
-    var headerNav = document.querySelector('.header-nav');
-    if (menuBtn && headerNav) {
-        menuBtn.addEventListener('click', function() {
-            headerNav.style.display = headerNav.style.display === 'flex' ? '' : 'flex';
-        });
-    }
-
     // Promo banner close
     var promoClose = document.querySelector('.promo-close');
     if (promoClose) {

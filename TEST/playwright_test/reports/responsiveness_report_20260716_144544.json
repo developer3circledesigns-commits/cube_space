@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-07-16 14:45:44",
+  "base_url": "http://localhost",
+  "total_tests": 1,
+  "passed": 0,
+  "failed": 1,
+  "results": [
+    {
+      "page": "Home",
+      "url": "http://localhost/",
+      "viewport": "Desktop 1920",
+      "viewport_size": "1920x1080",
+      "status": "FAIL",
+      "issues": [
+        "Overflow elements (50 found): [{'tag': 'ul#mobileNav.mobile-nav', 'width': 300, 'right': 2220, 'overflowX': 'auto', 'text': 'Menu\\n                \\n            \\n     '}, {'tag': 'li.mobile-nav-header', 'width': 268, 'right': 2220, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'span.mobile-nav-title', 'width': 43, 'right': 2019, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'button.mobile-nav-close', 'width': 26, 'right': 2196, 'overflowX': 'visible', 'text': ''}, {'tag': 'i.fa-solid.fa-xmark', 'width': 18, 'right': 2192, 'overflowX': 'visible', 'text': ''}]",
+        "Aspect ratio mismatch (11 images)"
+      ]
+    }
+  ],
+  "summary_by_page": {
+    "Home": {
+      "pass": 0,
+      "fail": 1,
+      "issues": [
+        "Overflow elements (50 found): [{'tag': 'ul#mobileNav.mobile-nav', 'width': 300, 'right': 2220, 'overflowX': 'auto', 'text': 'Menu\\n                \\n            \\n     '}, {'tag': 'li.mobile-nav-header', 'width': 268, 'right': 2220, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'span.mobile-nav-title', 'width': 43, 'right': 2019, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'button.mobile-nav-close', 'width': 26, 'right': 2196, 'overflowX': 'visible', 'text': ''}, {'tag': 'i.fa-solid.fa-xmark', 'width': 18, 'right': 2192, 'overflowX': 'visible', 'text': ''}]",
+        "Aspect ratio mismatch (11 images)"
+      ]
+    }
+  }
+}

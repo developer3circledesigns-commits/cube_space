@@ -1,0 +1,200 @@
+{
+  "timestamp": "2026-07-16 14:50:26",
+  "base_url": "http://localhost",
+  "total_tests": 15,
+  "passed": 0,
+  "failed": 6,
+  "results": [
+    {
+      "page": "Home",
+      "url": "http://localhost/",
+      "viewport": "Desktop 1920",
+      "viewport_size": "1920x1080",
+      "status": "FAIL",
+      "issues": [
+        "Overflow elements (50 found): [{'tag': 'ul#mobileNav.mobile-nav', 'width': 300, 'right': 2220, 'overflowX': 'auto', 'text': 'Menu\\n                \\n            \\n     '}, {'tag': 'li.mobile-nav-header', 'width': 268, 'right': 2220, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'span.mobile-nav-title', 'width': 43, 'right': 2019, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'button.mobile-nav-close', 'width': 26, 'right': 2196, 'overflowX': 'visible', 'text': ''}, {'tag': 'i.fa-solid.fa-xmark', 'width': 18, 'right': 2192, 'overflowX': 'visible', 'text': ''}]",
+        "Aspect ratio mismatch (11 images)"
+      ]
+    },
+    {
+      "page": "Managed Offices",
+      "viewport": "Desktop 1920",
+      "status": "ERROR",
+      "issues": [
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/managed_offices.php\", waiting until \"networkidle\"\n"
+      ]
+    },
+    {
+      "page": "Furnished Offices",
+      "viewport": "Desktop 1920",
+      "status": "ERROR",
+      "issues": [
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/furnished_offices.php\", waiting until \"networkidle\"\n"
+      ]
+    },
+    {
+      "page": "Unfurnished Offices",
+      "viewport": "Desktop 1920",
+      "status": "ERROR",
+      "issues": [
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/unfurnished_offices.php\", waiting until \"networkidle\"\n"
+      ]
+    },
+    {
+      "page": "Contact",
+      "url": "http://localhost/contact.php",
+      "viewport": "Desktop 1920",
+      "viewport_size": "1920x1080",
+      "status": "FAIL",
+      "issues": [
+        "Overflow elements (26 found): [{'tag': 'ul#mobileNav.mobile-nav', 'width': 300, 'right': 2220, 'overflowX': 'auto', 'text': 'Menu\\n                \\n            \\n     '}, {'tag': 'li.mobile-nav-header', 'width': 268, 'right': 2220, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'span.mobile-nav-title', 'width': 43, 'right': 2019, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'button.mobile-nav-close', 'width': 26, 'right': 2196, 'overflowX': 'visible', 'text': ''}, {'tag': 'i.fa-solid.fa-xmark', 'width': 18, 'right': 2192, 'overflowX': 'visible', 'text': ''}]",
+        "Aspect ratio mismatch (2 images)"
+      ]
+    },
+    {
+      "page": "Home",
+      "url": "http://localhost/",
+      "viewport": "Desktop 1440",
+      "viewport_size": "1440x900",
+      "status": "FAIL",
+      "issues": [
+        "Overflow elements (50 found): [{'tag': 'div.mega-menu', 'width': 700, 'right': 1469, 'overflowX': 'visible', 'text': 'Managed Office Spaces\\n                  '}, {'tag': 'div.mega-container', 'width': 700, 'right': 1469, 'overflowX': 'visible', 'text': 'Managed Office Spaces\\n                  '}, {'tag': 'ul#mobileNav.mobile-nav', 'width': 300, 'right': 1740, 'overflowX': 'auto', 'text': 'Menu\\n                \\n            \\n     '}, {'tag': 'li.mobile-nav-header', 'width': 268, 'right': 1740, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'span.mobile-nav-title', 'width': 43, 'right': 1539, 'overflowX': 'visible', 'text': 'Menu'}]",
+        "Aspect ratio mismatch (11 images)"
+      ]
+    },
+    {
+      "page": "Managed Offices",
+      "viewport": "Desktop 1440",
+      "status": "ERROR",
+      "issues": [
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/managed_offices.php\", waiting until \"networkidle\"\n"
+      ]
+    },
+    {
+      "page": "Furnished Offices",
+      "viewport": "Desktop 1440",
+      "status": "ERROR",
+      "issues": [
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/furnished_offices.php\", waiting until \"networkidle\"\n"
+      ]
+    },
+    {
+      "page": "Unfurnished Offices",
+      "viewport": "Desktop 1440",
+      "status": "ERROR",
+      "issues": [
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/unfurnished_offices.php\", waiting until \"networkidle\"\n"
+      ]
+    },
+    {
+      "page": "Contact",
+      "url": "http://localhost/contact.php",
+      "viewport": "Desktop 1440",
+      "viewport_size": "1440x900",
+      "status": "FAIL",
+      "issues": [
+        "Overflow elements (28 found): [{'tag': 'div.mega-menu', 'width': 700, 'right': 1469, 'overflowX': 'visible', 'text': 'Managed Office Spaces\\n                  '}, {'tag': 'div.mega-container', 'width': 700, 'right': 1469, 'overflowX': 'visible', 'text': 'Managed Office Spaces\\n                  '}, {'tag': 'ul#mobileNav.mobile-nav', 'width': 300, 'right': 1740, 'overflowX': 'auto', 'text': 'Menu\\n                \\n            \\n     '}, {'tag': 'li.mobile-nav-header', 'width': 268, 'right': 1740, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'span.mobile-nav-title', 'width': 43, 'right': 1539, 'overflowX': 'visible', 'text': 'Menu'}]",
+        "Aspect ratio mismatch (2 images)"
+      ]
+    },
+    {
+      "page": "Home",
+      "url": "http://localhost/",
+      "viewport": "Desktop 1280",
+      "viewport_size": "1280x800",
+      "status": "FAIL",
+      "issues": [
+        "Overflow elements (50 found): [{'tag': 'div.mega-menu', 'width': 700, 'right': 1329, 'overflowX': 'visible', 'text': 'Managed Office Spaces\\n                  '}, {'tag': 'div.mega-container', 'width': 700, 'right': 1329, 'overflowX': 'visible', 'text': 'Managed Office Spaces\\n                  '}, {'tag': 'ul#mobileNav.mobile-nav', 'width': 300, 'right': 1580, 'overflowX': 'auto', 'text': 'Menu\\n                \\n            \\n     '}, {'tag': 'li.mobile-nav-header', 'width': 268, 'right': 1580, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'span.mobile-nav-title', 'width': 43, 'right': 1379, 'overflowX': 'visible', 'text': 'Menu'}]",
+        "Aspect ratio mismatch (11 images)"
+      ]
+    },
+    {
+      "page": "Managed Offices",
+      "viewport": "Desktop 1280",
+      "status": "ERROR",
+      "issues": [
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/managed_offices.php\", waiting until \"networkidle\"\n"
+      ]
+    },
+    {
+      "page": "Furnished Offices",
+      "viewport": "Desktop 1280",
+      "status": "ERROR",
+      "issues": [
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/furnished_offices.php\", waiting until \"networkidle\"\n"
+      ]
+    },
+    {
+      "page": "Unfurnished Offices",
+      "viewport": "Desktop 1280",
+      "status": "ERROR",
+      "issues": [
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/unfurnished_offices.php\", waiting until \"networkidle\"\n"
+      ]
+    },
+    {
+      "page": "Contact",
+      "url": "http://localhost/contact.php",
+      "viewport": "Desktop 1280",
+      "viewport_size": "1280x800",
+      "status": "FAIL",
+      "issues": [
+        "Overflow elements (28 found): [{'tag': 'div.mega-menu', 'width': 700, 'right': 1329, 'overflowX': 'visible', 'text': 'Managed Office Spaces\\n                  '}, {'tag': 'div.mega-container', 'width': 700, 'right': 1329, 'overflowX': 'visible', 'text': 'Managed Office Spaces\\n                  '}, {'tag': 'ul#mobileNav.mobile-nav', 'width': 300, 'right': 1580, 'overflowX': 'auto', 'text': 'Menu\\n                \\n            \\n     '}, {'tag': 'li.mobile-nav-header', 'width': 268, 'right': 1580, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'span.mobile-nav-title', 'width': 43, 'right': 1379, 'overflowX': 'visible', 'text': 'Menu'}]",
+        "Aspect ratio mismatch (2 images)"
+      ]
+    }
+  ],
+  "summary_by_page": {
+    "Home": {
+      "pass": 0,
+      "fail": 3,
+      "issues": [
+        "Overflow elements (50 found): [{'tag': 'ul#mobileNav.mobile-nav', 'width': 300, 'right': 2220, 'overflowX': 'auto', 'text': 'Menu\\n                \\n            \\n     '}, {'tag': 'li.mobile-nav-header', 'width': 268, 'right': 2220, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'span.mobile-nav-title', 'width': 43, 'right': 2019, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'button.mobile-nav-close', 'width': 26, 'right': 2196, 'overflowX': 'visible', 'text': ''}, {'tag': 'i.fa-solid.fa-xmark', 'width': 18, 'right': 2192, 'overflowX': 'visible', 'text': ''}]",
+        "Aspect ratio mismatch (11 images)",
+        "Overflow elements (50 found): [{'tag': 'div.mega-menu', 'width': 700, 'right': 1469, 'overflowX': 'visible', 'text': 'Managed Office Spaces\\n                  '}, {'tag': 'div.mega-container', 'width': 700, 'right': 1469, 'overflowX': 'visible', 'text': 'Managed Office Spaces\\n                  '}, {'tag': 'ul#mobileNav.mobile-nav', 'width': 300, 'right': 1740, 'overflowX': 'auto', 'text': 'Menu\\n                \\n            \\n     '}, {'tag': 'li.mobile-nav-header', 'width': 268, 'right': 1740, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'span.mobile-nav-title', 'width': 43, 'right': 1539, 'overflowX': 'visible', 'text': 'Menu'}]",
+        "Aspect ratio mismatch (11 images)",
+        "Overflow elements (50 found): [{'tag': 'div.mega-menu', 'width': 700, 'right': 1329, 'overflowX': 'visible', 'text': 'Managed Office Spaces\\n                  '}, {'tag': 'div.mega-container', 'width': 700, 'right': 1329, 'overflowX': 'visible', 'text': 'Managed Office Spaces\\n                  '}, {'tag': 'ul#mobileNav.mobile-nav', 'width': 300, 'right': 1580, 'overflowX': 'auto', 'text': 'Menu\\n                \\n            \\n     '}, {'tag': 'li.mobile-nav-header', 'width': 268, 'right': 1580, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'span.mobile-nav-title', 'width': 43, 'right': 1379, 'overflowX': 'visible', 'text': 'Menu'}]",
+        "Aspect ratio mismatch (11 images)"
+      ]
+    },
+    "Managed Offices": {
+      "pass": 0,
+      "fail": 3,
+      "issues": [
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/managed_offices.php\", waiting until \"networkidle\"\n",
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/managed_offices.php\", waiting until \"networkidle\"\n",
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/managed_offices.php\", waiting until \"networkidle\"\n"
+      ]
+    },
+    "Furnished Offices": {
+      "pass": 0,
+      "fail": 3,
+      "issues": [
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/furnished_offices.php\", waiting until \"networkidle\"\n",
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/furnished_offices.php\", waiting until \"networkidle\"\n",
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/furnished_offices.php\", waiting until \"networkidle\"\n"
+      ]
+    },
+    "Unfurnished Offices": {
+      "pass": 0,
+      "fail": 3,
+      "issues": [
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/unfurnished_offices.php\", waiting until \"networkidle\"\n",
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/unfurnished_offices.php\", waiting until \"networkidle\"\n",
+        "Navigation failed: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"http://localhost/unfurnished_offices.php\", waiting until \"networkidle\"\n"
+      ]
+    },
+    "Contact": {
+      "pass": 0,
+      "fail": 3,
+      "issues": [
+        "Overflow elements (26 found): [{'tag': 'ul#mobileNav.mobile-nav', 'width': 300, 'right': 2220, 'overflowX': 'auto', 'text': 'Menu\\n                \\n            \\n     '}, {'tag': 'li.mobile-nav-header', 'width': 268, 'right': 2220, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'span.mobile-nav-title', 'width': 43, 'right': 2019, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'button.mobile-nav-close', 'width': 26, 'right': 2196, 'overflowX': 'visible', 'text': ''}, {'tag': 'i.fa-solid.fa-xmark', 'width': 18, 'right': 2192, 'overflowX': 'visible', 'text': ''}]",
+        "Aspect ratio mismatch (2 images)",
+        "Overflow elements (28 found): [{'tag': 'div.mega-menu', 'width': 700, 'right': 1469, 'overflowX': 'visible', 'text': 'Managed Office Spaces\\n                  '}, {'tag': 'div.mega-container', 'width': 700, 'right': 1469, 'overflowX': 'visible', 'text': 'Managed Office Spaces\\n                  '}, {'tag': 'ul#mobileNav.mobile-nav', 'width': 300, 'right': 1740, 'overflowX': 'auto', 'text': 'Menu\\n                \\n            \\n     '}, {'tag': 'li.mobile-nav-header', 'width': 268, 'right': 1740, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'span.mobile-nav-title', 'width': 43, 'right': 1539, 'overflowX': 'visible', 'text': 'Menu'}]",
+        "Aspect ratio mismatch (2 images)",
+        "Overflow elements (28 found): [{'tag': 'div.mega-menu', 'width': 700, 'right': 1329, 'overflowX': 'visible', 'text': 'Managed Office Spaces\\n                  '}, {'tag': 'div.mega-container', 'width': 700, 'right': 1329, 'overflowX': 'visible', 'text': 'Managed Office Spaces\\n                  '}, {'tag': 'ul#mobileNav.mobile-nav', 'width': 300, 'right': 1580, 'overflowX': 'auto', 'text': 'Menu\\n                \\n            \\n     '}, {'tag': 'li.mobile-nav-header', 'width': 268, 'right': 1580, 'overflowX': 'visible', 'text': 'Menu'}, {'tag': 'span.mobile-nav-title', 'width': 43, 'right': 1379, 'overflowX': 'visible', 'text': 'Menu'}]",
+        "Aspect ratio mismatch (2 images)"
+      ]
+    }
+  }
+}

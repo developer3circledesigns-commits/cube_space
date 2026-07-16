@@ -115,12 +115,12 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
         </div>
         <div class="offcanvas-body">
             <nav class="nav flex-column gap-1">
-                <a href="dashboard.php" class="nav-link text-white <?= $currentPage === 'dashboard' ? 'active bg-primary' : 'text-white-50' ?>" data-bs-dismiss="offcanvas"><i class="fa-solid fa-gauge-high me-2 w-auto"></i>Dashboard</a>
-                <a href="contacts.php" class="nav-link text-white <?= $currentPage === 'contacts' ? 'active bg-primary' : 'text-white-50' ?>" data-bs-dismiss="offcanvas"><i class="fa-solid fa-message me-2 w-auto"></i>Contacts<?php if ($newContactCount > 0): ?><span class="badge bg-danger ms-auto"><?= $newContactCount ?></span><?php endif; ?></a>
-                <a href="managed-office.php" class="nav-link text-white <?= $currentPage === 'managed-office' ? 'active bg-primary' : 'text-white-50' ?>" data-bs-dismiss="offcanvas"><i class="fa-solid fa-briefcase me-2 w-auto"></i>Managed Office</a>
-                <a href="office-space.php" class="nav-link text-white <?= $currentPage === 'office-space' ? 'active bg-primary' : 'text-white-50' ?>" data-bs-dismiss="offcanvas"><i class="fa-solid fa-building me-2 w-auto"></i>Office Space</a>
-                <a href="admins.php" class="nav-link text-white <?= $currentPage === 'admins' ? 'active bg-primary' : 'text-white-50' ?>" data-bs-dismiss="offcanvas"><i class="fa-solid fa-user-shield me-2 w-auto"></i>Admins</a>
-                <a href="activity.php" class="nav-link text-white <?= $currentPage === 'activity' ? 'active bg-primary' : 'text-white-50' ?>" data-bs-dismiss="offcanvas"><i class="fa-solid fa-clock-rotate-left me-2 w-auto"></i>Activity Log</a>
+                <a href="dashboard.php" class="nav-link text-white <?= $currentPage === 'dashboard' ? 'active bg-primary' : 'text-white-50' ?>"><i class="fa-solid fa-gauge-high me-2 w-auto"></i>Dashboard</a>
+                <a href="contacts.php" class="nav-link text-white <?= $currentPage === 'contacts' ? 'active bg-primary' : 'text-white-50' ?>"><i class="fa-solid fa-message me-2 w-auto"></i>Contacts<?php if ($newContactCount > 0): ?><span class="badge bg-danger ms-auto"><?= $newContactCount ?></span><?php endif; ?></a>
+                <a href="managed-office.php" class="nav-link text-white <?= $currentPage === 'managed-office' ? 'active bg-primary' : 'text-white-50' ?>"><i class="fa-solid fa-briefcase me-2 w-auto"></i>Managed Office</a>
+                <a href="office-space.php" class="nav-link text-white <?= $currentPage === 'office-space' ? 'active bg-primary' : 'text-white-50' ?>"><i class="fa-solid fa-building me-2 w-auto"></i>Furnished / Unfurnished</a>
+                <a href="admins.php" class="nav-link text-white <?= $currentPage === 'admins' ? 'active bg-primary' : 'text-white-50' ?>"><i class="fa-solid fa-user-shield me-2 w-auto"></i>Admins</a>
+                <a href="activity.php" class="nav-link text-white <?= $currentPage === 'activity' ? 'active bg-primary' : 'text-white-50' ?>"><i class="fa-solid fa-clock-rotate-left me-2 w-auto"></i>Activity Log</a>
             </nav>
             <hr class="border-secondary">
             <a href="logout.php" class="btn btn-outline-light btn-sm w-100"><i class="fa-solid fa-right-from-bracket me-1"></i>Logout</a>

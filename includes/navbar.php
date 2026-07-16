@@ -63,7 +63,6 @@ if (!function_exists('isActive')) {
             <li><a href="index.php"<?= isActive('index.php') ?>><i class="fa-solid fa-house nav-mobile-icon"></i>Home</a></li>
             <li><a href="managed_offices.php"<?= isActive('managed_offices.php') ?>><i class="fa-solid fa-briefcase nav-mobile-icon"></i>Managed Offices</a></li>
             <li><a href="furnished_offices.php"<?= isActive('furnished_offices.php') ?>><i class="fa-solid fa-building nav-mobile-icon"></i>Furnished Offices</a></li>
-            <li><a href="unfurnished_offices.php"<?= isActive('unfurnished_offices.php') ?>><i class="fa-solid fa-building-user nav-mobile-icon"></i>Unfurnished Offices</a></li>
             <li><a href="contact.php"<?= isActive('contact.php') ?>><i class="fa-solid fa-envelope nav-mobile-icon"></i>Contact Us</a></li>
             <li><a href="contact.php"<?= isActive('contact.php') ?>><i class="fa-solid fa-paper-plane nav-mobile-icon"></i>Share Requirement</a></li>
             <li class="mobile-nav-admin"><a href="/admin/" target="_blank" rel="noopener noreferrer"<?= $isAdminPage ? ' class="active"' : '' ?>><i class="fa-solid fa-user-shield nav-mobile-icon"></i>Admin Login</a></li>

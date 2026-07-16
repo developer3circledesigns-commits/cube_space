@@ -153,34 +153,49 @@ foreach (['action', 'table', 'admin', 'search'] as $k) {
         <a href="<?= $exportUrl ?>" class="btn btn-outline-success btn-sm" title="Export CSV"><i class="fa-solid fa-download"></i> CSV</a>
     </div>
 </div>
-<div class="row g-2 mb-3">
-    <div class="col-md-12">
-        <form method="get" class="d-flex gap-2 flex-wrap align-items-center">
-            <input type="search" name="search" class="form-control form-control-sm" style="width:150px" placeholder="Search..." value="<?= htmlspecialchars($search) ?>">
-            <select name="action" class="form-select form-select-sm" style="width:110px;" onchange="this.form.submit()">
-                <option value="">Action</option>
+<button class="btn btn-sm btn-outline-primary admin-filter-toggle mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#activityFilters" aria-expanded="true">
+    <i class="fa-solid fa-sliders-h"></i> Filters
+</button>
+<div class="collapse show admin-filter-section" id="activityFilters">
+    <form method="get" class="d-flex flex-wrap gap-2">
+        <div>
+            <div class="filter-label">Search</div>
+            <input type="search" name="search" class="form-control form-control-sm" placeholder="Search..." value="<?= htmlspecialchars($search) ?>">
+        </div>
+        <div>
+            <div class="filter-label">Action</div>
+            <select name="action" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Actions</option>
                 <?php if ($distinctActions && mysqli_num_rows($distinctActions)): mysqli_data_seek($distinctActions, 0); while ($a = mysqli_fetch_assoc($distinctActions)): ?>
                 <option value="<?= htmlspecialchars($a['action']) ?>" <?= $filterAction === $a['action'] ? 'selected' : '' ?>><?= htmlspecialchars(ucfirst($a['action'])) ?></option>
                 <?php endwhile; endif; ?>
             </select>
-            <select name="table" class="form-select form-select-sm" style="width:140px;" onchange="this.form.submit()">
-                <option value="">Table</option>
+        </div>
+        <div>
+            <div class="filter-label">Table</div>
+            <select name="table" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Tables</option>
                 <?php if ($distinctTables && mysqli_num_rows($distinctTables)): mysqli_data_seek($distinctTables, 0); while ($t = mysqli_fetch_assoc($distinctTables)): ?>
                 <option value="<?= htmlspecialchars($t['table_name']) ?>" <?= $filterTable === $t['table_name'] ? 'selected' : '' ?>><?= htmlspecialchars(str_replace('_', ' ', ucfirst($t['table_name']))) ?></option>
                 <?php endwhile; endif; ?>
             </select>
-            <select name="admin" class="form-select form-select-sm" style="width:120px;" onchange="this.form.submit()">
-                <option value="">Admin</option>
+        </div>
+        <div>
+            <div class="filter-label">Admin</div>
+            <select name="admin" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Admins</option>
                 <?php if ($distinctAdmins && mysqli_num_rows($distinctAdmins)): mysqli_data_seek($distinctAdmins, 0); while ($u = mysqli_fetch_assoc($distinctAdmins)): ?>
                 <option value="<?= htmlspecialchars($u['admin_username']) ?>" <?= $filterAdmin === $u['admin_username'] ? 'selected' : '' ?>><?= htmlspecialchars($u['admin_username']) ?></option>
                 <?php endwhile; endif; ?>
             </select>
-            <button type="submit" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-search"></i></button>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-search"></i> Search</button>
             <?php if ($filterAction || $filterTable || $filterAdmin || $search): ?>
-            <a href="activity.php" class="btn btn-sm btn-outline-secondary">&times;</a>
+            <a href="activity.php" class="btn btn-sm btn-outline-secondary">&times; Clear</a>
             <?php endif; ?>
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
 <div class="admin-card">
     <div class="table-wrap">

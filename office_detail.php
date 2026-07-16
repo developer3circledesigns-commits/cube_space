@@ -292,8 +292,9 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
     <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"></noscript>
     <meta name="access-token" content="">
     <style>
+        :root { --cs-border: #e2e8f0; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Roboto', sans-serif; background: #fff; color: #212121; -webkit-font-smoothing: antialiased; }
+        body { font-family: 'Roboto', sans-serif; background: #fff; color: #212121; -webkit-font-smoothing: antialiased; padding-top: 70px; }
 
         /* ===== STICKY NAV (tabs) ===== */
         .sticky-nav {
@@ -875,6 +876,81 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
             .info-strip { flex-direction: column; gap: 10px; align-items: flex-start; }
             .info-strip-divider { display: none; }
             .sidebar-form .form-row { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 480px) {
+            body { padding-top: 56px; }
+        }
+        @media (max-width: 540px) {
+            .ws-name { font-size: 18px; }
+            .ws-location { font-size: 12px; }
+            .image-gallery { border-radius: 0; }
+            .gallery-featured { aspect-ratio: 16 / 9; }
+            .gallery-side .gallery-item { min-height: 70px; }
+            .mobile-bottom-bar { padding: 10px 12px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+            .mob-bar-price { font-size: 16px; }
+            .mob-bar-actions button { font-size: 13px; height: 40px; }
+            .sidebar-form { padding: 14px; }
+            .sidebar-form input, .sidebar-form select { height: 40px; font-size: 13px; }
+            .btn-submit { height: 44px; font-size: 14px; }
+            .cd-item { padding: 12px 14px; }
+            .cd-value { font-size: 14px; }
+            .cd-icon { width: 36px; height: 36px; }
+            .cd-icon i { font-size: 15px; }
+            .amenity-item { padding: 10px 12px; font-size: 13px; }
+            .breadcrumb { font-size: 11px; gap: 4px; }
+            .nearby-card-img { height: 100px; }
+            .nearby-card-title { font-size: 12px; }
+            .section-title { font-size: 17px; }
+            .overview-text { font-size: 14px; }
+        }
+        @media (max-width: 400px) {
+            body { padding-top: 56px; }
+            .page-container { padding: 12px 12px 110px; }
+            .ws-name { font-size: 16px; }
+            .ws-location { font-size: 11px; }
+            .gallery-side .gallery-item { min-height: 55px; }
+            .gallery-featured { aspect-ratio: 4 / 3; }
+            .mobile-bottom-bar { padding: 8px 10px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+            .mob-bar-price { font-size: 14px; }
+            .mob-bar-seats { font-size: 10px; }
+            .mob-bar-actions button { font-size: 12px; height: 36px; }
+            .mob-bar-actions { gap: 6px; }
+            .sidebar-card-header { padding: 12px 14px; }
+            .sidebar-card-header .expert-info h4 { font-size: 13px; }
+            .sidebar-form { padding: 12px; }
+            .cd-item { padding: 10px 12px; gap: 10px; }
+            .cd-value { font-size: 13px; }
+            .cd-label { font-size: 11px; }
+            .cd-icon { width: 32px; height: 32px; }
+            .cd-icon i { font-size: 13px; }
+            .amenity-item { padding: 8px 10px; font-size: 12px; }
+            .nearby-grid { gap: 10px; }
+            .nearby-card-img { height: 80px; }
+            .nearby-card-body { padding: 8px 10px; }
+            .nearby-card-title { font-size: 11px; }
+            .nearby-card-address { font-size: 10px; }
+            .nearby-card-price { font-size: 12px; }
+            .section-title { font-size: 15px; }
+            .overview-text { font-size: 13px; }
+            .bottom-sticky, .mobile-bottom-bar { display: none !important; }
+            .page-container { padding-bottom: 24px; }
+        }
+        @media (max-width: 360px) {
+            body { padding-top: 50px; }
+            .page-container { padding: 10px 10px 100px; }
+            .ws-name { font-size: 15px; }
+            .ws-location { font-size: 10px; }
+            .gallery-side .gallery-item { min-height: 45px; }
+            .sticky-nav-inner { padding: 0 10px; }
+            .nav-tab { padding: 8px 10px; font-size: 11px; }
+            .sidebar-form input, .sidebar-form select { height: 36px; font-size: 12px; }
+            .btn-submit { height: 40px; font-size: 13px; }
+            .btn-call-sidebar { height: 40px; font-size: 13px; }
+            .btn-whatsapp { height: 40px; font-size: 13px; }
+            .nearby-card-img { height: 65px; }
+            .mobile-bottom-bar { padding: 6px 8px; padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
+            .mob-bar-price { font-size: 13px; }
         }
     </style>
 </head>

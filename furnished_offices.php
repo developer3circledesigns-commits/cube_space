@@ -120,6 +120,7 @@ if (isset($conn) && $conn) {
             background: #fafbff;
             color: #1a1a2e;
             -webkit-font-smoothing: antialiased;
+            padding-top: 70px;
         }
 
         .container.py-4 {
@@ -819,8 +820,7 @@ if (isset($conn) && $conn) {
             text-align: right;
             padding-right:18px;
         }
-        .gp-modal-logo img {
-            height: 70px;
+        .gp-modal-logo img { height: 70px;
             width: auto;
             max-width: 100%;
             object-fit: contain;
@@ -1163,9 +1163,48 @@ if (isset($conn) && $conn) {
             .locality-chip { font-size: 0.63rem; padding: 2px 8px; }
             .localities-scroll-container { gap: 3px; }
             .scroll-btn { width: 20px; height: 20px; font-size: 0.5rem; }
-            .filter-bar { padding: 8px; gap: 4px; }
-            .filter-bar .filter-select { font-size: 0.72rem; padding: 2px 18px 2px 6px; min-height: 28px; }
+            .filter-bar { flex-direction: column !important; align-items: stretch !important; overflow-x: visible !important; padding: 8px; gap: 8px !important; }
+            .filter-bar > div[style*="width:1px"] { display: none !important; }
+            .filter-bar .filter-select { width: 100%; max-width: 100%; font-size: 0.72rem; padding: 2px 18px 2px 6px; min-height: 28px; }
             .filter-bar .form-control { font-size: 0.72rem; padding: 2px 6px; min-height: 28px; }
+        }
+
+        @media (max-width: 480px) {
+            body { padding-top: 56px; }
+            .filter-bar { top: 56px; }
+        }
+        @media (max-width: 540px) {
+            .gp-modal-logo img { height: 120px !important; }
+            .custom-card .card-body { text-align: left; }
+            .custom-card .property-address { justify-content: flex-start; }
+            .custom-card .stats-row { justify-content: flex-start; }
+            .card-price .amount { font-size: 0.85rem; }
+            .card-actions .btn { font-size: 0.7rem; padding: 5px 12px; }
+            .results-counter { flex-direction: column; align-items: flex-start; gap: 6px; }
+        }
+        @media (max-width: 400px) {
+            body { padding-top: 56px; }
+            .filter-bar { top: 56px; }
+            .gp-modal-logo img { height: 80px !important; }
+            .image-wrapper { padding: 6px; }
+            .card-body { padding: 8px 10px; }
+            .card-title { font-size: 15px; }
+            .property-address { font-size: 11px; }
+            .description-text { font-size: 12px; }
+            .stats-row .stat-item { font-size: 0.6rem; }
+            .card-price .amount { font-size: 0.78rem; }
+        }
+        @media (max-width: 360px) {
+            body { padding-top: 50px; }
+            .filter-bar { top: 50px; }
+            .gp-modal-logo img { height: 60px !important; }
+            .card-body { padding: 6px 8px; }
+            .card-title { font-size: 14px; }
+            .property-address { font-size: 10px; }
+            .stats-row { gap: 2px 4px; }
+            .stats-row .stat-item { font-size: 0.55rem; }
+            .card-actions .btn { font-size: 0.62rem; padding: 4px 8px; }
+            .filter-bar .filter-select { font-size: 0.65rem; padding: 2px 14px 2px 4px; min-height: 24px; }
         }
     </style>
 </head>

@@ -358,53 +358,71 @@ if ($mode === 'add' || $mode === 'edit'):
         <a href="managed-office.php?mode=add" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus me-1"></i>Add</a>
     </div>
 </div>
-<div class="row g-2 mb-3">
-    <div class="col-md-12">
-        <form method="get" class="d-flex gap-2 flex-wrap align-items-center">
-            <input type="search" name="search" class="form-control form-control-sm" style="width:150px" placeholder="Search..." value="<?= htmlspecialchars($searchQuery) ?>">
-            <select name="status" class="form-select form-select-sm" style="width:110px;" onchange="this.form.submit()">
-                <option value="">Status</option>
+<button class="btn btn-sm btn-outline-primary admin-filter-toggle mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#managedFilters" aria-expanded="true">
+    <i class="fa-solid fa-sliders-h"></i> Filters
+</button>
+<div class="collapse show admin-filter-section" id="managedFilters">
+    <form method="get" class="d-flex flex-wrap gap-2">
+        <div>
+            <div class="filter-label">Search</div>
+            <input type="search" name="search" class="form-control form-control-sm" placeholder="Search..." value="<?= htmlspecialchars($searchQuery) ?>">
+        </div>
+        <div>
+            <div class="filter-label">Status</div>
+            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
                 <option value="inactive" <?= $statusFilter === 'inactive' ? 'selected' : '' ?>>Inactive</option>
                 <option value="active" <?= $statusFilter === 'active' ? 'selected' : '' ?>>Active</option>
             </select>
-            <select name="city" class="form-select form-select-sm" style="width:120px;" onchange="this.form.submit()">
-                <option value="">City</option>
+        </div>
+        <div>
+            <div class="filter-label">City</div>
+            <select name="city" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Cities</option>
                 <?php if ($cities): mysqli_data_seek($cities, 0); while ($c = mysqli_fetch_assoc($cities)): ?>
                 <option value="<?= htmlspecialchars($c['city']) ?>" <?= $cityFilter === $c['city'] ? 'selected' : '' ?>><?= htmlspecialchars(ucfirst($c['city'])) ?></option>
                 <?php endwhile; endif; ?>
             </select>
-            <select name="area" class="form-select form-select-sm" style="width:120px;" onchange="this.form.submit()">
-                <option value="">Area</option>
+        </div>
+        <div>
+            <div class="filter-label">Area</div>
+            <select name="area" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Areas</option>
                 <?php if ($areas): mysqli_data_seek($areas, 0); while ($a = mysqli_fetch_assoc($areas)): ?>
                 <option value="<?= htmlspecialchars($a['area']) ?>" <?= $areaFilter === $a['area'] ? 'selected' : '' ?>><?= htmlspecialchars($a['area']) ?></option>
                 <?php endwhile; endif; ?>
             </select>
-            <select name="seats" class="form-select form-select-sm" style="width:130px;" onchange="this.form.submit()">
-                <option value="">Seats</option>
+        </div>
+        <div>
+            <div class="filter-label">Seats</div>
+            <select name="seats" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Seats</option>
                 <option value="50" <?= $seatsFilter === '50' ? 'selected' : '' ?>>10-50 Seats</option>
                 <option value="100" <?= $seatsFilter === '100' ? 'selected' : '' ?>>51-100 Seats</option>
                 <option value="200" <?= $seatsFilter === '200' ? 'selected' : '' ?>>101-200 Seats</option>
                 <option value="500" <?= $seatsFilter === '500' ? 'selected' : '' ?>>200+ Seats</option>
             </select>
-            <button type="submit" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-search"></i></button>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-search"></i> Search</button>
             <?php if ($searchQuery || $statusFilter || $cityFilter || $areaFilter || $seatsFilter): ?>
-            <a href="managed-office.php" class="btn btn-sm btn-outline-secondary">&times;</a>
+            <a href="managed-office.php" class="btn btn-sm btn-outline-secondary">&times; Clear</a>
             <?php endif; ?>
-        </form>
-    </div>
+        </div>
+        <hr class="my-1">
+        <div class="bulk-bar p-0 mb-0 border-0 bg-transparent">
+            <select id="bulkActionSelect" class="form-select form-select-sm" aria-label="Bulk actions">
+                <option value="">-- Bulk Actions --</option>
+                <option value="delete">Delete Selected</option>
+                <option value="status-inactive">Mark as Inactive</option>
+                <option value="status-active">Mark as Active</option>
+            </select>
+            <button class="btn btn-sm btn-secondary" onclick="applyBulkAction()">Apply</button>
+        </div>
+    </form>
 </div>
 <?php if (isset($_GET['deleted'])): ?><div class="alert alert-success py-2">Listing deleted.</div><?php endif; ?>
 <?php if (isset($_GET['saved'])): ?><div class="alert alert-success py-2">Listing saved.</div><?php endif; ?>
-<div class="bulk-bar d-flex align-items-center gap-2 mb-2 p-2 bg-light">
-    <select id="bulkActionSelect" class="form-select form-select-sm" aria-label="Bulk actions" style="width:auto;">
-        <option value="">-- Bulk Actions --</option>
-        <option value="delete">Delete Selected</option>
-        <option value="status-inactive">Mark as Inactive</option>
-        <option value="status-active">Mark as Active</option>
-
-    </select>
-    <button class="btn btn-sm btn-secondary" onclick="applyBulkAction()">Apply</button>
-</div>
 <div class="admin-card">
     <div class="table-wrap">
         <div class="table-responsive">

@@ -307,8 +307,8 @@ body {
     cursor: pointer;
     background: none;
     border: none;
-    padding: 8px;
-    margin: 0;
+    padding: 12px 10px;
+    margin: 0 0 0 auto;
     outline: none;
     color: inherit;
     line-height: 1;
@@ -344,17 +344,7 @@ body {
     content: '';
     top: 8px;
 }
-.mobile-menu[aria-expanded="true"] .hamburger-inner {
-    transform: translateY(-50%) rotate(45deg);
-}
-.mobile-menu[aria-expanded="true"] .hamburger-inner::before {
-    transform: rotate(90deg) translateX(-8px);
-    opacity: 0;
-}
-.mobile-menu[aria-expanded="true"] .hamburger-inner::after {
-    transform: rotate(-90deg) translateX(8px);
-    opacity: 0;
-}
+
 .mobile-nav {
     position: fixed;
     top: 0;
@@ -953,6 +943,9 @@ body.mobile-nav-open {
     .nav-container { padding: 8px 16px; }
     .site-navbar .logo img { height: 44px; }
 }
+@media (max-width: 540px) {
+    .nav-container { gap: 12px; padding: 8px 14px; }
+}
 @media (max-width: 480px) {
     .nav-container { padding: 6px 12px; min-height: 56px; }
     .site-navbar .logo img { height: 38px; }
@@ -994,6 +987,10 @@ body.mobile-nav-open {
     .footer { padding-top: 60px; }
     .footer-container { grid-template-columns: 1fr; gap: 40px; }
     .footer-col:first-child { grid-column: auto; }
+    .footer-logo { display: block; margin: 0 auto; }
+    .footer-col h3 { text-align: center; }
+    .footer-col h3::after { left: 50%; transform: translateX(-50%); }
+    .footer-col ul li { text-align: center; }
     .footer-col p { max-width: 100%; }
     .nav-container { padding: 8px 16px; min-height: 60px; }
     .footer-bottom { flex-direction: column; justify-content: center; text-align: center; padding: 18px 16px; gap: 6px; }
@@ -1002,6 +999,7 @@ body.mobile-nav-open {
         grid-template-rows: none;
         grid-auto-flow: row;
     }
+    .contact-list li { justify-content: center; }
     .office-card .card-image { height: 180px; }
     .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 4px; }
     .stat-item { padding: 4px 6px; }
@@ -1389,4 +1387,99 @@ body.mobile-nav-open {
     #filterBar .filter-select { min-width: 100% !important; max-width: 100% !important; }
     #filterBar > div { min-width: 100% !important; max-width: 100% !important; }
     .listing-cards { gap: 0; }
+}
+
+/* =========================
+   MOBILE OPTIMIZATIONS (320px-540px)
+   ========================= */
+@media (max-width: 540px) {
+    .hero { padding: 100px 14px 40px; min-height: 92vh; }
+    .hero h1 { font-size: 26px; }
+    .hero p { font-size: 14px; margin-bottom: 24px; }
+    .leasing-title { font-size: 20px !important; padding-bottom: 30px !important; }
+    .leasing-tabs { flex-direction: column; align-items: center; width: 100%; }
+    .leasing-box > div:last-child { flex-direction: column; align-items: center; }
+    .leasing-tabs .tab-btn { width: 100%; max-width: 320px; padding: 10px 16px; font-size: 11px; line-height: 1.4; }
+    .leasing-tabs .tab-btn span { font-size: 10px; }
+    .hero-tab-cta { font-size: 10px; }
+    .tab-content { padding: 16px; }
+    .tab-content p { font-size: 13px; }
+    .search-row { flex-direction: column; gap: 10px; }
+    .search-row input { width: 100%; }
+    .search-btn { width: 100%; }
+    .about-section { padding: 50px 14px; }
+    .about-container { gap: 30px; }
+    .about-content h2 { font-size: 17px; }
+    .about-content p { font-size: 14px; }
+    .about-features { gap: 10px; margin: 24px 0; }
+    .feature-item { font-size: 13px; padding: 4px 2px; }
+    .experience-box { position: relative; right: auto; bottom: auto; margin-top: -10px; padding: 12px 20px; }
+    .experience-box h3 { font-size: 24px; }
+    .expert-box { padding: 20px 14px; margin: 0 10px; }
+    .expert-title { font-size: 18px; margin: 12px 0; }
+    .expert-grid { grid-template-columns: 1fr; }
+    .expert-item { padding: 16px 0; border-right: none !important; border-bottom: 1px solid #e5e7eb; }
+    .expert-item:last-child { border-bottom: none; }
+    .expert-item i { font-size: 26px; }
+    .expert-item p { font-size: 13px; }
+    .clients-section { padding: 40px 0; }
+    .clients-section h2 { font-size: 22px; margin-bottom: 30px; }
+    .logo-item { width: 110px; height: 65px; }
+    .logo-item img { max-width: 90px; max-height: 45px; }
+    .logo-track { gap: 20px; animation-duration: 20s; }
+    .footer { padding-top: 40px; }
+    .footer-container { gap: 30px; padding: 0 14px; }
+    .footer-col h3 { font-size: 17px; }
+    .footer-bottom { margin-top: 30px; padding: 16px 14px; flex-direction: column; text-align: center; gap: 4px; }
+    .footer-bottom p { font-size: 12px; }
+    .contact-list { gap: 8px 12px; }
+    .contact-list li { font-size: 13px; }
+    .modal-card { padding: 24px 20px; margin: 0 12px; }
+    .modal-header h3 { font-size: 18px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .stat-item { padding: 4px; }
+    .stat-value { font-size: 0.7rem; }
+    .locality-chip { font-size: 0.68rem !important; padding: 3px 8px !important; }
+}
+
+@media (max-width: 400px) {
+    .leasing-tabs .tab-btn { max-width: 280px; padding: 8px 14px; font-size: 10px; }
+    .leasing-tabs .tab-btn span { font-size: 9px; }
+    .hero-tab-cta { font-size: 9px; }
+}
+@media (max-width: 375px) {
+    .hero h1 { font-size: 22px; }
+    .hero p { font-size: 13px; }
+    .leasing-title { font-size: 18px !important; }
+    .about-content h2 { font-size: 15px; }
+    .about-content p { font-size: 13px; line-height: 1.7; }
+    .expert-title { font-size: 16px; }
+    .clients-section h2 { font-size: 20px; }
+    .logo-item { width: 90px; height: 55px; }
+    .logo-item img { max-width: 75px; max-height: 38px; }
+    .footer-container { gap: 24px; }
+    .footer-bottom { gap: 2px; }
+    .footer-bottom p { font-size: 11px; }
+    .contact-list { gap: 6px 10px; }
+    .contact-list li { font-size: 12px; }
+    .about-features { gap: 8px; }
+    .feature-item { font-size: 12px; }
+}
+
+@media (max-width: 320px) {
+    .hero h1 { font-size: 20px; }
+    .hero p { font-size: 12px; }
+    .leasing-title { font-size: 16px !important; }
+    .tab-btn { font-size: 10px; padding: 8px 12px; }
+    .leasing-tabs .tab-btn span { font-size: 8px; }
+    .hero-tab-cta { font-size: 9px; }
+    .logo-item { width: 80px; height: 48px; }
+    .logo-item img { max-width: 65px; max-height: 34px; }
+    .logo-track { gap: 14px; }
+    .about-section { padding: 36px 10px; }
+    .feature-item { font-size: 11px; padding: 3px 0; }
+    .footer { padding-top: 30px; }
+    .footer-container { padding: 0 10px; gap: 20px; }
+    .footer-col h3 { font-size: 15px; }
+    .footer-bottom { padding: 12px 10px; }
 }
