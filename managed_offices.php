@@ -1386,7 +1386,7 @@ if (isset($conn) && $conn) {
                         <div class="col-md-5 gp-modal-left">
                             <div class="gp-modal-left-inner">
                                 <div class="gp-modal-logo">
-                                    <img src="assets/images/Logo.png" alt="CubeSpace" style="height: 320px;">
+                                    <img src="assets/images/final-logo.png" alt="CubeSpace">
                                 </div>
                                 <!--<div class="gp-left-badge"><i class="fa-regular fa-building"></i> Workspace Expert</div>-->
                                 <h6 class="gp-left-heading">
