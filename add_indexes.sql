@@ -352,6 +352,20 @@ CREATE TABLE IF NOT EXISTS `password_resets` (
   UNIQUE KEY `token` (`token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ============================================================
+-- listing_images (BLOB storage for uploaded images)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `listing_images` (
+  `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `listing_type` varchar(50) NOT NULL,
+  `listing_id` int NOT NULL,
+  `image_data` longblob NOT NULL,
+  `image_mime` varchar(50) NOT NULL DEFAULT 'image/jpeg',
+  `sort_order` int NOT NULL DEFAULT 0,
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  KEY `idx_listing` (`listing_type`, `listing_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 ALTER TABLE password_resets DROP INDEX IF EXISTS idx_resets_admin_id;
 ALTER TABLE password_resets ADD INDEX idx_resets_admin_id (admin_id);
 ALTER TABLE password_resets DROP INDEX IF EXISTS idx_resets_token;

@@ -185,7 +185,7 @@ if ($mode === 'add' || $mode === 'edit'):
                 <?php if (!empty($images)): ?>
                 <div class="d-flex flex-wrap gap-2 mt-2" id="existingImagesContainer">
                     <?php foreach ($images as $img):
-                        $imgPath = $_SERVER['DOCUMENT_ROOT'] . $img;
+                        $imgPath = $_SERVER['DOCUMENT_ROOT'] . parse_url($img, PHP_URL_PATH);
                         $imgExists = file_exists($imgPath);
                     ?>
                     <div class="position-relative" data-src="<?= htmlspecialchars($img) ?>" style="width:70px;height:70px;">

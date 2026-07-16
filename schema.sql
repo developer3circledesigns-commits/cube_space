@@ -223,4 +223,16 @@ CREATE TABLE IF NOT EXISTS `visitors_log` (
   KEY `created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Create listing_images table (BLOB storage for uploaded images)
+CREATE TABLE IF NOT EXISTS `listing_images` (
+  `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `listing_type` varchar(50) NOT NULL,
+  `listing_id` int NOT NULL,
+  `image_data` longblob NOT NULL,
+  `image_mime` varchar(50) NOT NULL DEFAULT 'image/jpeg',
+  `sort_order` int NOT NULL DEFAULT 0,
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  KEY `idx_listing` (`listing_type`, `listing_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS=1;

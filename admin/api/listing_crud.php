@@ -47,6 +47,59 @@ function validate_image_upload($tmpPath, $originalName, $allowedExts) {
     return in_array($ext, $allowedExts);
 }
 
+function ensure_listing_images_table($conn) {
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS `listing_images` (
+        `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        `listing_type` varchar(50) NOT NULL,
+        `listing_id` int NOT NULL,
+        `image_data` longblob NOT NULL,
+        `image_mime` varchar(50) NOT NULL DEFAULT 'image/jpeg',
+        `sort_order` int NOT NULL DEFAULT 0,
+        `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+        KEY `idx_listing` (`listing_type`, `listing_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+}
+
+function store_uploaded_images($conn, $listingType, $listingId, $files, $allowedExts) {
+    ensure_listing_images_table($conn);
+    $urls = [];
+    if (empty($files['name'])) return $urls;
+    $count = count($files['name']);
+    $order = 0;
+    for ($i = 0; $i < $count; $i++) {
+        if ($files['error'][$i] !== UPLOAD_ERR_OK) continue;
+        $tmp = $files['tmp_name'][$i];
+        if (!validate_image_upload($tmp, $files['name'][$i], $allowedExts)) continue;
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $tmp);
+        finfo_close($finfo);
+        $data = file_get_contents($tmp);
+        $s = mysqli_prepare($conn, "INSERT INTO listing_images (listing_type, listing_id, image_data, image_mime, sort_order) VALUES (?, ?, ?, ?, ?)");
+        if (!$s) throw new Exception('DB prepare failed for listing_images: ' . mysqli_error($conn));
+        mysqli_stmt_bind_param($s, 'sissi', $listingType, $listingId, $data, $mime, $order);
+        mysqli_stmt_execute($s);
+        $urls[] = '/serve_image.php?id=' . mysqli_insert_id($conn);
+        $order++;
+    }
+    return $urls;
+}
+
+function delete_listing_images($conn, $listingType, $listingId) {
+    ensure_listing_images_table($conn);
+    $s = mysqli_prepare($conn, "DELETE FROM listing_images WHERE listing_type = ? AND listing_id = ?");
+    if (!$s) return;
+    mysqli_stmt_bind_param($s, 'si', $listingType, $listingId);
+    mysqli_stmt_execute($s);
+}
+
+function parse_db_image_id($url) {
+    if (str_contains($url, 'serve_image.php')) {
+        parse_str(parse_url($url, PHP_URL_QUERY), $params);
+        return (int)($params['id'] ?? 0);
+    }
+    return 0;
+}
+
 if ($action === 'create' || $action === 'update') {
     CSRFManager::require();
     $id = (int)($_POST['id'] ?? 0);
@@ -166,7 +219,6 @@ if ($action === 'create' || $action === 'update') {
     }
     $amenitiesJson = json_encode($amenities);
 
-    $imagePaths = [];
     $existingImages = json_decode($_POST['existing_images'] ?? '[]', true);
     $existingImages = array_values(array_filter($existingImages, function($image) {
         if (!is_string($image) || trim($image) === '') return false;
@@ -175,44 +227,12 @@ if ($action === 'create' || $action === 'update') {
         if ($host || $scheme) return true;
         $path = parse_url($image, PHP_URL_PATH);
         if (!$path) return false;
+        if (str_contains($path, 'serve_image.php')) return true;
         $filePath = __DIR__ . '/../..' . $path;
         return file_exists($filePath);
     }));
 
-    if (!empty($_FILES['images'])) {
-        $uploadDir = admin_uploads_dir();
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
-        $files = $_FILES['images'];
-        $count = count($files['name']);
-        for ($i = 0; $i < $count; $i++) {
-            if ($files['error'][$i] === UPLOAD_ERR_NO_FILE) continue;
-            if ($files['error'][$i] !== UPLOAD_ERR_OK) continue;
-            if (!validate_image_upload($files['tmp_name'][$i], $files['name'][$i], $ALLOWED_IMAGE_EXTS)) continue;
-            $ext = strtolower(pathinfo($files['name'][$i], PATHINFO_EXTENSION));
-            $filename = uniqid('listing_') . '.' . $ext;
-            move_uploaded_file($files['tmp_name'][$i], $uploadDir . $filename);
-            $imagePaths[] = '/uploads/listings/' . $filename;
-        }
-    }
-
-    // Handle image deletion: compare submitted existing_images with stored images on update
-    if ($action === 'update' && $id) {
-        $oldStmt = mysqli_prepare($conn, "SELECT images FROM $table WHERE id = ?");
-        mysqli_stmt_bind_param($oldStmt, 'i', $id);
-        mysqli_stmt_execute($oldStmt);
-        $oldRow = mysqli_fetch_assoc(mysqli_stmt_get_result($oldStmt));
-        $oldImages = json_decode($oldRow['images'] ?? '[]', true);
-        $removedImages = array_diff($oldImages, $existingImages);
-        foreach ($removedImages as $rimg) {
-            $filePath = __DIR__ . '/../..' . $rimg;
-            if (file_exists($filePath)) unlink($filePath);
-        }
-    }
-
-    $allImages = array_merge($existingImages, $imagePaths);
-    $imagesJson = !empty($allImages) ? json_encode($allImages) : null;
+    $newImagePaths = [];
 
     // Auto-generate listing code
     if ($action === 'create') {
@@ -238,6 +258,8 @@ if ($action === 'create' || $action === 'update') {
     if ($action === 'create') {
         mysqli_begin_transaction($conn);
         try {
+            $initImagesJson = !empty($existingImages) ? json_encode($existingImages) : null;
+
             if ($isFurnished) {
                 $availableSqft = trim($_POST['available_sqft'] ?? '');
                 $minInventory = trim($_POST['min_inventory'] ?? '');
@@ -256,7 +278,7 @@ if ($action === 'create' || $action === 'update') {
                     $price, $priceLabel, $totalSeats, $totalAreaSqft,
                     $availableSqft, $minInventory, $inventoryType,
                     $remarks,
-                    $amenitiesJson, $imagesJson,
+                    $amenitiesJson, $initImagesJson,
                     $status, $featured, $featureHighlightsJson, $seoText, $officeSpaceType,
                     $listingType, $listingCode
                 );
@@ -276,7 +298,7 @@ if ($action === 'create' || $action === 'update') {
                         $latitude, $longitude,
                         $price, $priceLabel, $totalSeats, $totalAreaSqft,
                         $billableSeats, $remarks, $minInventory, $inventoryType,
-                        $amenitiesJson, $imagesJson,
+                        $amenitiesJson, $initImagesJson,
                         $status, $featured, $featureHighlightsJson, $seoText, $officeSpaceType,
                         $listingType, $listingCode
                     );
@@ -293,7 +315,7 @@ if ($action === 'create' || $action === 'update') {
                         $latitude, $longitude,
                         $price, $priceLabel, $totalSeats, $totalAreaSqft,
                         $minInventory, $inventoryType,
-                        $amenitiesJson, $imagesJson,
+                        $amenitiesJson, $initImagesJson,
                         $status, $featured, $featureHighlightsJson, $seoText, $officeSpaceType,
                         $listingType, $listingCode
                     );
@@ -303,6 +325,20 @@ if ($action === 'create' || $action === 'update') {
                 throw new Exception('Failed to insert listing: ' . mysqli_stmt_error($stmt));
             }
             $newId = mysqli_insert_id($conn);
+
+            $uploaded = [];
+            if (!empty($_FILES['images'])) {
+                $uploaded = store_uploaded_images($conn, $listingType, $newId, $_FILES['images'], $ALLOWED_IMAGE_EXTS);
+            }
+
+            $allImages = array_merge($existingImages, $uploaded);
+            if (!empty($allImages)) {
+                $upd = mysqli_prepare($conn, "UPDATE $table SET images = ? WHERE id = ?");
+                $allJson = json_encode($allImages);
+                mysqli_stmt_bind_param($upd, 'si', $allJson, $newId);
+                mysqli_stmt_execute($upd);
+            }
+
             log_activity($conn, 'create', $table, $newId, ['title' => $title, 'type' => $listingType]);
             publish_event('listing_created', $listingType, $newId, $title);
             try {
@@ -314,19 +350,38 @@ if ($action === 'create' || $action === 'update') {
             echo json_encode(['success' => true, 'message' => 'Listing created successfully', 'id' => $newId]);
         } catch (Exception $e) {
             mysqli_rollback($conn);
-            // Clean up uploaded images on failure
-            foreach ($imagePaths as $img) {
-                $filePath = admin_resolve_upload_path($img);
-                if (file_exists($filePath)) {
-                    unlink($filePath);
-                }
-            }
             http_response_code(500);
             echo json_encode(['error' => 'Failed to create listing: ' . $e->getMessage()]);
         }
     } else {
         mysqli_begin_transaction($conn);
         try {
+            $uploaded = [];
+            if (!empty($_FILES['images'])) {
+                $uploaded = store_uploaded_images($conn, $listingType, $id, $_FILES['images'], $ALLOWED_IMAGE_EXTS);
+            }
+
+            $oldStmt = mysqli_prepare($conn, "SELECT images FROM $table WHERE id = ?");
+            if (!$oldStmt) throw new Exception('DB prepare failed: ' . mysqli_error($conn));
+            mysqli_stmt_bind_param($oldStmt, 'i', $id);
+            mysqli_stmt_execute($oldStmt);
+            $oldRow = mysqli_fetch_assoc(mysqli_stmt_get_result($oldStmt));
+            $oldImages = json_decode($oldRow['images'] ?? '[]', true);
+            $removedImages = array_diff($oldImages, $existingImages);
+            foreach ($removedImages as $rimg) {
+                $dbId = parse_db_image_id($rimg);
+                if ($dbId) {
+                    $dStmt = mysqli_prepare($conn, "DELETE FROM listing_images WHERE id = ?");
+                    if ($dStmt) {
+                        mysqli_stmt_bind_param($dStmt, 'i', $dbId);
+                        mysqli_stmt_execute($dStmt);
+                    }
+                }
+            }
+
+            $allImages = array_merge($existingImages, $uploaded);
+            $imagesJson = !empty($allImages) ? json_encode($allImages) : null;
+
             if ($isFurnished) {
                 $availableSqft = trim($_POST['available_sqft'] ?? '');
                 $minInventory = trim($_POST['min_inventory'] ?? '');
@@ -399,13 +454,6 @@ if ($action === 'create' || $action === 'update') {
             echo json_encode(['success' => true, 'message' => 'Listing updated successfully']);
         } catch (Exception $e) {
             mysqli_rollback($conn);
-            // Clean up newly uploaded images on failure
-            foreach ($imagePaths as $img) {
-                $filePath = admin_resolve_upload_path($img);
-                if (file_exists($filePath)) {
-                    unlink($filePath);
-                }
-            }
             http_response_code(500);
             echo json_encode(['error' => 'Failed to update listing: ' . $e->getMessage()]);
         }
@@ -510,13 +558,7 @@ if ($action === 'delete') {
         die(json_encode(['error' => 'Listing not found']));
     }
 
-    $images = json_decode($row['images'] ?? '[]', true);
-    foreach ($images as $img) {
-        $filePath = __DIR__ . '/../..' . $img;
-        if (file_exists($filePath)) {
-            unlink($filePath);
-        }
-    }
+    delete_listing_images($conn, $listingType, $id);
 
     $stmt = mysqli_prepare($conn, "DELETE FROM $table WHERE id = ?");
     mysqli_stmt_bind_param($stmt, 'i', $id);

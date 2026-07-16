@@ -65,13 +65,23 @@ if ($action === 'bulk_delete') {
                 $idCol = $tblInfo['id_col'];
                 $idPh = implode(',', array_fill(0, count($idList), '?'));
                 if ($tblInfo['images_col']) {
-                    $s = mysqli_prepare($conn, "SELECT $idCol, {$tblInfo['images_col']} FROM $tblName WHERE $idCol IN ($idPh)");
-                    mysqli_stmt_bind_param($s, str_repeat('i', count($idList)), ...$idList);
-                    mysqli_stmt_execute($s);
-                    $rs = mysqli_stmt_get_result($s);
-                    while ($r = mysqli_fetch_assoc($rs)) {
-                        $imgs = json_decode($r[$tblInfo['images_col']] ?? '[]', true);
-                        foreach ($imgs as $img) { $fp = __DIR__ . '/../..' . $img; if (file_exists($fp)) unlink($fp); }
+                    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS `listing_images` (
+                        `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                        `listing_type` varchar(50) NOT NULL,
+                        `listing_id` int NOT NULL,
+                        `image_data` longblob NOT NULL,
+                        `image_mime` varchar(50) NOT NULL DEFAULT 'image/jpeg',
+                        `sort_order` int NOT NULL DEFAULT 0,
+                        `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+                        KEY `idx_listing` (`listing_type`, `listing_id`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+                    foreach ($idList as $lid) {
+                        $lt = $tbl === 'furnished' ? 'furnished' : ($tbl === 'unfurnished' ? 'unfurnished' : $tbl);
+                        $dStmt = mysqli_prepare($conn, "DELETE FROM listing_images WHERE listing_type = ? AND listing_id = ?");
+                        if ($dStmt) {
+                            mysqli_stmt_bind_param($dStmt, 'si', $lt, $lid);
+                            mysqli_stmt_execute($dStmt);
+                        }
                     }
                 }
                 $del = mysqli_prepare($conn, "DELETE FROM $tblName WHERE $idCol IN ($idPh)");
@@ -116,17 +126,28 @@ if ($action === 'bulk_delete') {
     $idPlaceholders = implode(',', array_fill(0, count($idList), '?'));
 
     if ($imagesCol) {
-        $stmt = mysqli_prepare($conn, "SELECT $idCol, $imagesCol FROM $table WHERE $idCol IN ($idPlaceholders)");
-        mysqli_stmt_bind_param($stmt, str_repeat('i', count($idList)), ...$idList);
-        mysqli_stmt_execute($stmt);
-        $rows = mysqli_stmt_get_result($stmt);
-        while ($row = mysqli_fetch_assoc($rows)) {
-            $images = json_decode($row[$imagesCol] ?? '[]', true);
-            foreach ($images as $img) {
-                $filePath = __DIR__ . '/../..' . $img;
-                if (file_exists($filePath)) {
-                    unlink($filePath);
-                }
+        mysqli_query($conn, "CREATE TABLE IF NOT EXISTS `listing_images` (
+            `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `listing_type` varchar(50) NOT NULL,
+            `listing_id` int NOT NULL,
+            `image_data` longblob NOT NULL,
+            `image_mime` varchar(50) NOT NULL DEFAULT 'image/jpeg',
+            `sort_order` int NOT NULL DEFAULT 0,
+            `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+            KEY `idx_listing` (`listing_type`, `listing_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        foreach ($idList as $lid) {
+            $listingTypeMap = [
+                'managed_offices' => 'managed',
+                'office_spaces' => 'commercial',
+                'furnished_offices' => 'furnished',
+                'unfurnished_offices' => 'unfurnished',
+            ];
+            $lt = $listingTypeMap[$table] ?? $table;
+            $dStmt = mysqli_prepare($conn, "DELETE FROM listing_images WHERE listing_type = ? AND listing_id = ?");
+            if ($dStmt) {
+                mysqli_stmt_bind_param($dStmt, 'si', $lt, $lid);
+                mysqli_stmt_execute($dStmt);
             }
         }
     }
