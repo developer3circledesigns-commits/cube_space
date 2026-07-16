@@ -1261,12 +1261,12 @@ if (isset($conn) && $conn) {
             <aside class="col-lg-4">
                 <div class="card aside-card mb-4">
                     <div class="card-body">
-                        <h3 class="text-center">Connect with our expert</h3>
+                        <h3 class="text-center">Connect with <strong style="font-style: italic;">Hafiz</strong> for expert solutions</h3>
                         <div class="d-flex flex-column align-items-center mb-3">
-                            <div class="consultant-avatar mb-2"><i class="fa-solid fa-user-tie"></i></div>
+                            <!-- <div class="consultant-avatar mb-2"><i class="fa-solid fa-user-tie"></i></div>
                             <div class="text-center">
                                 <h4 class="h6 mb-0">Hafiz</h4>
-                            </div>
+                            </div> -->
                         </div>
                         <div class="d-flex flex-column align-items-center mb-3 small">
                             <span class="mb-1"><i class="fa-solid fa-phone text-primary me-1"></i> <a href="tel:+919962200015" class="text-decoration-none">+91-9962200015</a></span>
@@ -1347,7 +1347,7 @@ if (isset($conn) && $conn) {
                         <div class="col-md-5 gp-modal-left">
                             <div class="gp-modal-left-inner">
                                 <div class="gp-modal-logo">
-                                    <img src="assets/images/final-logo.png" alt="CubeSpace">
+                                    <img src="assets/images/Logo.png" alt="CubeSpace" style="height: 320px;">
                                 </div>
                                 <!--<div class="gp-left-badge"><i class="fa-regular fa-building"></i> Workspace Expert</div>-->
                                 <h6 class="gp-left-heading">
@@ -2319,3 +2319,4 @@ function showAlertModal(message, type) {
 </body>
 
 </html>
+
