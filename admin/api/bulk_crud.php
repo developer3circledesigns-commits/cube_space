@@ -413,6 +413,7 @@ if ($action === 'bulk_toggle_active') {
     $stmt = mysqli_prepare($conn, "UPDATE admins SET is_active=? WHERE id IN ($idPh)");
     $types = 'i' . str_repeat('i', count($idList));
     $params = array_merge([$value], $idList);
+    mysqli_stmt_bind_param($stmt, $types, ...$params);
     mysqli_begin_transaction($conn);
     try {
         if (mysqli_stmt_execute($stmt)) {
