@@ -51,13 +51,23 @@ if ($action === 'bulk_delete') {
 
     if ($page === 'office-space' && !empty($types)) {
         $af = 0;
+        $grouped = [];
+        foreach ($ids as $i => $id) {
+            $t = $types[$i] ?? 'furnished';
+            $grouped[$t][] = (int)$id;
+        }
+        mysqli_query($conn, "CREATE TABLE IF NOT EXISTS `listing_images` (
+            `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `listing_type` varchar(50) NOT NULL,
+            `listing_id` int NOT NULL,
+            `image_data` longblob NOT NULL,
+            `image_mime` varchar(50) NOT NULL DEFAULT 'image/jpeg',
+            `sort_order` int NOT NULL DEFAULT 0,
+            `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+            KEY `idx_listing` (`listing_type`, `listing_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
         mysqli_begin_transaction($conn);
         try {
-            $grouped = [];
-            foreach ($ids as $i => $id) {
-                $t = $types[$i] ?? 'furnished';
-                $grouped[$t][] = (int)$id;
-            }
             foreach ($grouped as $tbl => $idList) {
                 $tblInfo = get_table($tbl);
                 if (!$tblInfo) continue;
@@ -65,16 +75,6 @@ if ($action === 'bulk_delete') {
                 $idCol = $tblInfo['id_col'];
                 $idPh = implode(',', array_fill(0, count($idList), '?'));
                 if ($tblInfo['images_col']) {
-                    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS `listing_images` (
-                        `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        `listing_type` varchar(50) NOT NULL,
-                        `listing_id` int NOT NULL,
-                        `image_data` longblob NOT NULL,
-                        `image_mime` varchar(50) NOT NULL DEFAULT 'image/jpeg',
-                        `sort_order` int NOT NULL DEFAULT 0,
-                        `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
-                        KEY `idx_listing` (`listing_type`, `listing_id`)
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
                     foreach ($idList as $lid) {
                         $lt = $tbl === 'furnished' ? 'furnished' : ($tbl === 'unfurnished' ? 'unfurnished' : $tbl);
                         $dStmt = mysqli_prepare($conn, "DELETE FROM listing_images WHERE listing_type = ? AND listing_id = ?");
@@ -136,20 +136,6 @@ if ($action === 'bulk_delete') {
             `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
             KEY `idx_listing` (`listing_type`, `listing_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-        foreach ($idList as $lid) {
-            $listingTypeMap = [
-                'managed_offices' => 'managed',
-                'office_spaces' => 'commercial',
-                'furnished_offices' => 'furnished',
-                'unfurnished_offices' => 'unfurnished',
-            ];
-            $lt = $listingTypeMap[$table] ?? $table;
-            $dStmt = mysqli_prepare($conn, "DELETE FROM listing_images WHERE listing_type = ? AND listing_id = ?");
-            if ($dStmt) {
-                mysqli_stmt_bind_param($dStmt, 'si', $lt, $lid);
-                mysqli_stmt_execute($dStmt);
-            }
-        }
     }
 
     $stmt = mysqli_prepare($conn, "DELETE FROM $table WHERE $idCol IN ($idPlaceholders)");
@@ -157,6 +143,22 @@ if ($action === 'bulk_delete') {
     
     mysqli_begin_transaction($conn);
     try {
+        if ($imagesCol) {
+            $listingTypeMap = [
+                'managed_offices' => 'managed',
+                'office_spaces' => 'commercial',
+                'furnished_offices' => 'furnished',
+                'unfurnished_offices' => 'unfurnished',
+            ];
+            $lt = $listingTypeMap[$table] ?? $table;
+            foreach ($idList as $lid) {
+                $dStmt = mysqli_prepare($conn, "DELETE FROM listing_images WHERE listing_type = ? AND listing_id = ?");
+                if ($dStmt) {
+                    mysqli_stmt_bind_param($dStmt, 'si', $lt, $lid);
+                    mysqli_stmt_execute($dStmt);
+                }
+            }
+        }
         if (mysqli_stmt_execute($stmt)) {
             $affected = mysqli_stmt_affected_rows($stmt);
             log_activity($conn, 'bulk_delete', $table, 0, ['ids' => $idList, 'count' => $affected]);
@@ -254,9 +256,9 @@ if ($action === 'bulk_status') {
         } else {
             $stmt = mysqli_prepare($conn, "UPDATE $table SET status=? WHERE $idCol IN ($idPlaceholders)");
         }
-        $types = 's' . str_repeat('i', count($idList));
+        $bindTypes = 's' . str_repeat('i', count($idList));
         $params = array_merge([$status], $idList);
-        mysqli_stmt_bind_param($stmt, $types, ...$params);
+        mysqli_stmt_bind_param($stmt, $bindTypes, ...$params);
         mysqli_begin_transaction($conn);
         try {
             if (mysqli_stmt_execute($stmt)) {
@@ -287,9 +289,9 @@ if ($action === 'bulk_status') {
     }
 
     $stmt = mysqli_prepare($conn, "UPDATE $table SET status=? WHERE $idCol IN ($idPlaceholders)");
-    $types = 's' . str_repeat('i', count($idList));
+    $bindTypes = 's' . str_repeat('i', count($idList));
     $params = array_merge([$status], $idList);
-    mysqli_stmt_bind_param($stmt, $types, ...$params);
+    mysqli_stmt_bind_param($stmt, $bindTypes, ...$params);
     
     mysqli_begin_transaction($conn);
     try {
@@ -317,7 +319,7 @@ if ($action === 'bulk_featured') {
     $page = trim($_POST['page'] ?? '');
     $ids = $_POST['ids'] ?? [];
     $types = $_POST['types'] ?? [];
-    $featured = (int)($_POST['featured'] ?? 0);
+    $featured = in_array((int)($_POST['featured'] ?? 0), [0, 1], true) ? (int)$_POST['featured'] : 0;
 
     if (!$page || !is_array($ids) || empty($ids)) {
         http_response_code(400);

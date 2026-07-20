@@ -410,14 +410,16 @@ if ($mode === 'add' || $mode === 'edit'):
             <?php endif; ?>
         </div>
         <hr class="my-1">
-        <div class="bulk-bar p-0 mb-0 border-0 bg-transparent">
+        <div class="bulk-bar <?= $total > 0 ? '' : 'd-none' ?> p-0 mb-0 border-0 bg-transparent">
             <select id="bulkActionSelect" class="form-select form-select-sm" aria-label="Bulk actions">
                 <option value="">-- Bulk Actions --</option>
                 <option value="delete">Delete Selected</option>
                 <option value="status-inactive">Mark as Inactive</option>
                 <option value="status-active">Mark as Active</option>
+                <option value="featured-1">Mark as Featured</option>
+                <option value="featured-0">Mark as Unfeatured</option>
             </select>
-            <button class="btn btn-sm btn-secondary" onclick="applyBulkAction()">Apply</button>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="applyBulkAction()">Apply</button>
         </div>
     </form>
 </div>

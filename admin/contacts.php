@@ -225,7 +225,7 @@ if ($mode === 'view'):
             <?php endif; ?>
         </div>
         <hr class="my-1">
-        <div class="bulk-bar p-0 mb-0 border-0 bg-transparent">
+        <div class="bulk-bar <?= $total > 0 ? '' : 'd-none' ?> p-0 mb-0 border-0 bg-transparent">
             <select id="bulkActionSelect" class="form-select form-select-sm" aria-label="Bulk actions">
                 <option value="">-- Bulk Actions --</option>
                 <option value="delete">Delete Selected</option>
@@ -233,7 +233,7 @@ if ($mode === 'view'):
                 <option value="status-contacted">Mark as Contacted</option>
                 <option value="status-closed">Mark as Closed</option>
             </select>
-            <button class="btn btn-sm btn-secondary" onclick="applyBulkAction()">Apply</button>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="applyBulkAction()">Apply</button>
         </div>
     </form>
 </div>
@@ -260,7 +260,7 @@ if ($mode === 'view'):
                 <tbody>
                     <?php while ($row = mysqli_fetch_assoc($result)): ?>
                     <tr>
-                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="<?= $row['id'] ?>"></td>
+                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="<?= $row['id'] ?>" data-type="contact"></td>
                         <td class="text-muted"><?= $row['id'] ?></td>
                         <td><code class="small"><?= htmlspecialchars($row['listing_code'] ?? '—') ?></code></td>
                         <td class="fw-medium"><?= htmlspecialchars($row['name']) ?></td>

@@ -570,12 +570,13 @@ async function applyBulkAction() {
         fd.append('featured', actionVal.replace('featured-', ''));
     }
     const doAction = async function() {
+        showLoading(true);
         try {
             let headers = {
                 'Authorization': 'Bearer ' + getToken(),
                 'X-CSRF-Token': (document.querySelector('meta[name="csrf-token"]') || {}).content || ''
             };
-            const r = await fetch(url + '?action=' + apiAction, { method: 'POST', headers: headers, body: fd });
+            const r = await fetch(url + '?action=' + apiAction, { method: 'POST', headers: headers, credentials: 'same-origin', body: fd });
             const d = await r.json();
             if (d.success) {
                 showAlertModal(d.message || 'Bulk operation completed.', 'success');
@@ -585,6 +586,8 @@ async function applyBulkAction() {
             }
         } catch (err) {
             showAlertModal('Error: ' + err.message, 'error');
+        } finally {
+            showLoading(false);
         }
     };
     var confirmMsg = '';

@@ -261,7 +261,7 @@ if ($statusFilter) $exportUrl .= '&status=' . urlencode($statusFilter);
                         </div>
                         <hr class="my-1">
                         <div class="bulk-bar <?= $total > 0 ? '' : 'd-none' ?> p-0 mb-0 border-0 bg-transparent">
-                            <select class="form-select form-select-sm">
+                            <select id="bulkActionSelect" class="form-select form-select-sm">
                                 <option value="">Bulk actions</option>
                                 <option value="delete">Delete</option>
                                 <option value="activate">Activate</option>
@@ -277,7 +277,7 @@ if ($statusFilter) $exportUrl .= '&status=' . urlencode($statusFilter);
                         <table class="table table-hover align-middle mb-0 small">
                             <thead>
                                 <tr>
-                                    <th scope="col" style="width:36px"><input type="checkbox" onchange="toggleAllCheckboxes(this)"></th>
+                                    <th scope="col" style="width:36px"><input type="checkbox" class="form-check-input checkAll" onchange="toggleAllCheckboxes(this)"></th>
                                     <th scope="col">ID</th>
                                     <th scope="col">Username</th>
                                     <th scope="col">Email</th>
@@ -290,7 +290,7 @@ if ($statusFilter) $exportUrl .= '&status=' . urlencode($statusFilter);
                             <tbody>
                                 <?php if (mysqli_num_rows($result) > 0): while ($row = mysqli_fetch_assoc($result)): ?>
                                 <tr>
-                                    <td><input type="checkbox" class="bulk-checkbox" value="<?= $row['id'] ?>"></td>
+                                    <td><input type="checkbox" class="form-check-input bulk-checkbox" value="<?= $row['id'] ?>"></td>
                                     <td class="text-muted"><?= $row['id'] ?></td>
                                     <td class="fw-medium"><?= htmlspecialchars($row['username']) ?></td>
                                     <td><?= htmlspecialchars($row['email'] ?? '') ?></td>
@@ -487,9 +487,10 @@ function applyAdminBulkAction() {
             fd.append('is_active', '0');
         }
         (async function() {
+            showLoading(true);
             try {
                 var headers = { 'Authorization': 'Bearer ' + getToken(), 'X-CSRF-Token': (document.querySelector('meta[name="csrf-token"]') || {}).content || '' };
-                var r = await fetch(url + '?action=' + apiAction, { method: 'POST', headers: headers, body: fd });
+                var r = await fetch(url + '?action=' + apiAction, { method: 'POST', headers: headers, credentials: 'same-origin', body: fd });
                 var d = await r.json();
                 if (d.success) {
                     showAlertModal(d.message || 'Operation completed.', 'success');
@@ -499,6 +500,8 @@ function applyAdminBulkAction() {
                 }
             } catch (err) {
                 showAlertModal('Error: ' + err.message, 'error');
+            } finally {
+                showLoading(false);
             }
         })();
     }
