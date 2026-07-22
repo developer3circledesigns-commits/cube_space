@@ -1301,7 +1301,7 @@ if (isset($conn) && $conn) {
             <aside class="col-lg-4">
                 <div class="card aside-card mb-4">
                     <div class="card-body">
-                        <h3 class="text-center">Connect with <strong style="font-style: italic;">Hafiz</strong> for expert solutions</h3>
+                        <h3 class="text-center">Connect with <strong>Hafiz</strong> for expert solutions</h3>
                             <!-- <div class="d-flex flex-column align-items-center mb-3">
                                 <div class="consultant-avatar mb-2"><i class="fa-solid fa-user-tie"></i></div>
                                 <div class="text-center">
