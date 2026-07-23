@@ -2149,12 +2149,12 @@ if (isset($conn) && $conn) {
             const btn = document.getElementById('cbSubmitBtn');
             const formData = new FormData(form);
 
-            btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sending...';
 
             (window.CubeAPI ? CubeAPI.postForm('/api/contact.php', formData) : fetch(apiUrl('/api/contact.php'), { method: 'POST',
                     body: formData, credentials: 'same-origin' }).then(res => res.json()))
                 .then(data => {
+                    btn.innerHTML = 'Request Call Back';
                     if (data.success) {
                         showAlertModal('We will call you back shortly!', 'success');
                         form.reset();
@@ -2164,12 +2164,9 @@ if (isset($conn) && $conn) {
                     }
                 })
                 .catch((err) => {
+                    btn.innerHTML = 'Request Call Back';
                     showToast(err && err.message ? err.message : 'Network error. Please try again.', 'error');
                     console.error('Callback form error:', err);
-                })
-                .finally(() => {
-                    btn.disabled = false;
-                    btn.innerHTML = 'Request Call Back';
                 });
         }
 
@@ -2196,32 +2193,23 @@ if (isset($conn) && $conn) {
             const formData = new FormData(form);
 
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sending...';
-            btn.disabled = true;
 
             (window.CubeAPI ? CubeAPI.postForm('/api/contact.php', formData) : fetch(apiUrl('/api/contact.php'), { method: 'POST',
                     body: formData, credentials: 'same-origin' }).then(res => res.json()))
                 .then(data => {
+                    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Get Best Price';
                     if (data.success) {
                         form.reset();
                         if (getPriceModal) getPriceModal.hide();
                         showAlertModal('Thank you! Your enquiry has been submitted successfully. Our workspace expert will get back to you with the best price shortly.', 'success');
                     } else {
-                        btn.innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i> Failed - Try Again';
                         showToast(data.message || 'Failed to send enquiry.', 'error');
-                        setTimeout(() => {
-                            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Get Best Price';
-                            btn.disabled = false;
-                        }, 3000);
                     }
                 })
                 .catch((err) => {
-                    btn.innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i> Error - Try Again';
+                    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Get Best Price';
                     showToast(err && err.message ? err.message : 'Network error. Please try again.', 'error');
                     console.error('Get price form error:', err);
-                    setTimeout(() => {
-                        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Get Best Price';
-                        btn.disabled = false;
-                    }, 3000);
                 });
         }
 

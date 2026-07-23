@@ -89,7 +89,6 @@
         var formData = new FormData(form);
 
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sending...';
-        btn.disabled = true;
 
         var request = window.CubeAPI && typeof CubeAPI.postForm === 'function'
             ? CubeAPI.postForm((window.CubeBase && CubeBase.url ? CubeBase.url('/api/contact.php') : '/api/contact.php'), formData)
@@ -97,9 +96,9 @@
 
         request
             .then(function(data) {
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Get Best Price';
+                btn.style.background = '#0d4ab4';
                 if (data.success) {
-                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Enquiry Sent!';
-                    btn.style.background = '#08753f';
                     form.reset();
                     if (window.showAlertModal) {
                         setTimeout(function() { showAlertModal('Thank you! Your enquiry has been submitted successfully. Our workspace expert will get back to you with the best price shortly.', 'success'); }, 300);
@@ -107,26 +106,14 @@
                         CubeToast.success('Enquiry sent!');
                     }
                 } else {
-                    btn.innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i> Failed - Try Again';
-                    btn.style.background = '#dc2626';
                     if (window.CubeToast) CubeToast.error(data.message || 'Failed to send');
                 }
-                setTimeout(function() {
-                    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Get Best Price';
-                    btn.style.background = '#0d4ab4';
-                    btn.disabled = false;
-                }, 3000);
             })
             .catch(function(err) {
-                btn.innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i> Error - Try Again';
-                btn.style.background = '#dc2626';
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Get Best Price';
+                btn.style.background = '#0d4ab4';
                 if (window.CubeToast) CubeToast.error(err && err.message ? err.message : 'Network error');
                 console.error('Sidebar form error:', err);
-                setTimeout(function() {
-                    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Get Best Price';
-                    btn.style.background = '#0d4ab4';
-                    btn.disabled = false;
-                }, 3000);
             });
     };
 

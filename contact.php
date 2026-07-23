@@ -427,7 +427,6 @@ ob_start();
             const btn = this.querySelector('button');
             const fd = new FormData(this);
             msg.style.display = 'none';
-            btn.disabled = true;
             btn.textContent = 'Submitting...';
             try {
                 const d = window.CubeAPI
@@ -450,7 +449,6 @@ ob_start();
                 msg.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="margin-right:10px"></i>' + (err.message || 'Network error. Please try again.');
                 console.error('Contact form error:', err);
             }
-            btn.disabled = false;
             btn.textContent = 'Submit Request';
         });
 

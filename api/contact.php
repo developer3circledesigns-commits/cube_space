@@ -9,7 +9,6 @@ try {
 
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 
-    cubespace_require_project('lib/ratelimit.php');
     cubespace_require_project('lib/validator.php');
     cubespace_require_project('src/autoload.php');
     cubespace_require_project('lib/events.php');
@@ -28,12 +27,6 @@ try {
 
     $submittedIp = $_SERVER['REMOTE_ADDR'] ?? '';
     $userAgent   = $_SERVER['HTTP_USER_AGENT'] ?? '';
-
-    $limiter = new RateLimiter(5, 300, 'contact_');
-    if (!$limiter->check($submittedIp)) {
-        http_response_code(429);
-        die(json_encode(['success' => false, 'message' => 'Too many requests. Please try again later.', 'data' => null, 'errors' => null]));
-    }
 
     $validator = new Validator($_POST);
     if (!$validator->validate([
