@@ -30,7 +30,7 @@ services:
       MAIL_HOST: smtp.hostinger.com
       MAIL_PORT: 465
       MAIL_USERNAME: hafiz@cubespaces.in
-      MAIL_PASSWORD: Hafiz@2026$
+      MAIL_PASSWORD: Airtel@5g
       MAIL_ENCRYPTION: ssl
       MAIL_FROM: hafiz@cubespaces.in
       MAIL_FROM_NAME: CubeSpace
