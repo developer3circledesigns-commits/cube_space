@@ -195,10 +195,11 @@ if ($action === 'list') {
     $maxPrice = $_GET['max_price'] ?? '';
     $minSeats = $_GET['min_seats'] ?? '';
     $maxSeats = $_GET['max_seats'] ?? '';
+    $seatRanges = trim($_GET['seat_ranges'] ?? '');
     $sort = trim($_GET['sort'] ?? 'newest');
     $featured = $_GET['featured'] ?? '';
 
-    $cacheKey = 'list_managed_v4_' . JsonCache::getGlobalVersion() . '_' . md5(implode('|', [$page, $limit, $search, $listing_type, $city, $area, $minPrice, $maxPrice, $minSeats, $maxSeats, $sort, $featured]));
+    $cacheKey = 'list_managed_v5_' . JsonCache::getGlobalVersion() . '_' . md5(implode('|', [$page, $limit, $search, $listing_type, $city, $area, $minPrice, $maxPrice, $minSeats, $maxSeats, $seatRanges, $sort, $featured]));
     $cached = $cache->get($cacheKey);
     if ($cached) { echo json_encode($cached); exit; }
 
@@ -226,10 +227,17 @@ if ($action === 'list') {
         $params[] = $city;
         $types .= 's';
     }
-    if ($area) {
-        $where[] = "area = ?";
-        $params[] = $area;
-        $types .= 's';
+    $areaList = [];
+    if ($area !== '') {
+        foreach (explode(',', $area) as $a) {
+            $a = trim($a);
+            if ($a !== '') $areaList[] = $a;
+        }
+    }
+    if (!empty($areaList)) {
+        $areaIn = implode(',', array_fill(0, count($areaList), '?'));
+        $where[] = "area IN ($areaIn)";
+        foreach ($areaList as $a) { $params[] = $a; $types .= 's'; }
     }
     if ($featured === '1') {
         $where[] = "featured = 1";
@@ -243,6 +251,29 @@ if ($action === 'list') {
         $where[] = "total_seats <= ?";
         $params[] = (int)$maxSeats;
         $types .= 'i';
+    }
+    if ($seatRanges !== '') {
+        $rangeClauses = [];
+        foreach (explode(',', $seatRanges) as $r) {
+            $r = trim($r);
+            if ($r === '') continue;
+            $parts = explode('-', $r);
+            if (count($parts) === 2) {
+                $min = (int)$parts[0];
+                $max = (int)$parts[1];
+                if ($max >= 9999) {
+                    $rangeClauses[] = "total_seats >= ?";
+                    $params[] = $min; $types .= 'i';
+                } else {
+                    $rangeClauses[] = "(total_seats BETWEEN ? AND ?)";
+                    $params[] = $min; $types .= 'i';
+                    $params[] = $max; $types .= 'i';
+                }
+            }
+        }
+        if (!empty($rangeClauses)) {
+            $where[] = '(' . implode(' OR ', $rangeClauses) . ')';
+        }
     }
 
     $needsPriceFilter = ($minPrice !== '' || $maxPrice !== '');
@@ -332,10 +363,10 @@ if ($action === 'list') {
         $facetParams[] = $listing_type;
         $facetTypes .= 's';
     }
-    if ($area) {
-        $facetWhere[] = "area = ?";
-        $facetParams[] = $area;
-        $facetTypes .= 's';
+    if (!empty($areaList)) {
+        $areaIn = implode(',', array_fill(0, count($areaList), '?'));
+        $facetWhere[] = "area IN ($areaIn)";
+        foreach ($areaList as $a) { $facetParams[] = $a; $facetTypes .= 's'; }
     }
     if ($minSeats !== '') {
         $facetWhere[] = "total_seats >= ?";
@@ -346,6 +377,29 @@ if ($action === 'list') {
         $facetWhere[] = "total_seats <= ?";
         $facetParams[] = (int)$maxSeats;
         $facetTypes .= 'i';
+    }
+    if ($seatRanges !== '') {
+        $rangeClauses = [];
+        foreach (explode(',', $seatRanges) as $r) {
+            $r = trim($r);
+            if ($r === '') continue;
+            $parts = explode('-', $r);
+            if (count($parts) === 2) {
+                $min = (int)$parts[0];
+                $max = (int)$parts[1];
+                if ($max >= 9999) {
+                    $rangeClauses[] = "total_seats >= ?";
+                    $facetParams[] = $min; $facetTypes .= 'i';
+                } else {
+                    $rangeClauses[] = "(total_seats BETWEEN ? AND ?)";
+                    $facetParams[] = $min; $facetTypes .= 'i';
+                    $facetParams[] = $max; $facetTypes .= 'i';
+                }
+            }
+        }
+        if (!empty($rangeClauses)) {
+            $facetWhere[] = '(' . implode(' OR ', $rangeClauses) . ')';
+        }
     }
     if ($needsPriceFilter) {
         if ($minPrice !== '') {

@@ -192,10 +192,11 @@ if ($action === 'list') {
     $maxSeats = $_GET['max_seats'] ?? '';
     $minSqft = $_GET['min_sqft'] ?? '';
     $maxSqft = $_GET['max_sqft'] ?? '';
+    $sqftRanges = trim($_GET['sqft_ranges'] ?? '');
     $sort = trim($_GET['sort'] ?? 'newest');
     $featured = $_GET['featured'] ?? '';
 
-    $cacheKey = 'list_all_v1_' . JsonCache::getGlobalVersion() . '_' . md5(implode('|', [$page, $limit, $search, $city, $area, $minPrice, $maxPrice, $minSeats, $maxSeats, $minSqft, $maxSqft, $sort, $featured]));
+    $cacheKey = 'list_all_v2_' . JsonCache::getGlobalVersion() . '_' . md5(implode('|', [$page, $limit, $search, $city, $area, $minPrice, $maxPrice, $minSeats, $maxSeats, $minSqft, $maxSqft, $sqftRanges, $sort, $featured]));
     $cached = $cache->get($cacheKey);
     if ($cached) { echo json_encode($cached); exit; }
 
@@ -214,10 +215,17 @@ if ($action === 'list') {
         $params[] = $city;
         $types .= 's';
     }
-    if ($area) {
-        $where[] = "area = ?";
-        $params[] = $area;
-        $types .= 's';
+    $areaList = [];
+    if ($area !== '') {
+        foreach (explode(',', $area) as $a) {
+            $a = trim($a);
+            if ($a !== '') $areaList[] = $a;
+        }
+    }
+    if (!empty($areaList)) {
+        $areaIn = implode(',', array_fill(0, count($areaList), '?'));
+        $where[] = "area IN ($areaIn)";
+        foreach ($areaList as $a) { $params[] = $a; $types .= 's'; }
     }
     if ($featured === '1') {
         $where[] = "featured = 1";
@@ -241,6 +249,29 @@ if ($action === 'list') {
         $where[] = "total_area_sqft <= ?";
         $params[] = (int)$maxSqft;
         $types .= 'i';
+    }
+    if ($sqftRanges !== '') {
+        $rangeClauses = [];
+        foreach (explode(',', $sqftRanges) as $r) {
+            $r = trim($r);
+            if ($r === '') continue;
+            $parts = explode('-', $r);
+            if (count($parts) === 2) {
+                $min = (int)$parts[0];
+                $max = ($parts[1] === '') ? null : (int)$parts[1];
+                if ($max !== null && $max > 0) {
+                    $rangeClauses[] = "(total_area_sqft BETWEEN ? AND ?)";
+                    $params[] = $min; $types .= 'i';
+                    $params[] = $max; $types .= 'i';
+                } else {
+                    $rangeClauses[] = "total_area_sqft >= ?";
+                    $params[] = $min; $types .= 'i';
+                }
+            }
+        }
+        if (!empty($rangeClauses)) {
+            $where[] = '(' . implode(' OR ', $rangeClauses) . ')';
+        }
     }
 
     $needsPriceFilter = ($minPrice !== '' || $maxPrice !== '');
@@ -333,10 +364,10 @@ if ($action === 'list') {
         $facetParams = array_merge($facetParams, [$s, $s, $s, $s]);
         $facetTypes .= 'ssss';
     }
-    if ($area) {
-        $facetWhere[] = "area = ?";
-        $facetParams[] = $area;
-        $facetTypes .= 's';
+    if (!empty($areaList)) {
+        $areaIn = implode(',', array_fill(0, count($areaList), '?'));
+        $facetWhere[] = "area IN ($areaIn)";
+        foreach ($areaList as $a) { $facetParams[] = $a; $facetTypes .= 's'; }
     }
     if ($minSeats !== '') {
         $facetWhere[] = "total_seats >= ?";
@@ -357,6 +388,29 @@ if ($action === 'list') {
         $facetWhere[] = "total_area_sqft <= ?";
         $facetParams[] = (int)$maxSqft;
         $facetTypes .= 'i';
+    }
+    if ($sqftRanges !== '') {
+        $rangeClauses = [];
+        foreach (explode(',', $sqftRanges) as $r) {
+            $r = trim($r);
+            if ($r === '') continue;
+            $parts = explode('-', $r);
+            if (count($parts) === 2) {
+                $min = (int)$parts[0];
+                $max = ($parts[1] === '') ? null : (int)$parts[1];
+                if ($max !== null && $max > 0) {
+                    $rangeClauses[] = "(total_area_sqft BETWEEN ? AND ?)";
+                    $facetParams[] = $min; $facetTypes .= 'i';
+                    $facetParams[] = $max; $facetTypes .= 'i';
+                } else {
+                    $rangeClauses[] = "total_area_sqft >= ?";
+                    $facetParams[] = $min; $facetTypes .= 'i';
+                }
+            }
+        }
+        if (!empty($rangeClauses)) {
+            $facetWhere[] = '(' . implode(' OR ', $rangeClauses) . ')';
+        }
     }
     if ($needsPriceFilter) {
         if ($minPrice !== '') {

@@ -1729,22 +1729,7 @@ if (isset($conn) && $conn) {
         }
 
         function getSeatsFilter() {
-            const values = getMultiSelectValues('msSeats');
-            if (values.length === 0) return {};
-            let minSeats = Infinity, maxSeats = 0;
-            values.forEach(val => {
-                const parts = val.split('-');
-                if (parts.length === 2) {
-                    const min = parseInt(parts[0]);
-                    const max = parseInt(parts[1]);
-                    if (min < minSeats) minSeats = min;
-                    if (max > maxSeats) maxSeats = max;
-                }
-            });
-            const result = {};
-            if (minSeats !== Infinity) result.min_seats = minSeats;
-            if (maxSeats > 0 && maxSeats < 9999) result.max_seats = maxSeats;
-            return result;
+            return getMultiSelectValues('msSeats');
         }
 
         function buildQueryParams() {
@@ -1766,8 +1751,7 @@ if (isset($conn) && $conn) {
             } else if (localities.length > 1) {
                 params.area = localities.join(',');
             }
-            if (seats.min_seats) params.min_seats = seats.min_seats;
-            if (seats.max_seats) params.max_seats = seats.max_seats;
+            if (seats.length > 0) params.seat_ranges = seats.join(',');
             params._t = Date.now();
             return params;
         }

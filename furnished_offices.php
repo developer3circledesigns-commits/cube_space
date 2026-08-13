@@ -1721,22 +1721,7 @@ if (isset($conn) && $conn) {
         }
 
         function getSqftFilter() {
-            const values = getMultiSelectValues('msSqft');
-            if (values.length === 0) return {};
-            let minSqft = Infinity, maxSqft = 0;
-            values.forEach(val => {
-                const parts = val.split('-');
-                if (parts.length === 2) {
-                    const min = parseInt(parts[0]);
-                    const max = parts[1] === '' ? Infinity : parseInt(parts[1]);
-                    if (min < minSqft) minSqft = min;
-                    if (max > maxSqft) maxSqft = max;
-                }
-            });
-            const result = {};
-            if (minSqft !== Infinity) result.min_sqft = minSqft;
-            if (maxSqft !== Infinity && maxSqft > 0) result.max_sqft = maxSqft;
-            return result;
+            return getMultiSelectValues('msSqft');
         }
 
         function buildQueryParams() {
@@ -1758,8 +1743,7 @@ if (isset($conn) && $conn) {
             } else if (localities.length > 1) {
                 params.area = localities.join(',');
             }
-            if (sqft.min_sqft !== undefined) params.min_sqft = sqft.min_sqft;
-            if (sqft.max_sqft !== undefined) params.max_sqft = sqft.max_sqft;
+            if (sqft.length > 0) params.sqft_ranges = sqft.join(',');
             params._t = Date.now();
             return params;
         }
