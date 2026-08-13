@@ -209,7 +209,7 @@ if (isset($conn) && $conn) {
         .ms-dropdown .ms-list {
             display: none; position: absolute; top: calc(100% + 2px); left: 0; right: 0;
             background: #fff; border: 1px solid #dcdcdc; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-            z-index: 100; max-height: 240px; overflow: hidden; flex-direction: column;
+            z-index: 99999; max-height: 240px; overflow: hidden; flex-direction: column;
         }
         .ms-dropdown.open .ms-list { display: flex; }
         .ms-dropdown .ms-list .ms-actions {
@@ -1632,8 +1632,36 @@ if (isset($conn) && $conn) {
         // ============================================================
         function toggleMsDropdown(id) {
             const el = document.getElementById(id);
-            if (el) el.classList.toggle('open');
+            if (!el) return;
+            const opening = !el.classList.contains('open');
+            el.classList.toggle('open');
+            if (opening) {
+                positionMsList(id);
+            }
         }
+
+        function positionMsList(id) {
+            const dd = document.getElementById(id);
+            if (!dd) return;
+            const header = dd.querySelector('.ms-header');
+            const list = dd.querySelector('.ms-list');
+            if (!header || !list) return;
+            const rect = header.getBoundingClientRect();
+            list.style.position = 'fixed';
+            list.style.top = (rect.bottom + 2) + 'px';
+            list.style.left = rect.left + 'px';
+            list.style.width = dd.offsetWidth + 'px';
+            list.style.zIndex = '999999';
+        }
+
+        // Close any open multi-select dropdown on scroll or resize
+        ['scroll', 'resize'].forEach(function(evt) {
+            window.addEventListener(evt, function() {
+                document.querySelectorAll('.ms-dropdown.open').forEach(function(dd) {
+                    dd.classList.remove('open');
+                });
+            }, true);
+        });
 
         function getMultiSelectValues(id) {
             const el = document.getElementById(id);
