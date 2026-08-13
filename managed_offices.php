@@ -210,6 +210,7 @@ if (isset($conn) && $conn) {
             display: none; position: absolute; top: calc(100% + 2px); left: 0; right: 0;
             background: #fff; border: 1px solid #dcdcdc; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
             z-index: 99999; max-height: 240px; overflow: hidden; flex-direction: column;
+            pointer-events: auto;
         }
         .ms-dropdown.open .ms-list { display: flex; }
         .ms-dropdown .ms-list .ms-actions {
@@ -1647,18 +1648,28 @@ if (isset($conn) && $conn) {
             const list = dd.querySelector('.ms-list');
             if (!header || !list) return;
             const rect = header.getBoundingClientRect();
+            const listHeight = list.offsetHeight;
             list.style.position = 'fixed';
-            list.style.top = (rect.bottom + 2) + 'px';
             list.style.left = rect.left + 'px';
             list.style.width = dd.offsetWidth + 'px';
             list.style.zIndex = '999999';
+            const spaceBelow = window.innerHeight - rect.bottom;
+            if (listHeight > 0 && listHeight > spaceBelow && rect.top > spaceBelow) {
+                list.style.top = Math.max(8, rect.top - listHeight - 2) + 'px';
+            } else {
+                list.style.top = (rect.bottom + 2) + 'px';
+            }
         }
 
-        // Close any open multi-select dropdown on scroll or resize
+        // Reposition open multi-select dropdowns on page scroll/resize.
+        // Scrolls happening inside the dropdown itself are ignored so the
+        // options list stays scrollable and clickable.
         ['scroll', 'resize'].forEach(function(evt) {
-            window.addEventListener(evt, function() {
+            window.addEventListener(evt, function(e) {
+                var t = e.target;
+                if (t && t.closest && t.closest('.ms-dropdown')) return;
                 document.querySelectorAll('.ms-dropdown.open').forEach(function(dd) {
-                    dd.classList.remove('open');
+                    positionMsList(dd.id);
                 });
             }, true);
         });
