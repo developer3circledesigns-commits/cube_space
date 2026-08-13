@@ -190,6 +190,63 @@ if (isset($conn) && $conn) {
             min-width: 100px;
             max-width: 140px;
         }
+
+        /* Multi-Select Dropdown */
+        .ms-dropdown { position: relative; width: 100%; }
+        .ms-dropdown .ms-header {
+            display: flex; align-items: center; justify-content: space-between;
+            border: 1px solid #0d4ab4; background: #fafbff; font-size: 0.85rem;
+            padding: 6px 30px 6px 10px; min-height: 38px; cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s; user-select: none;
+        }
+        .ms-dropdown .ms-header::after {
+            content: '\f107'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            color: #6b7280; font-size: 0.7rem; pointer-events: none;
+        }
+        .ms-dropdown.open .ms-header::after { transform: translateY(-50%) rotate(180deg); }
+        .ms-dropdown .ms-header:hover { box-shadow: 0 0 0 3px rgba(13,74,180,0.12); }
+        .ms-dropdown .ms-list {
+            display: none; position: absolute; top: calc(100% + 2px); left: 0; right: 0;
+            background: #fff; border: 1px solid #dcdcdc; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            z-index: 100; max-height: 240px; overflow: hidden; flex-direction: column;
+        }
+        .ms-dropdown.open .ms-list { display: flex; }
+        .ms-dropdown .ms-list .ms-actions {
+            display: flex; gap: 6px; padding: 6px 8px; border-bottom: 1px solid #eee;
+            flex-shrink: 0;
+        }
+        .ms-dropdown .ms-list .ms-actions button {
+            flex: 1; font-size: 0.7rem; font-weight: 500; padding: 3px 0;
+            border: 1px solid #e5e7eb; background: #fafbff; color: #374151;
+            cursor: pointer; transition: background 0.15s;
+        }
+        .ms-dropdown .ms-list .ms-actions button:hover { background: #eef4ff; color: #0d4ab4; }
+        .ms-dropdown .ms-options {
+            overflow-y: auto; max-height: 190px; padding: 4px 0;
+        }
+        .ms-dropdown .ms-option {
+            display: flex; align-items: center; gap: 8px;
+            padding: 5px 10px; cursor: pointer; font-size: 0.8rem;
+            color: #374151; transition: background 0.15s;
+        }
+        .ms-dropdown .ms-option:hover { background: #eef4ff; }
+        .ms-dropdown .ms-option input[type="checkbox"] {
+            accent-color: #0d4ab4; width: 14px; height: 14px;
+            cursor: pointer; flex-shrink: 0; margin: 0;
+        }
+        .ms-dropdown .ms-option label {
+            margin: 0; cursor: pointer; flex: 1; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; font-weight: 400;
+        }
+        @media (max-width: 575px) {
+            .ms-dropdown .ms-header { font-size: 0.72rem; padding: 2px 18px 2px 6px; min-height: 28px; }
+            .ms-dropdown .ms-option { font-size: 0.72rem; padding: 4px 8px; }
+        }
+        @media (max-width: 360px) {
+            .ms-dropdown .ms-header { font-size: 0.65rem; padding: 2px 14px 2px 4px; min-height: 24px; }
+            .ms-dropdown .ms-option { font-size: 0.65rem; padding: 3px 6px; }
+        }
         /* ----- Localities ----- */
         .localities-section {
             background: #ffffff;
@@ -1252,22 +1309,57 @@ if (isset($conn) && $conn) {
             </div>
             <div>
                 <label class="form-label" style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:2px;white-space:nowrap;">Locality</label>
-                <select class="form-select form-select-sm filter-select filter-locality-select" id="filterLocality" aria-label="Filter by Locality">
-                    <option value="">All Locations</option>
-                    <?php foreach ($areas as $a): ?>
-                        <option value="<?= htmlspecialchars($a) ?>"><?= htmlspecialchars(ucfirst($a)) ?></option>
-                    <?php endforeach; ?>
-                </select>
+                <div class="ms-dropdown filter-locality-select" id="msLocality">
+                    <div class="ms-header" onclick="toggleMsDropdown('msLocality')">
+                        <span class="ms-count">All Locations</span>
+                    </div>
+                    <div class="ms-list">
+                        <div class="ms-actions">
+                            <button type="button" onclick="msSelectAll('msLocality')">Select All</button>
+                            <button type="button" onclick="msClearAll('msLocality')">Clear All</button>
+                        </div>
+                        <div class="ms-options">
+                            <?php foreach ($areas as $a): ?>
+                            <div class="ms-option">
+                                <input type="checkbox" id="loc_<?= htmlspecialchars($a) ?>" value="<?= htmlspecialchars($a) ?>" onchange="msChanged('msLocality')">
+                                <label for="loc_<?= htmlspecialchars($a) ?>"><?= htmlspecialchars(ucfirst($a)) ?></label>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div>
                 <label class="form-label" style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:2px;white-space:nowrap;">Seats</label>
-                <select class="form-select form-select-sm filter-select filter-seats-select" id="filterSeats" aria-label="Filter by Seats">
-                    <option value="">All Seats</option>
-                    <option value="10-50">10-50</option>
-                    <option value="51-100">51-100</option>
-                    <option value="101-200">101-200</option>
-                    <option value="200-9999">200+</option>
-                </select>
+                <div class="ms-dropdown filter-seats-select" id="msSeats">
+                    <div class="ms-header" onclick="toggleMsDropdown('msSeats')">
+                        <span class="ms-count">All Seats</span>
+                    </div>
+                    <div class="ms-list">
+                        <div class="ms-actions">
+                            <button type="button" onclick="msSelectAll('msSeats')">Select All</button>
+                            <button type="button" onclick="msClearAll('msSeats')">Clear All</button>
+                        </div>
+                        <div class="ms-options">
+                            <div class="ms-option">
+                                <input type="checkbox" id="seats_10_50" value="10-50" onchange="msChanged('msSeats')">
+                                <label for="seats_10_50">10-50</label>
+                            </div>
+                            <div class="ms-option">
+                                <input type="checkbox" id="seats_51_100" value="51-100" onchange="msChanged('msSeats')">
+                                <label for="seats_51_100">51-100</label>
+                            </div>
+                            <div class="ms-option">
+                                <input type="checkbox" id="seats_101_200" value="101-200" onchange="msChanged('msSeats')">
+                                <label for="seats_101_200">101-200</label>
+                            </div>
+                            <div class="ms-option">
+                                <input type="checkbox" id="seats_200_plus" value="200-9999" onchange="msChanged('msSeats')">
+                                <label for="seats_200_plus">200+</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <!-- <div>
                 <label class="form-label" style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:2px;white-space:nowrap;">Search</label>
@@ -1536,39 +1628,84 @@ if (isset($conn) && $conn) {
         //  ADMIN LOGIN
         // ============================================================
         // ============================================================
+        //  MULTI-SELECT DROPDOWN FUNCTIONS
+        // ============================================================
+        function toggleMsDropdown(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('open');
+        }
+
+        function getMultiSelectValues(id) {
+            const el = document.getElementById(id);
+            if (!el) return [];
+            return Array.from(el.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+        }
+
+        function msSelectAll(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+            msChanged(id);
+        }
+
+        function msClearAll(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            msChanged(id);
+        }
+
+        function msChanged(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const count = el.querySelectorAll('input[type="checkbox"]:checked').length;
+            const countEl = el.querySelector('.ms-count');
+            if (count === 0) {
+                if (id === 'msLocality') countEl.textContent = 'All Locations';
+                else if (id === 'msSeats') countEl.textContent = 'All Seats';
+                else countEl.textContent = 'All';
+            } else {
+                countEl.textContent = count + ' selected';
+            }
+            currentPage = 1;
+            loadListings();
+        }
+
+        // Close multi-select dropdown on outside click
+        document.addEventListener('click', function(e) {
+            document.querySelectorAll('.ms-dropdown.open').forEach(dd => {
+                if (!dd.contains(e.target)) dd.classList.remove('open');
+            });
+        });
+
+        // ============================================================
         //  FILTERS
         // ============================================================
         function getFilters() {
             return {
                 city: document.getElementById('filterCity').value,
-                locality: document.getElementById('filterLocality').value,
                 product: document.getElementById('filterProduct').value,
                 page: currentPage
             };
         }
 
         function getSeatsFilter() {
-            const val = document.getElementById('filterSeats').value;
-            if (!val) return {};
-            
-            if (val === '200-9999') {
-                return { min_seats: 201 };
-            }
-            
-            const parts = val.split('-');
-            if (parts.length !== 2) return {};
-            
-            const minVal = parts[0].trim();
-            const maxVal = parts[1].trim();
-            
-            if (isNaN(minVal) || (maxVal !== '' && isNaN(maxVal))) return {};
-            
-            const minSeats = parseInt(minVal);
-            const maxSeats = maxVal ? parseInt(maxVal) : null;
-            
-            if (minSeats < 0 || (maxSeats !== null && maxSeats < 0)) return {};
-            
-            return { min_seats: minSeats, ...(maxSeats !== null ? { max_seats: maxSeats } : {}) };
+            const values = getMultiSelectValues('msSeats');
+            if (values.length === 0) return {};
+            let minSeats = Infinity, maxSeats = 0;
+            values.forEach(val => {
+                const parts = val.split('-');
+                if (parts.length === 2) {
+                    const min = parseInt(parts[0]);
+                    const max = parseInt(parts[1]);
+                    if (min < minSeats) minSeats = min;
+                    if (max > maxSeats) maxSeats = max;
+                }
+            });
+            const result = {};
+            if (minSeats !== Infinity) result.min_seats = minSeats;
+            if (maxSeats > 0 && maxSeats < 9999) result.max_seats = maxSeats;
+            return result;
         }
 
         function buildQueryParams() {
@@ -1583,8 +1720,13 @@ if (isset($conn) && $conn) {
             };
             if (search) params.search = search;
             if (f.city) params.city = f.city;
-            if (f.locality) params.area = f.locality;
             if (f.product) params.listing_type = f.product;
+            const localities = getMultiSelectValues('msLocality');
+            if (localities.length === 1) {
+                params.area = localities[0];
+            } else if (localities.length > 1) {
+                params.area = localities.join(',');
+            }
             if (seats.min_seats) params.min_seats = seats.min_seats;
             if (seats.max_seats) params.max_seats = seats.max_seats;
             params._t = Date.now();
@@ -1614,17 +1756,15 @@ if (isset($conn) && $conn) {
                 const text = cityEl.options[cityEl.selectedIndex]?.text || f.city;
                 filters.push({ key: 'city', label: text });
             }
-            if (f.locality) {
-                const locEl = document.getElementById('filterLocality');
-                const text = locEl.options[locEl.selectedIndex]?.text || f.locality;
-                filters.push({ key: 'locality', label: text });
-            }
-            const seatsVal = document.getElementById('filterSeats').value;
-            if (seatsVal) {
-                const seatsEl = document.getElementById('filterSeats');
-                const text = seatsEl.options[seatsEl.selectedIndex]?.text || seatsVal;
-                filters.push({ key: 'seats', label: text + ' seats' });
-            }
+            const localities = getMultiSelectValues('msLocality');
+            localities.forEach(val => {
+                filters.push({ key: 'locality', label: val.charAt(0).toUpperCase() + val.slice(1), value: val });
+            });
+            const seatsValues = getMultiSelectValues('msSeats');
+            seatsValues.forEach(val => {
+                const label = val.replace(/-/g, ' - ') + ' seats';
+                filters.push({ key: 'seats', label: label, value: val });
+            });
 
             if (filters.length === 0) {
                 container.innerHTML = '';
@@ -1637,18 +1777,30 @@ if (isset($conn) && $conn) {
             clearBtn.style.display = 'inline';
             let html = '';
             filters.forEach(fil => {
-                html += '<span class="filter-tag"><span>' + escHtml(fil.label) + '</span><button onclick="removeFilter(\'' + fil
-                    .key +
-                    '\')" aria-label="Remove ' + fil.key + ' filter">&times;</button></span>';
+                html += '<span class="filter-tag"><span>' + escHtml(fil.label) + '</span><button onclick="removeFilter(\'' + fil.key + '\', \'' + escHtml(fil.value || '') + '\')" aria-label="Remove ' + fil.key + ' filter">&times;</button></span>';
             });
             container.innerHTML = html;
         }
 
-        function removeFilter(key) {
+        function removeFilter(key, value) {
             if (key === 'product') document.getElementById('filterProduct').value = '';
-            else if (key === 'city') { document.getElementById('filterCity').value = '';
-                updateLocationDropdown(); } else if (key === 'locality') { document.getElementById('filterLocality').value = '';
-                updateChipsFromDropdown(); } else if (key === 'seats') document.getElementById('filterSeats').value = '';
+            else if (key === 'city') {
+                document.getElementById('filterCity').value = '';
+                rebuildLocalityOptions();
+            } else if (key === 'locality') {
+                const cb = document.getElementById('loc_' + value);
+                if (cb) cb.checked = false;
+                msChanged('msLocality');
+                return;
+            } else if (key === 'seats') {
+                const dd = document.getElementById('msSeats');
+                if (dd) {
+                    const cb = dd.querySelector('input[value="' + value + '"]');
+                    if (cb) cb.checked = false;
+                }
+                msChanged('msSeats');
+                return;
+            }
             currentPage = 1;
             loadListings();
         }
@@ -1656,9 +1808,9 @@ if (isset($conn) && $conn) {
         function clearFilters() {
             document.getElementById('filterProduct').value = '';
             document.getElementById('filterCity').value = '';
-            updateLocationDropdown();
-            document.getElementById('filterLocality').value = '';
-            document.getElementById('filterSeats').value = '';
+            rebuildLocalityOptions();
+            msClearAll('msLocality');
+            msClearAll('msSeats');
             document.querySelectorAll('.locality-chip').forEach(c => { c.classList.remove('active'); c.setAttribute('aria-selected', 'false'); });
             const allChip = document.querySelector('.locality-chip[data-area=""]');
             if (allChip) { allChip.classList.add('active'); allChip.setAttribute('aria-selected', 'true'); }
@@ -1667,37 +1819,44 @@ if (isset($conn) && $conn) {
         }
 
         function updateChipsFromDropdown() {
-            const locVal = document.getElementById('filterLocality').value;
+            const localities = getMultiSelectValues('msLocality');
             document.querySelectorAll('.locality-chip').forEach(c => {
-                c.classList.toggle('active', c.dataset.area === locVal);
-                c.setAttribute('aria-selected', c.dataset.area === locVal ? 'true' : 'false');
+                const isActive = localities.length === 0 ? c.dataset.area === '' : localities.includes(c.dataset.area);
+                c.classList.toggle('active', isActive);
+                c.setAttribute('aria-selected', isActive ? 'true' : 'false');
             });
-            if (!locVal) {
+            if (localities.length === 0) {
                 const allChip = document.querySelector('.locality-chip[data-area=""]');
                 if (allChip) { allChip.classList.add('active');
                     allChip.setAttribute('aria-selected', 'true'); }
             }
         }
 
-        function updateLocationDropdown() {
+        function rebuildLocalityOptions() {
             var city = document.getElementById('filterCity').value;
-            var locSelect = document.getElementById('filterLocality');
-            var currentVal = locSelect.value;
-            while (locSelect.options.length > 1) {
-                locSelect.remove(1);
-            }
-            var areas = city && cityAreas[city] ? cityAreas[city] : (cityAreas['__all__'] || []);
-            areas.forEach(function(area) {
-                var opt = document.createElement('option');
-                opt.value = area;
-                opt.textContent = area.charAt(0).toUpperCase() + area.slice(1);
-                locSelect.appendChild(opt);
+            var dd = document.getElementById('msLocality');
+            if (!dd) return;
+            var optionsContainer = dd.querySelector('.ms-options');
+            if (!optionsContainer) return;
+            var checked = {};
+            dd.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+                checked[cb.value] = true;
             });
-            var exists = false;
-            for (var i = 0; i < locSelect.options.length; i++) {
-                if (locSelect.options[i].value === currentVal) { exists = true; break; }
+            var areas = city && cityAreas[city] ? cityAreas[city] : (cityAreas['__all__'] || []);
+            var html = '';
+            areas.forEach(function(area) {
+                var id = 'loc_' + area;
+                var isChecked = checked[area] ? 'checked' : '';
+                html += '<div class="ms-option"><input type="checkbox" id="' + id + '" value="' + area + '" ' + isChecked + ' onchange="msChanged(\'msLocality\')"><label for="' + id + '">' + area.charAt(0).toUpperCase() + area.slice(1) + '</label></div>';
+            });
+            optionsContainer.innerHTML = html;
+            var count = dd.querySelectorAll('input[type="checkbox"]:checked').length;
+            var countEl = dd.querySelector('.ms-count');
+            if (count === 0) {
+                countEl.textContent = 'All Locations';
+            } else {
+                countEl.textContent = count + ' selected';
             }
-            if (!exists) locSelect.value = '';
         }
 
         // ============================================================
@@ -2224,8 +2383,7 @@ if (isset($conn) && $conn) {
                     return;
                 }
                 currentPage = 1;
-                if (el.id === 'filterCity') updateLocationDropdown();
-                if (el.id === 'filterLocality') updateChipsFromDropdown();
+                if (el.id === 'filterCity') rebuildLocalityOptions();
                 loadListings();
             });
         });
@@ -2267,9 +2425,15 @@ if (isset($conn) && $conn) {
                 });
                 this.classList.add('active');
                 this.setAttribute('aria-selected', 'true');
-                document.getElementById('filterLocality').value = this.dataset.area;
-                currentPage = 1;
-                loadListings();
+                const area = this.dataset.area;
+                // Uncheck all locality checkboxes
+                document.querySelectorAll('#msLocality input[type="checkbox"]').forEach(cb => cb.checked = false);
+                // Check the corresponding checkbox if area is not empty
+                if (area) {
+                    const cb = document.getElementById('loc_' + area);
+                    if (cb) cb.checked = true;
+                }
+                msChanged('msLocality');
             });
         });
 
@@ -2278,7 +2442,7 @@ if (isset($conn) && $conn) {
         // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
             const cityEl = document.getElementById('filterCity');
-            updateLocationDropdown();
+            rebuildLocalityOptions();
             if (typeof CubeRealtime !== 'undefined') {
                 CubeRealtime.init({ interval: 20000 });
                 CubeRealtime.on('listing_updated', function() {

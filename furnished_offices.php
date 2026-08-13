@@ -194,6 +194,63 @@ if (isset($conn) && $conn) {
             min-width: 120px;
             max-width: 160px;
         }
+
+        /* Multi-Select Dropdown */
+        .ms-dropdown { position: relative; width: 100%; }
+        .ms-dropdown .ms-header {
+            display: flex; align-items: center; justify-content: space-between;
+            border: 1px solid #0d4ab4; background: #fafbff; font-size: 0.85rem;
+            padding: 6px 30px 6px 10px; min-height: 38px; cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s; user-select: none;
+        }
+        .ms-dropdown .ms-header::after {
+            content: '\f107'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            color: #6b7280; font-size: 0.7rem; pointer-events: none;
+        }
+        .ms-dropdown.open .ms-header::after { transform: translateY(-50%) rotate(180deg); }
+        .ms-dropdown .ms-header:hover { box-shadow: 0 0 0 3px rgba(13,74,180,0.12); }
+        .ms-dropdown .ms-list {
+            display: none; position: absolute; top: calc(100% + 2px); left: 0; right: 0;
+            background: #fff; border: 1px solid #dcdcdc; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            z-index: 100; max-height: 240px; overflow: hidden; flex-direction: column;
+        }
+        .ms-dropdown.open .ms-list { display: flex; }
+        .ms-dropdown .ms-list .ms-actions {
+            display: flex; gap: 6px; padding: 6px 8px; border-bottom: 1px solid #eee;
+            flex-shrink: 0;
+        }
+        .ms-dropdown .ms-list .ms-actions button {
+            flex: 1; font-size: 0.7rem; font-weight: 500; padding: 3px 0;
+            border: 1px solid #e5e7eb; background: #fafbff; color: #374151;
+            cursor: pointer; transition: background 0.15s;
+        }
+        .ms-dropdown .ms-list .ms-actions button:hover { background: #eef4ff; color: #0d4ab4; }
+        .ms-dropdown .ms-options {
+            overflow-y: auto; max-height: 190px; padding: 4px 0;
+        }
+        .ms-dropdown .ms-option {
+            display: flex; align-items: center; gap: 8px;
+            padding: 5px 10px; cursor: pointer; font-size: 0.8rem;
+            color: #374151; transition: background 0.15s;
+        }
+        .ms-dropdown .ms-option:hover { background: #eef4ff; }
+        .ms-dropdown .ms-option input[type="checkbox"] {
+            accent-color: #0d4ab4; width: 14px; height: 14px;
+            cursor: pointer; flex-shrink: 0; margin: 0;
+        }
+        .ms-dropdown .ms-option label {
+            margin: 0; cursor: pointer; flex: 1; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; font-weight: 400;
+        }
+        @media (max-width: 575px) {
+            .ms-dropdown .ms-header { font-size: 0.72rem; padding: 2px 18px 2px 6px; min-height: 28px; }
+            .ms-dropdown .ms-option { font-size: 0.72rem; padding: 4px 8px; }
+        }
+        @media (max-width: 360px) {
+            .ms-dropdown .ms-header { font-size: 0.65rem; padding: 2px 14px 2px 4px; min-height: 24px; }
+            .ms-dropdown .ms-option { font-size: 0.65rem; padding: 3px 6px; }
+        }
         /* ----- Localities ----- */
         .localities-section {
             background: #ffffff;
@@ -1252,22 +1309,57 @@ if (isset($conn) && $conn) {
             </div>
             <div>
                 <label class="form-label" style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:2px;white-space:nowrap;">Locality</label>
-                <select class="form-select form-select-sm filter-select filter-locality-select" id="filterLocality" aria-label="Filter by Locality">
-                    <option value="">All Locations</option>
-                    <?php foreach ($areas as $a): ?>
-                        <option value="<?= htmlspecialchars($a) ?>"><?= htmlspecialchars(ucfirst($a)) ?></option>
-                    <?php endforeach; ?>
-                </select>
+                <div class="ms-dropdown filter-locality-select" id="msLocality">
+                    <div class="ms-header" onclick="toggleMsDropdown('msLocality')">
+                        <span class="ms-count">All Locations</span>
+                    </div>
+                    <div class="ms-list">
+                        <div class="ms-actions">
+                            <button type="button" onclick="msSelectAll('msLocality')">Select All</button>
+                            <button type="button" onclick="msClearAll('msLocality')">Clear All</button>
+                        </div>
+                        <div class="ms-options">
+                            <?php foreach ($areas as $a): ?>
+                            <div class="ms-option">
+                                <input type="checkbox" id="loc_<?= htmlspecialchars($a) ?>" value="<?= htmlspecialchars($a) ?>" onchange="msChanged('msLocality')">
+                                <label for="loc_<?= htmlspecialchars($a) ?>"><?= htmlspecialchars(ucfirst($a)) ?></label>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div>
                 <label class="form-label" style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:2px;white-space:nowrap;">Sq Ft</label>
-                <select class="form-select form-select-sm filter-select filter-sqft-select" id="filterSqft" aria-label="Filter by Square Feet">
-                    <option value="">All Sq Ft</option>
-                    <option value="1000-5000">1000 - 5000</option>
-                    <option value="5000-10000">5000 - 10000</option>
-                    <option value="10000-20000">10000 - 20000</option>
-                    <option value="20000-">20000+</option>
-                </select>
+                <div class="ms-dropdown filter-sqft-select" id="msSqft">
+                    <div class="ms-header" onclick="toggleMsDropdown('msSqft')">
+                        <span class="ms-count">All Sq Ft</span>
+                    </div>
+                    <div class="ms-list">
+                        <div class="ms-actions">
+                            <button type="button" onclick="msSelectAll('msSqft')">Select All</button>
+                            <button type="button" onclick="msClearAll('msSqft')">Clear All</button>
+                        </div>
+                        <div class="ms-options">
+                            <div class="ms-option">
+                                <input type="checkbox" id="sqft_1000_5000" value="1000-5000" onchange="msChanged('msSqft')">
+                                <label for="sqft_1000_5000">1000 - 5000</label>
+                            </div>
+                            <div class="ms-option">
+                                <input type="checkbox" id="sqft_5000_10000" value="5000-10000" onchange="msChanged('msSqft')">
+                                <label for="sqft_5000_10000">5000 - 10000</label>
+                            </div>
+                            <div class="ms-option">
+                                <input type="checkbox" id="sqft_10000_20000" value="10000-20000" onchange="msChanged('msSqft')">
+                                <label for="sqft_10000_20000">10000 - 20000</label>
+                            </div>
+                            <div class="ms-option">
+                                <input type="checkbox" id="sqft_20000_plus" value="20000-" onchange="msChanged('msSqft')">
+                                <label for="sqft_20000_plus">20000+</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <!-- <div>
                 <label class="form-label" style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:2px;white-space:nowrap;">Search</label>
@@ -1528,26 +1620,84 @@ if (isset($conn) && $conn) {
         //  ADMIN LOGIN
         // ============================================================
         // ============================================================
+        //  MULTI-SELECT DROPDOWN FUNCTIONS
+        // ============================================================
+        function toggleMsDropdown(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('open');
+        }
+
+        function getMultiSelectValues(id) {
+            const el = document.getElementById(id);
+            if (!el) return [];
+            return Array.from(el.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+        }
+
+        function msSelectAll(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+            msChanged(id);
+        }
+
+        function msClearAll(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            msChanged(id);
+        }
+
+        function msChanged(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const count = el.querySelectorAll('input[type="checkbox"]:checked').length;
+            const countEl = el.querySelector('.ms-count');
+            if (count === 0) {
+                if (id === 'msLocality') countEl.textContent = 'All Locations';
+                else if (id === 'msSqft') countEl.textContent = 'All Sq Ft';
+                else countEl.textContent = 'All';
+            } else {
+                countEl.textContent = count + ' selected';
+            }
+            currentPage = 1;
+            loadListings();
+        }
+
+        // Close multi-select dropdown on outside click
+        document.addEventListener('click', function(e) {
+            document.querySelectorAll('.ms-dropdown.open').forEach(dd => {
+                if (!dd.contains(e.target)) dd.classList.remove('open');
+            });
+        });
+
+        // ============================================================
         //  FILTERS
         // ============================================================
         function getFilters() {
             return {
                 city: document.getElementById('filterCity').value,
-                locality: document.getElementById('filterLocality').value,
                 product: document.getElementById('filterProduct').value,
                 page: currentPage
             };
         }
 
         function getSqftFilter() {
-            const val = document.getElementById('filterSqft').value;
-            if (!val) return {};
-            const parts = val.split('-');
-            if (parts.length === 2) {
-                if (parts[1] === '') return { min_sqft: parseInt(parts[0]) };
-                return { min_sqft: parseInt(parts[0]), max_sqft: parseInt(parts[1]) };
-            }
-            return {};
+            const values = getMultiSelectValues('msSqft');
+            if (values.length === 0) return {};
+            let minSqft = Infinity, maxSqft = 0;
+            values.forEach(val => {
+                const parts = val.split('-');
+                if (parts.length === 2) {
+                    const min = parseInt(parts[0]);
+                    const max = parts[1] === '' ? Infinity : parseInt(parts[1]);
+                    if (min < minSqft) minSqft = min;
+                    if (max > maxSqft) maxSqft = max;
+                }
+            });
+            const result = {};
+            if (minSqft !== Infinity) result.min_sqft = minSqft;
+            if (maxSqft !== Infinity && maxSqft > 0) result.max_sqft = maxSqft;
+            return result;
         }
 
         function buildQueryParams() {
@@ -1562,8 +1712,13 @@ if (isset($conn) && $conn) {
             };
             if (search) params.search = search;
             if (f.city) params.city = f.city;
-            if (f.locality) params.area = f.locality;
             if (f.product) params.listing_type = f.product;
+            const localities = getMultiSelectValues('msLocality');
+            if (localities.length === 1) {
+                params.area = localities[0];
+            } else if (localities.length > 1) {
+                params.area = localities.join(',');
+            }
             if (sqft.min_sqft !== undefined) params.min_sqft = sqft.min_sqft;
             if (sqft.max_sqft !== undefined) params.max_sqft = sqft.max_sqft;
             params._t = Date.now();
@@ -1593,17 +1748,14 @@ if (isset($conn) && $conn) {
                 const text = cityEl.options[cityEl.selectedIndex]?.text || f.city;
                 filters.push({ key: 'city', label: text });
             }
-            if (f.locality) {
-                const locEl = document.getElementById('filterLocality');
-                const text = locEl.options[locEl.selectedIndex]?.text || f.locality;
-                filters.push({ key: 'locality', label: text });
-            }
-            const sqftVal = document.getElementById('filterSqft').value;
-            if (sqftVal) {
-                const sqftEl = document.getElementById('filterSqft');
-                const text = sqftEl.options[sqftEl.selectedIndex]?.text || sqftVal;
-                filters.push({ key: 'sqft', label: text + ' Sq Ft.' });
-            }
+            const localities = getMultiSelectValues('msLocality');
+            localities.forEach(val => {
+                filters.push({ key: 'locality', label: val.charAt(0).toUpperCase() + val.slice(1), value: val });
+            });
+            const sqftValues = getMultiSelectValues('msSqft');
+            sqftValues.forEach(val => {
+                filters.push({ key: 'sqft', label: val.replace(/-/g, ' - ') + ' Sq Ft.', value: val });
+            });
 
             if (filters.length === 0) {
                 container.innerHTML = '';
@@ -1616,18 +1768,30 @@ if (isset($conn) && $conn) {
             clearBtn.style.display = 'inline';
             let html = '';
             filters.forEach(fil => {
-                html += '<span class="filter-tag"><span>' + escHtml(fil.label) + '</span><button onclick="removeFilter(\'' + fil
-                    .key +
-                    '\')" aria-label="Remove ' + fil.key + ' filter">&times;</button></span>';
+                html += '<span class="filter-tag"><span>' + escHtml(fil.label) + '</span><button onclick="removeFilter(\'' + fil.key + '\', \'' + escHtml(fil.value || '') + '\')" aria-label="Remove ' + fil.key + ' filter">&times;</button></span>';
             });
             container.innerHTML = html;
         }
 
-        function removeFilter(key) {
+        function removeFilter(key, value) {
             if (key === 'product') document.getElementById('filterProduct').value = 'commercial';
-            else if (key === 'city') { document.getElementById('filterCity').value = '';
-                updateLocationDropdown(); } else if (key === 'locality') { document.getElementById('filterLocality').value = '';
-                updateChipsFromDropdown(); } else if (key === 'sqft') document.getElementById('filterSqft').value = '';
+            else if (key === 'city') {
+                document.getElementById('filterCity').value = '';
+                rebuildLocalityOptions();
+            } else if (key === 'locality') {
+                const cb = document.getElementById('loc_' + value);
+                if (cb) cb.checked = false;
+                msChanged('msLocality');
+                return;
+            } else if (key === 'sqft') {
+                const dd = document.getElementById('msSqft');
+                if (dd) {
+                    const cb = dd.querySelector('input[value="' + value + '"]');
+                    if (cb) cb.checked = false;
+                }
+                msChanged('msSqft');
+                return;
+            }
             currentPage = 1;
             loadListings();
         }
@@ -1635,9 +1799,9 @@ if (isset($conn) && $conn) {
         function clearFilters() {
             document.getElementById('filterProduct').value = 'commercial';
             document.getElementById('filterCity').value = '';
-            updateLocationDropdown();
-            document.getElementById('filterLocality').value = '';
-            document.getElementById('filterSqft').value = '';
+            rebuildLocalityOptions();
+            msClearAll('msLocality');
+            msClearAll('msSqft');
             document.querySelectorAll('.locality-chip').forEach(c => c.classList.remove('active'));
             const allChip = document.querySelector('.locality-chip[data-area=""]');
             if (allChip) allChip.classList.add('active');
@@ -1646,37 +1810,44 @@ if (isset($conn) && $conn) {
         }
 
         function updateChipsFromDropdown() {
-            const locVal = document.getElementById('filterLocality').value;
+            const localities = getMultiSelectValues('msLocality');
             document.querySelectorAll('.locality-chip').forEach(c => {
-                c.classList.toggle('active', c.dataset.area === locVal);
-                c.setAttribute('aria-selected', c.dataset.area === locVal ? 'true' : 'false');
+                const isActive = localities.length === 0 ? c.dataset.area === '' : localities.includes(c.dataset.area);
+                c.classList.toggle('active', isActive);
+                c.setAttribute('aria-selected', isActive ? 'true' : 'false');
             });
-            if (!locVal) {
+            if (localities.length === 0) {
                 const allChip = document.querySelector('.locality-chip[data-area=""]');
                 if (allChip) { allChip.classList.add('active');
                     allChip.setAttribute('aria-selected', 'true'); }
             }
         }
 
-        function updateLocationDropdown() {
+        function rebuildLocalityOptions() {
             var city = document.getElementById('filterCity').value;
-            var locSelect = document.getElementById('filterLocality');
-            var currentVal = locSelect.value;
-            while (locSelect.options.length > 1) {
-                locSelect.remove(1);
-            }
-            var areas = city && cityAreas[city] ? cityAreas[city] : (cityAreas['__all__'] || []);
-            areas.forEach(function(area) {
-                var opt = document.createElement('option');
-                opt.value = area;
-                opt.textContent = area.charAt(0).toUpperCase() + area.slice(1);
-                locSelect.appendChild(opt);
+            var dd = document.getElementById('msLocality');
+            if (!dd) return;
+            var optionsContainer = dd.querySelector('.ms-options');
+            if (!optionsContainer) return;
+            var checked = {};
+            dd.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+                checked[cb.value] = true;
             });
-            var exists = false;
-            for (var i = 0; i < locSelect.options.length; i++) {
-                if (locSelect.options[i].value === currentVal) { exists = true; break; }
+            var areas = city && cityAreas[city] ? cityAreas[city] : (cityAreas['__all__'] || []);
+            var html = '';
+            areas.forEach(function(area) {
+                var id = 'loc_' + area;
+                var isChecked = checked[area] ? 'checked' : '';
+                html += '<div class="ms-option"><input type="checkbox" id="' + id + '" value="' + area + '" ' + isChecked + ' onchange="msChanged(\'msLocality\')"><label for="' + id + '">' + area.charAt(0).toUpperCase() + area.slice(1) + '</label></div>';
+            });
+            optionsContainer.innerHTML = html;
+            var count = dd.querySelectorAll('input[type="checkbox"]:checked').length;
+            var countEl = dd.querySelector('.ms-count');
+            if (count === 0) {
+                countEl.textContent = 'All Locations';
+            } else {
+                countEl.textContent = count + ' selected';
             }
-            if (!exists) locSelect.value = '';
         }
 
         // ============================================================
@@ -2216,8 +2387,7 @@ if (isset($conn) && $conn) {
                     return;
                 }
                 currentPage = 1;
-                if (el.id === 'filterCity') updateLocationDropdown();
-                if (el.id === 'filterLocality') updateChipsFromDropdown();
+                if (el.id === 'filterCity') rebuildLocalityOptions();
                 loadListings();
             });
         });
@@ -2259,9 +2429,15 @@ if (isset($conn) && $conn) {
                 });
                 this.classList.add('active');
                 this.setAttribute('aria-selected', 'true');
-                document.getElementById('filterLocality').value = this.dataset.area;
-                currentPage = 1;
-                loadListings();
+                const area = this.dataset.area;
+                // Uncheck all locality checkboxes
+                document.querySelectorAll('#msLocality input[type="checkbox"]').forEach(cb => cb.checked = false);
+                // Check the corresponding checkbox if area is not empty
+                if (area) {
+                    const cb = document.getElementById('loc_' + area);
+                    if (cb) cb.checked = true;
+                }
+                msChanged('msLocality');
             });
         });
 
@@ -2270,7 +2446,7 @@ if (isset($conn) && $conn) {
         // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
             const cityEl = document.getElementById('filterCity');
-            updateLocationDropdown();
+            rebuildLocalityOptions();
             // Don't force a default city - show all listings
             if (typeof CubeRealtime !== 'undefined') {
                 CubeRealtime.init({ interval: 20000 });
