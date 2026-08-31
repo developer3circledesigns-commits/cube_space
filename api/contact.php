@@ -35,10 +35,12 @@ try {
         if ($mseTs > 1000000000000) $mseTs = (int)($mseTs / 1000);
         $age = time() - $mseTs;
         if ($age < 2) {
+            error_log('[contact.php] Timing blocked: age=' . $age . 's, mse_ts=' . $mseTsRaw . ', IP=' . ($_SERVER['REMOTE_ADDR'] ?? ''));
             http_response_code(400);
             die(json_encode(['success' => false, 'message' => 'Please wait a moment before submitting.', 'data' => null, 'errors' => null]));
         }
         if ($age > 3600) {
+            error_log('[contact.php] Form expired: age=' . $age . 's, mse_ts=' . $mseTsRaw . ', IP=' . ($_SERVER['REMOTE_ADDR'] ?? ''));
             http_response_code(400);
             die(json_encode(['success' => false, 'message' => 'Form expired. Please refresh and try again.', 'data' => null, 'errors' => null]));
         }
@@ -122,6 +124,7 @@ try {
         'listing_code' => 'max:20',
         'source'       => 'max:255',
     ])) {
+        error_log('[contact.php] Validation failed: ' . json_encode($validator->errors()) . ' — POST keys: ' . implode(',', array_keys($_POST)));
         http_response_code(400);
         die(json_encode([
             'success' => false,
