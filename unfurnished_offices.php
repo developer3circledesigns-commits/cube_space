@@ -81,6 +81,8 @@ if (isset($conn) && $conn) {
     <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
     <link rel="preload" href="assets/css/style.css?v=6" as="style">
     <link rel="stylesheet" href="assets/css/style.css?v=6">
+    <link rel="stylesheet" href="assets/css/multi-select-enquiry.css?v=4">
+    <link rel="stylesheet" href="assets/css/listing-pages-mobile.css?v=3">
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" as="style" onload="this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" onload="this.rel='stylesheet'">
@@ -1553,7 +1555,10 @@ if (isset($conn) && $conn) {
             <div class="col-lg-8">
                 <div class="results-counter" id="resultsCounter">
                     <span>Showing <strong id="resultRange">1–<?= (int)min(20, $totalCount) ?></strong> of <strong id="resultCount"><?= (int)$totalCount ?></strong> Unfurnished Office Spaces</span>
-                    <button class="btn btn-sm btn-outline-secondary" id="btnClearAll" onclick="clearFilters()" style="display:none;">Clear All Filters</button>
+                    <div class="results-counter-actions">
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btnToggleMultiSelect" aria-pressed="false" title="Select multiple workspaces and send one enquiry"><i class="fa-solid fa-list-check me-1"></i> Multi Select Enquiry</button>
+                        <button class="btn btn-sm btn-outline-secondary" id="btnClearAll" onclick="clearFilters()" style="display:none;">Clear All Filters</button>
+                    </div>
                 </div>
                 <div class="active-filters" id="activeFilters"></div>
                 <div id="listingsContainer">
@@ -1709,6 +1714,8 @@ if (isset($conn) && $conn) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
     </script>
     <script src="assets/js/api-client.js?v=2"></script>
+    <script src="assets/js/multi-select-enquiry.js?v=6"></script>
+    <script src="assets/js/filter-panel-toggle.js?v=1"></script>
     <script>
         // ============================================================
         //  GLOBALS
@@ -2089,8 +2096,8 @@ if (isset($conn) && $conn) {
                         <button class="description-toggle" onclick="toggleDescription('${descId}')">View more</button>
                     </div>` : '';
 
-                html += `
-                        <div class="card office-card flex-lg-row profile-card" data-slug="${escHtml(o.slug)}" data-listing-type="unfurnished" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
+                const cardInner = `
+                            <div class="card office-card flex-lg-row profile-card border-0" style="border:none; box-shadow:none;">
                             <div class="card-img-top office-card-img">
                                 ${carouselHtml}
                                 ${imgCount}
@@ -2114,27 +2121,19 @@ if (isset($conn) && $conn) {
                                 </div>
                             </div>
                         </div>`;
+                html += MultiSelectEnquiry.renderCardShell({
+                    id: o.id,
+                    slug: o.slug,
+                    listingType: 'unfurnished',
+                    ariaLabel: 'View details for ' + escHtml(o.title),
+                    innerHtml: cardInner
+                });
             });
             html += '</div>';
             container.innerHTML = html;
 
             initCarousels(container);
-
-            container.querySelectorAll('.office-card').forEach(card => {
-                card.addEventListener('click', function(e) {
-                    if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
-                        .target.closest('.btn-get-price') || e.target.closest('.description-toggle')) return;
-                    navigateTo('office_detail.php?slug=' + this.dataset.slug + '&type=' + this.dataset.listingType);
-                });
-                card.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
-                            .target.closest('.btn-get-price')) return;
-                        navigateTo('office_detail.php?slug=' + this.dataset.slug + '&type=' + this.dataset.listingType);
-                    }
-                });
-            });
+            MultiSelectEnquiry.afterRender(container);
         }
 
         function renderPagination(total, page, limit) {
@@ -2248,8 +2247,8 @@ if (isset($conn) && $conn) {
                         <button class="description-toggle" onclick="toggleDescription('${descId}')">View more</button>
                     </div>` : '';
 
-                html += `
-                                <div class="card office-card profile-card" data-slug="${escHtml(o.slug)}" data-listing-type="unfurnished" tabindex="0" role="link" aria-label="View details for ${escHtml(o.title)}">
+                const nearestCardInner = `
+                                    <div class="card office-card profile-card border-0" style="border:none; box-shadow:none;">
                                     <div class="card-img-top office-card-img position-relative overflow-hidden">
                                         <span class="badge-nearby"><i class="fa-regular fa-compass"></i> Nearby</span>
                                         ${carouselHtml}
@@ -2273,6 +2272,13 @@ if (isset($conn) && $conn) {
                                     </div>
                                 </div>
                             `;
+                html += MultiSelectEnquiry.renderCardShell({
+                    id: o.id,
+                    slug: o.slug,
+                    listingType: 'unfurnished',
+                    ariaLabel: 'View details for ' + escHtml(o.title),
+                    innerHtml: nearestCardInner
+                });
             });
 
             html += '</div></div>';
@@ -2280,23 +2286,7 @@ if (isset($conn) && $conn) {
 
             // Init nearest carousels
             initCarousels(el);
-
-            // Click handlers for nearest cards
-            el.querySelectorAll('.office-card').forEach(card => {
-                card.addEventListener('click', function(e) {
-                    if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
-                        .target.closest('.btn-get-price') || e.target.closest('.description-toggle')) return;
-                    navigateTo('office_detail.php?slug=' + this.dataset.slug + '&type=' + this.dataset.listingType);
-                });
-                card.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        if (e.target.closest('.carousel-btn') || e.target.closest('.carousel-dots') || e
-                            .target.closest('.btn-get-price')) return;
-                        navigateTo('office_detail.php?slug=' + this.dataset.slug + '&type=' + this.dataset.listingType);
-                    }
-                });
-            });
+            MultiSelectEnquiry.afterRender(el);
         }
 
         // ============================================================
@@ -2532,6 +2522,11 @@ if (isset($conn) && $conn) {
         // ============================================================
         //  INIT
         // ============================================================
+        MultiSelectEnquiry.init({
+            interest: 'unfurnished',
+            storageKey: 'cubespace_multi_select_unfurnished'
+        });
+        FilterPanelToggle.init({ storageKey: 'cubespace_filters_open_unfurnished' });
         loadListings();
     </script>
 

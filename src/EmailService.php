@@ -116,7 +116,43 @@ class EmailService {
     }
 
     public function notifyAdminNewContact(array $contact): bool {
-        $subject = 'New Enquiry: ' . ($contact['name'] ?? 'Unknown') . ' - CubeSpace';
+        // Sanitize name for subject to avoid header injection
+        $safeName = preg_replace('/[\r\n]+/', ' ', (string)($contact['name'] ?? 'Unknown'));
+        $safeName = mb_substr(trim($safeName), 0, 80);
+        if ($safeName === '') $safeName = 'Unknown';
+        $subject = 'New Enquiry: ' . $safeName . ' - CubeSpace';
+        // Build workspaces summary safely from selected_offices or fallback
+        $workspacesSummary = $contact['workspaces_summary'] ?? '';
+        if ($workspacesSummary === '' && !empty($contact['selected_offices']) && is_array($contact['selected_offices'])) {
+            $lines = [];
+            foreach ($contact['selected_offices'] as $idx => $off) {
+                $t = preg_replace('/[\r\n]+/', ' ', (string)($off['title'] ?? 'Workspace'));
+                $t = mb_substr(trim(strip_tags($t)), 0, 100);
+                $code = preg_replace('/[\r\n]+/', '', (string)($off['listing_code'] ?? ''));
+                $code = mb_substr(trim(strip_tags($code)), 0, 30);
+                $type = preg_replace('/[^a-z_]/', '', strtolower((string)($off['listing_type'] ?? '')));
+                $id = (int)($off['id'] ?? 0);
+                $line = ($idx + 1) . '. ' . $t;
+                if ($code !== '') $line .= ' [' . $code . ']';
+                if ($id > 0) $line .= ' (ID: ' . $id . ', ' . $type . ')';
+                $lines[] = $line;
+            }
+            $workspacesSummary = implode("\n", $lines);
+        } else {
+            // Sanitize existing summary
+            $workspacesSummary = preg_replace('/[\r\n]+/', "\n", (string)$workspacesSummary);
+            $workspacesSummary = mb_substr(trim($workspacesSummary), 0, 5000);
+        }
+
+        // For multi, office_id/listing_code are placeholders; show N/A or MULTI summary
+        $officeIdDisplay = $contact['office_id'] ?? 'N/A';
+        if (empty($officeIdDisplay) || $officeIdDisplay === 0) $officeIdDisplay = 'N/A';
+        // If multi, show count hint
+        $listingCodeDisplay = $contact['listing_code'] ?? 'N/A';
+        if (($contact['source'] ?? '') === 'multi_select_enquiry' && !empty($contact['selected_offices'])) {
+            $listingCodeDisplay = $listingCodeDisplay . ' (' . count($contact['selected_offices']) . ' workspaces)';
+        }
+
         $body = $this->renderTemplate('admin-new-contact', [
             'name' => $contact['name'] ?? 'N/A',
             'phone' => $contact['phone'] ?? 'N/A',
@@ -125,17 +161,20 @@ class EmailService {
             'company' => $contact['company'] ?? 'N/A',
             'seats' => $contact['seats'] ?? 'N/A',
             'message' => $contact['message'] ?? 'N/A',
-            'office_id' => $contact['office_id'] ?? 'N/A',
-            'listing_code' => $contact['listing_code'] ?? 'N/A',
+            'office_id' => $officeIdDisplay,
+            'listing_code' => $listingCodeDisplay,
             'source' => $contact['source'] ?? 'N/A',
             'ip' => $contact['ip'] ?? 'N/A',
             'user_agent' => $contact['user_agent'] ?? 'N/A',
+            'workspaces_summary' => $workspacesSummary !== '' ? $workspacesSummary : 'N/A',
         ]);
 
         $result = $this->send($this->adminEmail, $subject, $body);
 
         if (!$result) {
-            $this->logEmail('New contact enquiry from ' . ($contact['name'] ?? 'Unknown') . ' (email failed)');
+            $safeLogName = preg_replace('/[\r\n\t]+/', ' ', (string)($contact['name'] ?? 'Unknown'));
+            $safeLogName = mb_substr(trim($safeLogName), 0, 60);
+            $this->logEmail('New contact enquiry from ' . $safeLogName . ' (email failed)');
         }
 
         return $result;
@@ -233,6 +272,7 @@ class EmailService {
                     <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Seats Required</td><td style="padding:8px;border:1px solid #ddd;">{{seats}}</td></tr>
                     <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Office ID</td><td style="padding:8px;border:1px solid #ddd;">{{office_id}}</td></tr>
                     <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Listing Code</td><td style="padding:8px;border:1px solid #ddd;">{{listing_code}}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;vertical-align:top;">Selected Workspaces</td><td style="padding:8px;border:1px solid #ddd;white-space:pre-line;">{{workspaces_summary}}</td></tr>
                     <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">Source</td><td style="padding:8px;border:1px solid #ddd;">{{source}}</td></tr>
                     <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">IP Address</td><td style="padding:8px;border:1px solid #ddd;">{{ip}}</td></tr>
                     <tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;">User Agent</td><td style="padding:8px;border:1px solid #ddd;word-break:break-all;">{{user_agent}}</td></tr>
@@ -268,11 +308,15 @@ class EmailService {
     }
 
     private function logEmail(string $message): void {
+        // Sanitize to prevent log injection: strip newlines, control chars, limit length
+        $sanitized = preg_replace('/[\r\n\t]+/', ' ', $message);
+        $sanitized = preg_replace('/[\x00-\x1F\x7F]/u', '', $sanitized);
+        $sanitized = mb_substr(trim($sanitized), 0, 500);
         $logDir = __DIR__ . '/../logs';
         if (!is_dir($logDir)) {
             @mkdir($logDir, 0755, true);
         }
         $logFile = $logDir . '/mail_' . date('Y-m-d') . '.log';
-        file_put_contents($logFile, date('c') . ' ' . $message . PHP_EOL, FILE_APPEND | LOCK_EX);
+        file_put_contents($logFile, date('c') . ' ' . $sanitized . PHP_EOL, FILE_APPEND | LOCK_EX);
     }
 }

@@ -2,7 +2,37 @@
 require_once __DIR__ . '/layout.php';
 
 function interest_label($val) {
-    return $val === 'managed' ? 'Managed Furnished Office' : ($val === 'furnished' ? 'Furnished / Unfurnished Office' : ($val ?: '—'));
+    if ($val === 'managed') return 'Managed Furnished Office';
+    if ($val === 'furnished') return 'Furnished Office';
+    if ($val === 'unfurnished') return 'Unfurnished Office';
+    if ($val === 'commercial') return 'Furnished / Unfurnished (Mixed)';
+    return $val ? htmlspecialchars(ucfirst($val)) : '—';
+}
+
+function parse_multi_workspaces($message) {
+    // Message format: "Selected workspaces (n):\n1. Title [CODE] (ID: 12, managed)\n2. ..."
+    $workspaces = [];
+    if (strpos($message, 'Selected workspaces') === false) return $workspaces;
+    $lines = explode("\n", $message);
+    foreach ($lines as $line) {
+        // Match pattern: 1. Title [CODE] (ID: 123, type)
+        if (preg_match('/^\s*\d+\.\s*(.*?)\s*(?:\[(.*?)\])?\s*\(ID:\s*(\d+),\s*([^\)]+)\)/', $line, $m)) {
+            $workspaces[] = [
+                'title' => trim($m[1]),
+                'listing_code' => trim($m[2] ?? ''),
+                'id' => (int)$m[3],
+                'listing_type' => trim($m[4]),
+            ];
+        }
+    }
+    return $workspaces;
+}
+
+function workspace_type_badge($type) {
+    $map = ['managed' => 'Managed', 'furnished' => 'Furnished', 'unfurnished' => 'Unfurnished'];
+    $label = $map[$type] ?? ucfirst($type);
+    $color = $type === 'managed' ? 'primary' : ($type === 'furnished' ? 'success' : 'warning');
+    return '<span class="badge bg-' . $color . '">' . htmlspecialchars($label) . '</span>';
 }
 
 function office_link($office_id) {
@@ -62,7 +92,34 @@ if ($mode === 'view'):
                         <div class="col-md-4"><label class="form-label small text-muted">Company</label><div class="fw-medium"><?= htmlspecialchars($row['company'] ?? '—') ?></div></div>
                         <div class="col-md-4"><label class="form-label small text-muted">Seats</label><div class="fw-medium"><?= htmlspecialchars($row['seats'] ?? '—') ?></div></div>
                         <?php if ($row['message']): ?>
-                        <div class="col-12"><label class="form-label small text-muted">Message</label><div class="fw-medium"><?= nl2br(htmlspecialchars($row['message'])) ?></div></div>
+                        <div class="col-12"><label class="form-label small text-muted">Message</label><div class="fw-medium" style="white-space:pre-line"><?= nl2br(htmlspecialchars($row['message'])) ?></div></div>
+                        <?php endif; ?>
+                        <?php if ($row['source'] === 'multi_select_enquiry'): 
+                            $multiWorkspaces = parse_multi_workspaces($row['message'] ?? '');
+                        ?>
+                        <div class="col-12"><label class="form-label small text-muted">Enquiry Type</label><div class="fw-medium"><span class="badge bg-primary">Multi Workspace Enquiry</span> <span class="badge bg-secondary"><?= count($multiWorkspaces) ?> workspace(s)</span></div></div>
+                        <?php if (!empty($multiWorkspaces)): ?>
+                        <div class="col-12">
+                            <label class="form-label small text-muted">Selected Workspaces</label>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0 small">
+                                    <thead><tr><th>#</th><th>Workspace</th><th>Code</th><th>Type</th><th>Link</th></tr></thead>
+                                    <tbody>
+                                    <?php foreach ($multiWorkspaces as $idx => $ws): ?>
+                                        <tr>
+                                            <td><?= $idx + 1 ?></td>
+                                            <td><?= htmlspecialchars($ws['title']) ?></td>
+                                            <td><code><?= htmlspecialchars($ws['listing_code'] ?: '—') ?></code></td>
+                                            <td><?= workspace_type_badge($ws['listing_type']) ?></td>
+                                            <td><?= office_link($ws['id']) ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="form-text">Links resolve via office ID across all tables.</div>
+                        </div>
+                        <?php endif; ?>
                         <?php endif; ?>
                         <div class="col-md-4"><label class="form-label small text-muted">Linked Office</label><div class="fw-medium"><?= office_link($row['office_id']) ?></div></div>
                         <div class="col-md-4"><label class="form-label small text-muted">Listing Code</label><div class="fw-medium"><?= htmlspecialchars($row['listing_code'] ?? '—') ?></div></div>
@@ -262,7 +319,7 @@ if ($mode === 'view'):
                     <tr>
                         <td><input type="checkbox" class="form-check-input bulk-checkbox" value="<?= $row['id'] ?>" data-type="contact"></td>
                         <td class="text-muted"><?= $row['id'] ?></td>
-                        <td><code class="small"><?= htmlspecialchars($row['listing_code'] ?? '—') ?></code></td>
+                        <td><code class="small"><?= htmlspecialchars($row['listing_code'] ?? '—') ?></code><?php if ($row['source'] === 'multi_select_enquiry'): ?><span class="badge bg-primary ms-1" title="Multi enquiry">Multi</span><?php endif; ?></td>
                         <td class="fw-medium"><?= htmlspecialchars($row['name']) ?></td>
                         <td><?= htmlspecialchars($row['phone']) ?></td>
                         <td><?= htmlspecialchars($row['email'] ?: '—') ?></td>

@@ -1,0 +1,289 @@
+/* Multi-select workspace enquiry — fixed layout, a11y, and responsive */
+:root {
+    --mseb-height: 72px;
+}
+.results-counter-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+#btnToggleMultiSelect {
+    font-size: clamp(0.72rem, 1.8vw, 0.8rem);
+    padding: 6px 14px;
+    white-space: nowrap;
+    border-color: #0d4ab4;
+    color: #0d4ab4;
+    font-weight: 600;
+    line-height: 1.2;
+    min-height: 32px;
+    max-width: 100%;
+}
+#btnToggleMultiSelect .fa-list-check,
+#btnToggleMultiSelect .fa-xmark {
+    flex-shrink: 0;
+}
+
+#btnToggleMultiSelect:hover,
+#btnToggleMultiSelect.active {
+    background: #0d4ab4;
+    border-color: #0d4ab4;
+    color: #fff;
+}
+
+#btnToggleMultiSelect.active {
+    box-shadow: 0 0 0 2px rgba(13, 74, 180, 0.25);
+}
+#btnToggleMultiSelect:focus-visible {
+    outline: 2px solid #0d4ab4;
+    outline-offset: 2px;
+}
+
+.ws-card-select-row {
+    display: flex;
+    align-items: stretch;
+    min-height: 100%;
+    contain: layout;
+}
+
+.ws-select-col {
+    display: flex;
+    flex: 0 0 0;
+    max-width: 0;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: #f8fafc;
+    border-right: 1px solid transparent;
+    transition: flex-basis 0.22s ease, max-width 0.22s ease, opacity 0.18s ease, padding 0.22s ease, border-color 0.22s ease;
+    will-change: flex-basis, max-width;
+    position: relative;
+    z-index: 1;
+}
+
+.multi-select-active .ws-select-col {
+    flex: 0 0 44px;
+    max-width: 44px;
+    opacity: 1;
+    pointer-events: auto;
+    padding: 12px 8px;
+    border-right-color: #e5e7eb;
+}
+
+/* Ensure checkbox hit-area meets 44px WCAG even when visual box is smaller */
+.ws-select-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.ws-select-cb {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #0d4ab4;
+    flex-shrink: 0;
+}
+.ws-select-cb:focus-visible {
+    outline: 2px solid #0d4ab4;
+    outline-offset: 2px;
+}
+
+.ws-card-content {
+    flex: 1;
+    min-width: 0;
+}
+.ws-card-content:focus-visible {
+    outline: 2px solid #0d4ab4;
+    outline-offset: -2px;
+}
+.custom-card:focus-visible {
+    outline: 2px solid #0d4ab4;
+    outline-offset: 2px;
+}
+
+.custom-card.ws-selected {
+    border-color: #0d4ab4;
+    box-shadow: 0 0 0 1px rgba(13, 74, 180, 0.35);
+}
+
+.custom-card.ws-selected .ws-select-col {
+    background: #eff6ff;
+}
+
+/* Ensure carousel controls stay above select column */
+.custom-card .carousel-btn,
+.custom-card .carousel-dots,
+.custom-card .image-wrapper .carousel-btn,
+.custom-card .image-wrapper .carousel-dots {
+    z-index: 5;
+}
+
+#multiEnquiryBar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1040; /* below Bootstrap backdrop 1050 / modal 1055, above navbar 1030 */
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    padding: 12px 16px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    transform: translateY(100%);
+    transition: transform 0.25s ease;
+    will-change: transform;
+    contain: layout paint;
+}
+#multiEnquiryBar.visible {
+    transform: translateY(0);
+}
+/* Hide bar behind modal when modal is open (prevents peek over backdrop on iOS) */
+body.modal-open #multiEnquiryBar {
+    transform: translateY(100%) !important;
+}
+
+.multi-enquiry-bar-inner {
+    max-width: 1140px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.multi-enquiry-bar-count {
+    font-size: 0.9rem;
+    color: #374151;
+}
+
+.multi-enquiry-bar-count strong {
+    color: #0d4ab4;
+}
+
+.multi-enquiry-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+#multiEnquirySelectedList {
+    max-height: 180px;
+    overflow-y: auto;
+    font-size: 0.8rem;
+    color: #4b5563;
+    margin-top: 6px;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f8fafc;
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+}
+#multiEnquirySelectedList::-webkit-scrollbar { width: 6px; }
+#multiEnquirySelectedList::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+#multiEnquirySelectedList:focus-visible { outline: 2px solid #0d4ab4; outline-offset: 2px; }
+/* Fade indicator for scrollable content */
+#multiEnquirySelectedList::after {
+    content: '';
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 12px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
+    pointer-events: none;
+    display: block;
+}
+
+#multiEnquirySelectedList .selected-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+#multiEnquirySelectedList .selected-item:last-child {
+    border-bottom: none;
+}
+
+#multiEnquirySelectedList .remove-item {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 6px;
+    min-width: 32px;
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+#multiEnquirySelectedList .remove-item:hover { color: #dc2626; }
+#multiEnquirySelectedList .remove-item:focus-visible { outline: 2px solid #0d4ab4; outline-offset: 2px; }
+
+#multiEnquiryModal .selected-workspaces-preview {
+    max-height: 160px;
+    overflow-y: auto;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+}
+
+#multiEnquiryModal .selected-workspaces-preview li {
+    margin-bottom: 4px;
+}
+
+/* Body padding accounts for bar height + safe area; uses var for mobile override */
+body.multi-enquiry-bar-open {
+    padding-bottom: calc(var(--mseb-height) + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 576px) {
+    .multi-select-active .ws-select-col {
+        flex: 0 0 44px;
+        max-width: 44px;
+        padding: 6px 4px;
+    }
+
+    .ws-select-cb {
+        width: 18px;
+        height: 18px;
+    }
+
+    .multi-enquiry-bar-inner {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .multi-enquiry-bar-actions {
+        width: 100%;
+    }
+
+    .multi-enquiry-bar-actions .btn {
+        flex: 1;
+        min-height: 38px;
+    }
+}
+@media (max-width: 360px) {
+    #btnToggleMultiSelect {
+        font-size: 0.72rem;
+        padding: 5px 10px;
+    }
+}

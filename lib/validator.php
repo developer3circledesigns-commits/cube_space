@@ -57,7 +57,17 @@ class Validator {
 
     private function phone(string $field, mixed $value): void {
         if ($value === null || $value === '') return;
-        $cleaned = preg_replace('/[^0-9]/', '', (string)$value);
+        $raw = trim((string)$value);
+        // Allow +91, 0 prefix, spaces/dashes; normalize to last 10 digits
+        $cleaned = preg_replace('/[^0-9]/', '', $raw);
+        // Strip leading 91 (country code) or 0 if present
+        if (strlen($cleaned) > 10) {
+            if (str_starts_with($cleaned, '91') && strlen($cleaned) === 12) {
+                $cleaned = substr($cleaned, 2);
+            } elseif (str_starts_with($cleaned, '0') && strlen($cleaned) === 11) {
+                $cleaned = substr($cleaned, 1);
+            }
+        }
         if (!preg_match('/^[6-9][0-9]{9}$/', $cleaned)) {
             $this->addError($field, "Invalid phone number");
         }
