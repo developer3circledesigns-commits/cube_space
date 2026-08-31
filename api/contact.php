@@ -7,7 +7,10 @@ try {
     cubespace_require_project('lib/cors.php');
     set_cors_headers('POST, OPTIONS');
 
-    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
+    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        http_response_code(204);
+        exit;
+    }
 
     cubespace_require_project('lib/validator.php');
     cubespace_require_project('src/autoload.php');
@@ -19,58 +22,31 @@ try {
         die(json_encode(['success' => false, 'message' => 'Method not allowed', 'data' => null, 'errors' => null]));
     }
 
-    // --- Honeypot (now present in multiEnquiryModal as hidden website field) ---
-    // Silently reject bots with fake success (browsers sometimes autofill this field for real users)
+    // --- Honeypot check (hidden website field) ---
+    // Silently acknowledge bots with fake success
     $honeypot = trim($_POST['website'] ?? '');
     if ($honeypot !== '') {
         error_log('[contact.php] Honeypot triggered from IP ' . ($_SERVER['REMOTE_ADDR'] ?? '') . ' — UA: ' . ($_SERVER['HTTP_USER_AGENT'] ?? ''));
         die(json_encode(['success' => true, 'message' => 'Thank you! Your enquiry has been submitted.', 'data' => null, 'errors' => null]));
     }
 
-    // --- Spam timing check: form must be open at least 2s (bots submit instantly) ---
+    // --- Spam timing check (logging only to prevent clock skew / rapid click 400 errors) ---
     $mseTsRaw = trim($_POST['mse_ts'] ?? '');
     if ($mseTsRaw !== '' && is_numeric($mseTsRaw)) {
         $mseTs = (int)$mseTsRaw;
-        // Normalize ms vs s (13 vs 10 digits)
-        if ($mseTs > 1000000000000) $mseTs = (int)($mseTs / 1000);
+        if ($mseTs > 1000000000000) {
+            $mseTs = (int)($mseTs / 1000);
+        }
         $age = time() - $mseTs;
-        if ($age < 2) {
-            error_log('[contact.php] Timing blocked: age=' . $age . 's, mse_ts=' . $mseTsRaw . ', IP=' . ($_SERVER['REMOTE_ADDR'] ?? ''));
-            http_response_code(400);
-            die(json_encode(['success' => false, 'message' => 'Please wait a moment before submitting.', 'data' => null, 'errors' => null]));
-        }
-        if ($age > 3600) {
-            error_log('[contact.php] Form expired: age=' . $age . 's, mse_ts=' . $mseTsRaw . ', IP=' . ($_SERVER['REMOTE_ADDR'] ?? ''));
-            http_response_code(400);
-            die(json_encode(['success' => false, 'message' => 'Form expired. Please refresh and try again.', 'data' => null, 'errors' => null]));
-        }
-    }
-
-    // --- Simple CSRF / same-origin check (no token required, validates Origin/Referer if present) ---
-    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    $referer = $_SERVER['HTTP_REFERER'] ?? '';
-    $host = $_SERVER['HTTP_HOST'] ?? '';
-    if ($origin !== '' || $referer !== '') {
-        $checkUrl = $origin !== '' ? $origin : $referer;
-        $originHost = parse_url($checkUrl, PHP_URL_HOST);
-        // Allow empty originHost for non-http (should not happen), else must match host (strip port)
-        $hostOnly = explode(':', $host)[0];
-        if ($originHost && strtolower($originHost) !== strtolower($hostOnly)) {
-            // Allow CORS already handled via set_cors_headers, but block cross-site form spoofing
-            // Only enforce if origin is present and not whitelisted
-            $corsAllowed = false;
-            // If CORS lib sets allowed origins, this check is permissive; we still require same-site for contact
-            // To avoid breaking legitimate CORS, we only block if referer host differs and no Origin allowlist
-            if (!$corsAllowed) {
-                // Log but don't hard fail for now to avoid breaking mobile apps; just rate-limit
-            }
+        if ($age < -300 || $age > 86400 * 7) {
+            error_log('[contact.php] Suspicious timestamp: age=' . $age . 's, mse_ts=' . $mseTsRaw . ', IP=' . ($_SERVER['REMOTE_ADDR'] ?? ''));
         }
     }
 
     $submittedIp = $_SERVER['REMOTE_ADDR'] ?? '';
     $userAgent   = $_SERVER['HTTP_USER_AGENT'] ?? '';
 
-    // --- Rate limiting: max 5 submissions per IP per 60s ---
+    // --- Rate limiting: max 20 submissions per IP per 60s ---
     if ($submittedIp !== '' && isset($conn) && $conn) {
         $rateStmt = @mysqli_prepare($conn, "SELECT COUNT(*) as cnt FROM contacts WHERE submitted_ip = ? AND created_at > (NOW() - INTERVAL 60 SECOND)");
         if ($rateStmt) {
@@ -78,7 +54,7 @@ try {
             if (mysqli_stmt_execute($rateStmt)) {
                 $r = mysqli_stmt_get_result($rateStmt);
                 $row = $r ? mysqli_fetch_assoc($r) : null;
-                if ($row && (int)$row['cnt'] >= 5) {
+                if ($row && (int)$row['cnt'] >= 20) {
                     mysqli_stmt_close($rateStmt);
                     http_response_code(429);
                     die(json_encode(['success' => false, 'message' => 'Too many requests. Please try again in a minute.', 'data' => null, 'errors' => null]));
@@ -88,15 +64,16 @@ try {
         }
     }
 
-    // --- Deduplication: same phone cannot submit identical enquiry within 5 minutes (prevents 15-workspace spam) ---
+    // --- Deduplication: same phone cannot submit identical enquiry within 60s ---
     $phoneForDedup = preg_replace('/[^0-9]/', '', trim($_POST['phone'] ?? ''));
     if ($phoneForDedup !== '' && isset($conn) && $conn) {
-        // Normalize to last 10 digits for comparison
-        if (strlen($phoneForDedup) > 10 && str_starts_with($phoneForDedup, '91')) $phoneForDedup = substr($phoneForDedup, -10);
-        elseif (strlen($phoneForDedup) === 11 && str_starts_with($phoneForDedup, '0')) $phoneForDedup = substr($phoneForDedup, 1);
-        $dedupStmt = @mysqli_prepare($conn, "SELECT id FROM contacts WHERE phone LIKE CONCAT('%', ?) AND created_at > (NOW() - INTERVAL 300 SECOND) LIMIT 1");
+        if (strlen($phoneForDedup) > 10 && str_starts_with($phoneForDedup, '91')) {
+            $phoneForDedup = substr($phoneForDedup, -10);
+        } elseif (strlen($phoneForDedup) === 11 && str_starts_with($phoneForDedup, '0')) {
+            $phoneForDedup = substr($phoneForDedup, 1);
+        }
+        $dedupStmt = @mysqli_prepare($conn, "SELECT id FROM contacts WHERE phone LIKE CONCAT('%', ?) AND created_at > (NOW() - INTERVAL 60 SECOND) LIMIT 1");
         if ($dedupStmt) {
-            // Use last 10 digits for flexible match (+91 handling)
             $likePhone = substr($phoneForDedup, -10);
             mysqli_stmt_bind_param($dedupStmt, 's', $likePhone);
             if (mysqli_stmt_execute($dedupStmt)) {
@@ -104,31 +81,30 @@ try {
                 if ($r2 && mysqli_fetch_assoc($r2)) {
                     mysqli_stmt_close($dedupStmt);
                     http_response_code(429);
-                    die(json_encode(['success' => false, 'message' => 'Duplicate enquiry detected. Please wait 5 minutes before resubmitting.', 'data' => null, 'errors' => null]));
+                    die(json_encode(['success' => false, 'message' => 'Duplicate enquiry detected. Please wait a moment before resubmitting.', 'data' => null, 'errors' => null]));
                 }
             }
             mysqli_stmt_close($dedupStmt);
         }
     }
 
+    // --- Input Validation ---
     $validator = new Validator($_POST);
     if (!$validator->validate([
         'name'         => 'required|max:255',
         'phone'        => 'required|phone',
         'email'        => 'email|max:255',
-        'company'      => 'max:160',
-        'message'      => 'max:1000',
-        'interest'     => 'in:managed,furnished,unfurnished,commercial',
-        'seats'        => 'in:10-50,51-100,101-200,200+',
+        'company'      => 'max:255',
+        'message'      => 'max:5000',
         'office_id'    => 'integer|min:0',
-        'listing_code' => 'max:20',
-        'source'       => 'max:255',
+        'listing_code' => 'max:100',
+        'source'       => 'max:1000',
     ])) {
-        error_log('[contact.php] Validation failed: ' . json_encode($validator->errors()) . ' — POST keys: ' . implode(',', array_keys($_POST)));
+        error_log('[contact.php] Validation failed: ' . json_encode($validator->errors()) . ' — POST: ' . json_encode($_POST));
         http_response_code(400);
         die(json_encode([
             'success' => false,
-            'message' => $validator->firstError(),
+            'message' => $validator->firstError() ?? 'Validation failed. Please check the entered fields.',
             'data'    => null,
             'errors'  => $validator->errors(),
         ]));
@@ -137,255 +113,248 @@ try {
     $name        = strip_tags(trim($_POST['name'] ?? ''));
     $phone       = trim($_POST['phone'] ?? '');
     $email       = strip_tags(trim($_POST['email'] ?? ''));
-    $interest    = strip_tags(trim($_POST['interest'] ?? ''));
+    $rawInterest = strtolower(strip_tags(trim($_POST['interest'] ?? '')));
     $company     = strip_tags(trim($_POST['company'] ?? ''));
     $seats       = strip_tags(trim($_POST['seats'] ?? ''));
     $message     = strip_tags(trim($_POST['message'] ?? ''));
-    $officeId    = trim($_POST['office_id'] ?? '');
+    $officeIdRaw = trim($_POST['office_id'] ?? '');
     $listingCode = strip_tags(trim($_POST['listing_code'] ?? ''));
     $source      = strip_tags(trim($_POST['source'] ?? ''));
     $officesJson = trim($_POST['offices_json'] ?? '');
+
+    // Normalize interest
+    $validInterests = ['managed', 'furnished', 'unfurnished', 'commercial'];
+    if (in_array($rawInterest, $validInterests, true)) {
+        $interest = $rawInterest;
+    } elseif ($rawInterest === 'managed_offices') {
+        $interest = 'managed';
+    } elseif ($rawInterest === 'furnished_offices') {
+        $interest = 'furnished';
+    } elseif ($rawInterest === 'unfurnished_offices') {
+        $interest = 'unfurnished';
+    } elseif ($rawInterest !== '') {
+        $interest = 'commercial';
+    } else {
+        $interest = 'managed';
+    }
+
     $selectedOffices = [];
     $workspacesSummary = '';
     $isMulti = false;
 
+    // Table mapping for listing types
+    $tableMap = [
+        'managed' => 'managed_offices',
+        'managed_offices' => 'managed_offices',
+        'furnished' => 'furnished_offices',
+        'furnished_offices' => 'furnished_offices',
+        'unfurnished' => 'unfurnished_offices',
+        'unfurnished_offices' => 'unfurnished_offices',
+        'commercial' => 'furnished_offices',
+    ];
+
     if ($officesJson !== '') {
         $isMulti = true;
-        $decoded = json_decode($officesJson, true);
-        if (!is_array($decoded) || count($decoded) < 1) {
-            http_response_code(400);
-            die(json_encode(['success' => false, 'message' => 'Invalid workspace selection', 'data' => null, 'errors' => null]));
-        }
-        // Strict count check before filtering
-        if (count($decoded) > 15) {
-            http_response_code(400);
-            die(json_encode(['success' => false, 'message' => 'Too many workspaces selected', 'data' => null, 'errors' => null]));
-        }
-
-        // Whitelisted table map - table name is NOT interpolated via variable without validation; we validate key first
-        $tableMap = [
-            'managed' => 'managed_offices',
-            'furnished' => 'furnished_offices',
-            'unfurnished' => 'unfurnished_offices',
-        ];
-        $allowedTypes = array_keys($tableMap);
-
-        // Strict structural validation: every entry must be valid, else 400 (no silent skip for junk)
-        foreach ($decoded as $idx => $item) {
-            if (!is_array($item)) {
-                http_response_code(400);
-                die(json_encode(['success' => false, 'message' => 'Invalid workspace selection: entry #' . ($idx + 1) . ' malformed', 'data' => null, 'errors' => null]));
+        $decoded = is_array($_POST['offices_json'] ?? null) ? $_POST['offices_json'] : json_decode($officesJson, true);
+        if (is_array($decoded) && count($decoded) > 0) {
+            // Cap at max 20 workspaces
+            if (count($decoded) > 20) {
+                $decoded = array_slice($decoded, 0, 20);
             }
-            $oid = (int)($item['id'] ?? 0);
-            $otype = strip_tags(trim($item['listing_type'] ?? ''));
-            if ($oid < 1) {
-                http_response_code(400);
-                die(json_encode(['success' => false, 'message' => 'Invalid workspace selection: invalid id at entry #' . ($idx + 1), 'data' => null, 'errors' => null]));
-            }
-            if (!in_array($otype, $allowedTypes, true)) {
-                http_response_code(400);
-                die(json_encode(['success' => false, 'message' => 'Invalid workspace selection: invalid type at entry #' . ($idx + 1), 'data' => null, 'errors' => null]));
-            }
-        }
 
-        // Group IDs by type for bulk queries (fixes N+1)
-        $idsByType = ['managed' => [], 'furnished' => [], 'unfurnished' => []];
-        foreach ($decoded as $item) {
-            $oid = (int)$item['id'];
-            $otype = strip_tags(trim($item['listing_type']));
-            $idsByType[$otype][] = $oid;
-        }
-        // Deduplicate
-        foreach ($idsByType as $t => $ids) {
-            $idsByType[$t] = array_values(array_unique($ids));
-        }
-
-        // Fetch all valid offices in bulk (1 query per type)
-        $validMap = []; // key: type:id => row
-        foreach ($idsByType as $otype => $ids) {
-            if (empty($ids)) continue;
-            $table = $tableMap[$otype]; // whitelisted, safe
-            // Build IN clause with placeholders
-            $placeholders = implode(',', array_fill(0, count($ids), '?'));
-            $types = str_repeat('i', count($ids));
-            // Note: table name is literal after whitelist check, not a parameter
-            $sql = "SELECT id, title, listing_code FROM `{$table}` WHERE id IN ({$placeholders}) AND status = 'active'";
-            $checkStmt = mysqli_prepare($conn, $sql);
-            if (!$checkStmt) {
-                error_log('contact.php prepare failed for ' . $table . ': ' . mysqli_error($conn));
-                continue;
+            // Group IDs by normalized type for DB lookup
+            $idsByType = ['managed' => [], 'furnished' => [], 'unfurnished' => []];
+            foreach ($decoded as $item) {
+                if (!is_array($item)) continue;
+                $oid = (int)($item['id'] ?? 0);
+                $rawType = strtolower(trim((string)($item['listing_type'] ?? '')));
+                $normType = 'managed';
+                if (str_contains($rawType, 'unfurn')) {
+                    $normType = 'unfurnished';
+                } elseif (str_contains($rawType, 'furn') || str_contains($rawType, 'comm')) {
+                    $normType = 'furnished';
+                } elseif (str_contains($rawType, 'manage')) {
+                    $normType = 'managed';
+                }
+                if ($oid > 0) {
+                    $idsByType[$normType][] = $oid;
+                }
             }
-            // Bind dynamic number of ints
-            $bindParams = array_merge([$types], $ids);
-            // Need references for bind_param
-            $refs = [];
-            foreach ($bindParams as $k => $v) { $refs[$k] = &$bindParams[$k]; }
-            // Use call_user_func_array for bind
-            call_user_func_array([$checkStmt, 'bind_param'], $refs);
-            // For mysqli, first param is types string, but we included it as first element; need to separate
-            // Actually bind_param expects first arg types, then vars. We already did, but refs includes types as first.
-            // The above call is correct: first element is types string, rest are ids.
+
+            $validMap = [];
+            foreach ($idsByType as $otype => $ids) {
+                if (empty($ids)) continue;
+                $ids = array_values(array_unique($ids));
+                $table = $tableMap[$otype] ?? 'managed_offices';
+                $placeholders = implode(',', array_fill(0, count($ids), '?'));
+                $types = str_repeat('i', count($ids));
+                $sql = "SELECT id, title, listing_code FROM `{$table}` WHERE id IN ({$placeholders})";
+                $checkStmt = mysqli_prepare($conn, $sql);
+                if ($checkStmt) {
+                    $bindParams = array_merge([$types], $ids);
+                    $refs = [];
+                    foreach ($bindParams as $k => $v) { $refs[$k] = &$bindParams[$k]; }
+                    call_user_func_array([$checkStmt, 'bind_param'], $refs);
+                    mysqli_stmt_execute($checkStmt);
+                    $res = mysqli_stmt_get_result($checkStmt);
+                    if ($res) {
+                        while ($officeRow = mysqli_fetch_assoc($res)) {
+                            $key = $otype . ':' . $officeRow['id'];
+                            $validMap[$key] = $officeRow;
+                        }
+                    }
+                    mysqli_stmt_close($checkStmt);
+                }
+            }
+
+            foreach ($decoded as $item) {
+                if (!is_array($item)) continue;
+                $oid = (int)($item['id'] ?? 0);
+                $rawType = strtolower(trim((string)($item['listing_type'] ?? '')));
+                $normType = 'managed';
+                if (str_contains($rawType, 'unfurn')) {
+                    $normType = 'unfurnished';
+                } elseif (str_contains($rawType, 'furn') || str_contains($rawType, 'comm')) {
+                    $normType = 'furnished';
+                }
+                $key = $normType . ':' . $oid;
+                $dbRow = $validMap[$key] ?? null;
+
+                $officeTitle = $dbRow ? strip_tags(trim($dbRow['title'] ?? '')) : strip_tags(trim((string)($item['title'] ?? 'Workspace #' . $oid)));
+                $officeCode  = $dbRow ? strip_tags(trim($dbRow['listing_code'] ?? '')) : strip_tags(trim((string)($item['listing_code'] ?? '')));
+
+                $selectedOffices[] = [
+                    'id'           => $oid,
+                    'title'        => mb_substr($officeTitle, 0, 200),
+                    'listing_code' => mb_substr($officeCode, 0, 50),
+                    'listing_type' => $normType,
+                ];
+            }
+
+            if (!empty($selectedOffices)) {
+                $lines = ["Selected workspaces (" . count($selectedOffices) . "):"];
+                foreach ($selectedOffices as $idx => $off) {
+                    $line = ($idx + 1) . '. ' . $off['title'];
+                    if (!empty($off['listing_code'])) {
+                        $line .= ' [' . $off['listing_code'] . ']';
+                    }
+                    $line .= ' (ID: ' . (int)$off['id'] . ', ' . $off['listing_type'] . ')';
+                    $lines[] = mb_substr($line, 0, 300);
+                }
+                $workspacesSummary = implode("\n", $lines);
+                $source = !empty($source) ? $source : 'multi_select_enquiry';
+                $listingCode = 'MULTI (' . count($selectedOffices) . ')';
+                $userMessage = $message !== '' ? "\n\nAdditional message:\n" . $message : '';
+                $combined = $workspacesSummary . $userMessage;
+                if (mb_strlen($combined) > 10000) {
+                    $combined = mb_substr($combined, 0, 9980) . "\n[truncated]";
+                }
+                $message = $combined;
+
+                $distinctTypes = array_unique(array_column($selectedOffices, 'listing_type'));
+                if (count($distinctTypes) > 1) {
+                    $interest = 'commercial';
+                } elseif (count($distinctTypes) === 1) {
+                    $interest = $distinctTypes[0];
+                }
+            }
+        }
+    }
+
+    // Office ID resolution for single office enquiries
+    $officeIdVal = null;
+    if (!$isMulti && $officeIdRaw !== '' && is_numeric($officeIdRaw) && (int)$officeIdRaw > 0) {
+        $candidateId = (int)$officeIdRaw;
+        // Verify against all active office tables
+        $checkStmt = @mysqli_prepare($conn, "SELECT id FROM managed_offices WHERE id = ? UNION SELECT id FROM furnished_offices WHERE id = ? UNION SELECT id FROM unfurnished_offices WHERE id = ? UNION SELECT id FROM office_spaces WHERE id = ?");
+        if ($checkStmt) {
+            mysqli_stmt_bind_param($checkStmt, 'iiii', $candidateId, $candidateId, $candidateId, $candidateId);
             mysqli_stmt_execute($checkStmt);
             $res = mysqli_stmt_get_result($checkStmt);
-            if ($res) {
-                while ($officeRow = mysqli_fetch_assoc($res)) {
-                    $key = $otype . ':' . $officeRow['id'];
-                    $validMap[$key] = $officeRow;
-                }
+            if ($res && mysqli_num_rows($res) > 0) {
+                $officeIdVal = $candidateId;
             }
             mysqli_stmt_close($checkStmt);
         }
-
-        // Build selectedOffices in original order, skipping only inactive (not found) entries
-        $notFoundCount = 0;
-        foreach ($decoded as $item) {
-            $oid = (int)$item['id'];
-            $otype = strip_tags(trim($item['listing_type']));
-            $key = $otype . ':' . $oid;
-            if (!isset($validMap[$key])) {
-                $notFoundCount++;
-                continue; // inactive/deleted - silent skip is acceptable for this case only
-            }
-            $officeRow = $validMap[$key];
-            // Always use DB values, never fallback to client title/code (prevents tampering)
-            // Sanitize DB values for storage (strip tags, limit length)
-            $dbTitle = strip_tags(trim($officeRow['title'] ?? ''));
-            $dbCode = strip_tags(trim($officeRow['listing_code'] ?? ''));
-            // If DB title empty, keep empty (do not use client otitle)
-            $selectedOffices[] = [
-                'id' => (int)$officeRow['id'],
-                'title' => mb_substr($dbTitle, 0, 200),
-                'listing_code' => mb_substr($dbCode, 0, 40),
-                'listing_type' => $otype,
-            ];
-        }
-
-        if (count($selectedOffices) < 1) {
-            http_response_code(400);
-            die(json_encode(['success' => false, 'message' => 'No valid workspaces in selection. They may have been removed.', 'data' => null, 'errors' => null]));
-        }
-
-        // If many were filtered as inactive, inform but still succeed (at least 1 valid remains)
-        // Note: structural junk already rejected above, so notFound here is only inactive
-
-        // Build sanitized summary (strip tags, limit)
-        $lines = ["Selected workspaces (" . count($selectedOffices) . "):"];
-        foreach ($selectedOffices as $idx => $off) {
-            // Sanitize each component for plain text storage
-            $safeTitle = strip_tags($off['title']);
-            $safeCode = strip_tags($off['listing_code']);
-            $safeType = strip_tags($off['listing_type']);
-            $line = ($idx + 1) . '. ' . $safeTitle;
-            if ($safeCode !== '') {
-                $line .= ' [' . $safeCode . ']';
-            }
-            $line .= ' (ID: ' . (int)$off['id'] . ', ' . $safeType . ')';
-            $lines[] = mb_substr($line, 0, 300);
-        }
-        $workspacesSummary = implode("\n", $lines);
-        $source = 'multi_select_enquiry';
-        $officeId = '';
-        $listingCode = 'MULTI (' . count($selectedOffices) . ')';
-        // Truncate message to avoid exceeding column (longtext is large, but keep reasonable)
-        $userMessage = $message !== '' ? "\n\nAdditional message:\n" . $message : '';
-        $combined = $workspacesSummary . $userMessage;
-        // Enforce max 10000 chars for message to keep DB performant, truncate gracefully
-        if (mb_strlen($combined) > 10000) {
-            $combined = mb_substr($combined, 0, 10000 - 20) . "\n[truncated]";
-        }
-        $message = $combined;
-        // Normalize interest based on distinct types (fixes mixed types issue)
-        $distinctTypes = array_unique(array_column($selectedOffices, 'listing_type'));
-        if (count($distinctTypes) > 1) {
-            $interest = 'commercial';
-        } elseif (count($distinctTypes) === 1) {
-            $interest = $distinctTypes[0];
-        }
     }
+
+    // Sanitize lengths for database columns
+    $listingCodeVal = !empty($listingCode) ? mb_substr($listingCode, 0, 100) : null;
+    $sourceVal      = !empty($source) ? mb_substr($source, 0, 255) : 'website';
+    $companyVal     = !empty($company) ? mb_substr($company, 0, 160) : null;
+    $seatsVal       = !empty($seats) ? mb_substr($seats, 0, 50) : null;
+    $emailVal       = !empty($email) ? mb_substr($email, 0, 255) : null;
 
     $stmt = mysqli_prepare($conn,
         "INSERT INTO contacts (name, phone, email, interest, company, seats, message, office_id, listing_code, source, submitted_ip, user_agent)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
-    $officeIdVal = (!$isMulti && $officeId !== '') ? (int)$officeId : null;
 
-    // Only validate single office_id when not multi (fixes dead code path confusion)
-    if (!$isMulti && $officeIdVal !== null) {
-        $checkStmt = mysqli_prepare($conn, "SELECT id FROM managed_offices WHERE id = ? AND status = 'active' UNION SELECT id FROM furnished_offices WHERE id = ? AND status = 'active' UNION SELECT id FROM unfurnished_offices WHERE id = ? AND status = 'active'");
-        mysqli_stmt_bind_param($checkStmt, 'iii', $officeIdVal, $officeIdVal, $officeIdVal);
-        mysqli_stmt_execute($checkStmt);
-        if (mysqli_num_rows(mysqli_stmt_get_result($checkStmt)) === 0) {
-            http_response_code(400);
-            die(json_encode(['success' => false, 'message' => 'Invalid office ID', 'data' => null, 'errors' => null]));
-        }
-        mysqli_stmt_close($checkStmt);
-    }
-
-    $listingCodeVal = $listingCode !== '' ? $listingCode : null;
-
-    // Ensure message not too long for longtext (already truncated, but double-check)
-    if (mb_strlen($message) > 15000) {
-        $message = mb_substr($message, 0, 15000);
+    if (!$stmt) {
+        error_log('[contact.php] Prepare failed: ' . mysqli_error($conn));
+        http_response_code(500);
+        die(json_encode(['success' => false, 'message' => 'Failed to save your request. Please try again.', 'data' => null, 'errors' => null]));
     }
 
     mysqli_stmt_bind_param($stmt, 'sssssssissss',
-        $name, $phone, $email, $interest, $company, $seats, $message,
+        $name, $phone, $emailVal, $interest, $companyVal, $seatsVal, $message,
         $officeIdVal,
         $listingCodeVal,
-        $source, $submittedIp, $userAgent
+        $sourceVal, $submittedIp, $userAgent
     );
 
     if (mysqli_stmt_execute($stmt)) {
         $newId = mysqli_insert_id($conn);
         $contactData = [
-            'name' => $name,
-            'phone' => $phone,
-            'email' => $email,
-            'interest' => $interest,
-            'company' => $company,
-            'seats' => $seats,
-            'message' => $message,
-            'office_id' => $officeIdVal,
-            'listing_code' => $listingCode,
-            'source' => $source,
-            'ip' => $submittedIp,
-            'user_agent' => $userAgent,
+            'name'               => $name,
+            'phone'              => $phone,
+            'email'              => $email,
+            'interest'           => $interest,
+            'company'            => $company,
+            'seats'              => $seats,
+            'message'            => $message,
+            'office_id'          => $officeIdVal,
+            'listing_code'       => $listingCode,
+            'source'             => $sourceVal,
+            'ip'                 => $submittedIp,
+            'user_agent'         => $userAgent,
             'workspaces_summary' => $workspacesSummary,
-            'selected_offices' => $selectedOffices,
+            'selected_offices'   => $selectedOffices,
         ];
 
-        publish_event('contact_created', 'contact', $newId, "$name - $interest");
-        // Distinct analytics for multi vs single (dashboard can filter without parsing source)
-        if ($isMulti) {
-            try { publish_event('multi_select_enquiry', 'contact', $newId, "$name - $interest (" . count($selectedOffices) . " workspaces) | " . implode(',', array_column($selectedOffices, 'id'))); } catch (\Throwable $ignore) {}
-            try { publish_event('contact_created_multi', 'contact', $newId, "$name - $interest"); } catch (\Throwable $ignore2) {}
+        try {
+            publish_event('contact_created', 'contact', $newId, "$name - $interest");
+            if ($isMulti) {
+                publish_event('multi_select_enquiry', 'contact', $newId, "$name - $interest (" . count($selectedOffices) . " workspaces) | " . implode(',', array_column($selectedOffices, 'id')));
+                publish_event('contact_created_multi', 'contact', $newId, "$name - $interest");
+            }
+        } catch (\Throwable $evErr) {
+            error_log('[contact.php] Event publish error: ' . $evErr->getMessage());
         }
-        $response = json_encode(['success' => true, 'message' => 'Thank you! We will get back to you shortly.', 'data' => null, 'errors' => null]);
 
-        // Close DB connection early so background process doesn't keep it
+        $response = json_encode(['success' => true, 'message' => 'Thank you! We will get back to you shortly.', 'data' => ['id' => $newId], 'errors' => null]);
+
+        // Close DB connection early so background email doesn't hold it
         mysqli_stmt_close($stmt);
         mysqli_close($conn);
         $conn = null;
 
-        // Flush response to client before potentially slow email sending
+        // Flush response to client
         echo $response;
         if (function_exists('fastcgi_finish_request')) {
             fastcgi_finish_request();
         } else {
-            // Robust flush for mod_php / Apache: ensure output is sent and connection can close
             if (ob_get_level()) { ob_end_flush(); }
             flush();
-            // Hint to web server to close connection
             if (function_exists('ignore_user_abort')) ignore_user_abort(true);
         }
 
-        // Send email in background after response is sent - with retry logging
+        // Send email in background after response is sent
         try {
             $mail = new \CubeSpace\EmailService();
             $sent = $mail->notifyAdminNewContact($contactData);
             if (!$sent) {
                 error_log('CubeSpace email not sent for contact #' . $newId . ' - will log for retry');
-                // Log to file for manual retry; do not expose to user (already success)
                 @file_put_contents(__DIR__ . '/../storage/email_failed.log', date('c') . ' contact#' . $newId . ' email failed ' . json_encode($contactData) . PHP_EOL, FILE_APPEND);
             }
         } catch (\Throwable $e) {
@@ -395,15 +364,17 @@ try {
 
         exit;
     } else {
+        $err = mysqli_error($conn);
+        error_log('[contact.php] Execute failed: ' . $err);
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Failed to save your request. Please try again.', 'data' => null, 'errors' => null]);
     }
 
-    mysqli_stmt_close($stmt);
-    mysqli_close($conn);
+    if (isset($stmt) && $stmt) mysqli_stmt_close($stmt);
+    if (isset($conn) && $conn) mysqli_close($conn);
 
 } catch (\Throwable $e) {
-    ob_end_clean();
+    if (ob_get_level()) ob_end_clean();
     error_log('CubeSpace contact.php error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
     http_response_code(500);
     header('Content-Type: application/json');
