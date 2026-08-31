@@ -2337,12 +2337,14 @@ if (isset($conn) && $conn) {
                     body: formData, credentials: 'same-origin' }).then(res => res.json()))
                 .then(data => {
                     btn.innerHTML = 'Request Call Back';
-                    if (data.success) {
-                        showAlertModal('We will call you back shortly!', 'success');
+                    if (data && (data.success || data.id)) {
                         form.reset();
                         if (callbackModal) callbackModal.hide();
+                        setTimeout(function() {
+                            showAlertModal((data && data.message) || 'We will call you back shortly!', 'success');
+                        }, 350);
                     } else {
-                        showToast('Failed to send. Please try again.', 'error');
+                        showToast((data && data.message) || 'Failed to send. Please try again.', 'error');
                     }
                 })
                 .catch((err) => {
@@ -2380,12 +2382,14 @@ if (isset($conn) && $conn) {
                     body: formData, credentials: 'same-origin' }).then(res => res.json()))
                 .then(data => {
                     btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Get Best Price';
-                    if (data.success) {
+                    if (data && (data.success || data.id)) {
                         form.reset();
                         if (getPriceModal) getPriceModal.hide();
-                        showAlertModal('Thank you! Your enquiry has been submitted successfully. Our workspace expert will get back to you with the best price shortly.', 'success');
+                        setTimeout(function() {
+                            showAlertModal((data && data.message) || 'Thank you! Your enquiry has been submitted successfully. Our workspace expert will get back to you with the best price shortly.', 'success');
+                        }, 350);
                     } else {
-                        showToast(data.message || 'Failed to send enquiry.', 'error');
+                        showToast((data && data.message) || 'Failed to send enquiry.', 'error');
                     }
                 })
                 .catch((err) => {

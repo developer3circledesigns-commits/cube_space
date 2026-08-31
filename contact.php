@@ -436,20 +436,23 @@ ob_start();
                     ? await CubeAPI.postForm('/api/contact.php', fd)
                     : await fetch(apiUrl('/api/contact.php'), { method: 'POST', body: fd }).then(r => r.json());
                 msg.style.display = 'block';
-                if (d.success) {
+                if (d && (d.success || d.id)) {
                     msg.style.background = '#ecfdf5'; msg.style.color = '#065f46'; msg.style.border = '1px solid #a7f3d0';
-                    msg.innerHTML = '<i class="fa-solid fa-circle-check" style="margin-right:8px"></i>' + d.message;
+                    msg.innerHTML = '<i class="fa-solid fa-circle-check" style="margin-right:8px"></i>' + (d.message || 'Thank you! Your enquiry has been submitted.');
                     this.reset();
                     const hp = this.querySelector('input[name="website"]');
                     if (hp) { hp.value = ''; hp.style.position = 'absolute'; hp.style.left = '-9999px'; }
+                    showAlertModal(d.message || 'Thank you! Your enquiry has been submitted successfully. Our workspace expert will get back to you shortly.', 'success');
                 } else {
                     msg.style.background = '#fef2f2'; msg.style.color = '#991b1b'; msg.style.border = '1px solid #fecaca';
                     msg.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="margin-right:8px"></i>' + (d.message || d.error || 'Something went wrong');
+                    showAlertModal(d.message || d.error || 'Failed to submit request. Please try again.', 'error');
                 }
             } catch (err) {
                 msg.style.display = 'block';
                 msg.style.background = '#fef2f2'; msg.style.color = '#991b1b'; msg.style.border = '1px solid #fecaca';
                 msg.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="margin-right:10px"></i>' + (err.message || 'Network error. Please try again.');
+                showAlertModal(err.message || 'Network error. Please try again.', 'error');
                 console.error('Contact form error:', err);
             }
             btn.textContent = 'Submit Request';

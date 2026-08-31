@@ -1441,12 +1441,14 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
         (window.CubeAPI ? CubeAPI.postForm('/api/contact.php', formData) : fetch('/api/contact.php', { method: 'POST', body: formData, credentials: 'same-origin' }).then(res => res.json()))
             .then(data => {
                 btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Get Best Price';
-                if (data.success) {
+                if (data && (data.success || data.id)) {
                     form.reset();
                     if (getPriceModal) getPriceModal.hide();
-                    showAlertModal('Thank you! Your enquiry has been submitted successfully. Our workspace expert will get back to you with the best price shortly.', 'success');
+                    setTimeout(function() {
+                        showAlertModal((data && data.message) || 'Thank you! Your enquiry has been submitted successfully. Our workspace expert will get back to you with the best price shortly.', 'success');
+                    }, 350);
                 } else {
-                    showToast(data.message || 'Failed to send enquiry.', 'error');
+                    showToast((data && data.message) || 'Failed to send enquiry.', 'error');
                 }
             })
             .catch((err) => {

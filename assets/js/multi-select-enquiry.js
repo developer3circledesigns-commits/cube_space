@@ -701,9 +701,8 @@
                     btn.removeAttribute('aria-busy');
                     btn.innerHTML = btn.dataset.mseOrigHtml || '<i class="fa-solid fa-paper-plane"></i> Send Multi Enquiry';
                 }
-                if (data && data.success) {
+                if (data && (data.success || data.id)) {
                     form.reset();
-                    // Clear before hiding to avoid flash behind backdrop; wait for hidden event if possible
                     var doAfterHide = function () {
                         self.clearAll();
                         self.enabled = false;
@@ -712,29 +711,19 @@
                         if (typeof global.loadListings === 'function') global.loadListings();
                     };
                     if (self.modal) {
-                        var modalEl = document.getElementById('multiEnquiryModal');
-                        var handler = function () {
-                            try { modalEl.removeEventListener('hidden.bs.modal', handler); } catch (ignore) {}
-                            doAfterHide();
-                        };
-                        try {
-                            if (modalEl) modalEl.addEventListener('hidden.bs.modal', handler);
-                            self.modal.hide();
-                            // Fallback if event not fired (no bootstrap transition)
-                            setTimeout(function () {
-                                try { modalEl.removeEventListener('hidden.bs.modal', handler); } catch (ignore2) {}
-                                // Only run if selections not already cleared
-                                if (self.count() > 0) doAfterHide();
-                            }, 600);
-                        } catch (e) {
-                            doAfterHide();
+                        try { self.modal.hide(); } catch (e) {}
+                    }
+                    doAfterHide();
+                    setTimeout(function () {
+                        var successMsg = (data && data.message) || ('Thank you! Your enquiry for ' + selections.length + ' workspace(s) has been submitted. Our expert will get back to you shortly.');
+                        if (typeof global.showAlertModal === 'function') {
+                            global.showAlertModal(successMsg, 'success');
+                        } else if (global.CubeToast) {
+                            global.CubeToast.success(successMsg);
+                        } else {
+                            MultiSelectEnquiry.toast(successMsg, 'success');
                         }
-                    } else {
-                        doAfterHide();
-                    }
-                    if (global.showAlertModal) {
-                        global.showAlertModal('Thank you! Your enquiry for ' + selections.length + ' workspace(s) has been submitted. Our expert will get back to you shortly.', 'success');
-                    }
+                    }, 350);
                 } else {
                     MultiSelectEnquiry.toast((data && data.message) || 'Failed to send enquiry.', 'error');
                 }

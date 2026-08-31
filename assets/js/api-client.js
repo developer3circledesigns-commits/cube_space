@@ -24,6 +24,7 @@
 
     function normalizeData(data) {
         if (!data || typeof data !== 'object') return data;
+        if (data.success !== undefined) return data;
         var nested = data.data;
         if (nested !== null && nested !== undefined) return nested;
         return data;
