@@ -15,19 +15,25 @@ if (isset($_GET['stream']) && $_GET['stream'] === 'true') {
     header('Cache-Control: no-cache');
     header('X-Accel-Buffering: no');
     header('Access-Control-Allow-Credentials: true');
+    header('Connection: keep-alive');
+
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
 
     set_time_limit(300);
 
-    // Send initial handshake
+    @ini_set('implicit_flush', '0');
+    @ini_set('output_buffering', '0');
+
     echo ": open\n\n";
-    ob_flush();
     flush();
 
     $loopCount = 0;
     $maxLoops = 150;
 
     while ($loopCount < $maxLoops) {
-        if (connection_aborted()) {
+        if (connection_aborted() || connection_status() !== CONNECTION_NORMAL) {
             break;
         }
 
@@ -45,18 +51,12 @@ if (isset($_GET['stream']) && $_GET['stream'] === 'true') {
                 'events' => $events,
                 'timestamp' => $since
             ]) . "\n\n";
-            ob_flush();
             flush();
         } else {
             echo ": heartbeat\n\n";
-            ob_flush();
             flush();
         }
 
-        if (connection_status() !== CONNECTION_NORMAL) {
-            break;
-        }
-        
         usleep(2000000);
         $loopCount++;
     }
@@ -76,4 +76,3 @@ echo json_encode([
     ],
     'errors'    => null,
 ]);
-

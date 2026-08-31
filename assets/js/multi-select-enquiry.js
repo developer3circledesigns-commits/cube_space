@@ -668,6 +668,9 @@
 
             var form = event.target;
             var btn = document.getElementById('meSubmitBtn');
+            // Clear honeypot field in case browser autofilled it
+            var honeypot = form.querySelector('[name="website"]');
+            if (honeypot) honeypot.value = '';
             var formData = new FormData(form);
             // Derive interest: if mixed types, use 'commercial' for correct backend grouping
             var distinctTypes = {};
@@ -883,7 +886,10 @@
                                         '<textarea class="form-control" id="meMessage" name="message" data-rules="max:1000" rows="3" placeholder="Tell us about your requirements..."></textarea>' +
                                     '</div>' +
                                     '<input type="hidden" name="mse_ts" id="mseTs" value="">' +
-                                    '<input type="text" name="website" value="" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;" tabindex="-1" autocomplete="off" aria-hidden="true">' +
+                                    '<div aria-hidden="true" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">' +
+                                        '<label for="meWebsite">Leave this empty</label>' +
+                                        '<input type="text" id="meWebsite" name="website" value="" tabindex="-1" autocomplete="new-password">' +
+                                    '</div>' +
                                     '<button type="submit" class="btn btn-primary w-100" id="meSubmitBtn"><i class="fa-solid fa-paper-plane"></i> Send Multi Enquiry</button>' +
                                 '</form>' +
                             '</div>' +

@@ -74,50 +74,7 @@
     }
 
     Realtime.poll = function() {
-        var url = Realtime.adminMode ? Realtime.adminUrl : Realtime.publicUrl;
-
-        // SSE doesn't work behind HTTP/2 reverse proxies — fall back to polling
-        if (Realtime.adminMode) {
-            Realtime.pollFallback();
-            return;
-        }
-        if (typeof EventSource !== 'undefined') {
-            if (Realtime.eventSource) {
-                try { Realtime.eventSource.close(); } catch (e) {}
-            }
-            var sseUrl = url + (url.indexOf('?') === -1 ? '?' : '&') + 'stream=true&since=' + Realtime.lastTimestamp;
-            var es = new EventSource(sseUrl, { withCredentials: true });
-            Realtime.eventSource = es;
-
-            es.onmessage = function(e) {
-                try {
-                    var data = JSON.parse(e.data);
-                    var payload = Realtime.extractEnvelope(data);
-                    Realtime.lastTimestamp = payload.timestamp || Date.now();
-                    Realtime.retryCount = 0;
-                    if (payload.events && payload.events.length) {
-                        for (var i = 0; i < payload.events.length; i++) {
-                            emit(payload.events[i].event_type, payload.events[i]);
-                        }
-                    }
-                } catch (err) {
-                    console.warn('Error parsing SSE data:', err);
-                }
-            };
-
-            es.onerror = function(err) {
-                if (es.readyState === EventSource.CLOSED) {
-                    console.log('SSE connection closed by server, reconnecting...');
-                } else {
-                    console.warn('SSE connection error, falling back to polling...', err);
-                }
-                es.close();
-                Realtime.eventSource = null;
-                Realtime.pollFallback();
-            };
-        } else {
-            Realtime.pollFallback();
-        }
+        Realtime.pollFallback();
     };
 
     Realtime.pollFallback = function() {

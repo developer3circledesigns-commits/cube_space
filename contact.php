@@ -426,6 +426,9 @@ ob_start();
             const msg = document.getElementById('contactMsg');
             const btn = this.querySelector('button');
             const fd = new FormData(this);
+            // Clear honeypot in case browser auto-filled it
+            const hp = this.querySelector('input[name="website"]');
+            if (hp) hp.value = '';
             msg.style.display = 'none';
             btn.textContent = 'Submitting...';
             try {
