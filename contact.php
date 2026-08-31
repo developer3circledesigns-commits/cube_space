@@ -425,10 +425,10 @@ ob_start();
             if (window.CSForms && !CSForms.validate(this)) return;
             const msg = document.getElementById('contactMsg');
             const btn = this.querySelector('button');
-            const fd = new FormData(this);
-            // Clear honeypot in case browser auto-filled it
+            // Clear honeypot in case browser auto-filled it (before creating FormData)
             const hp = this.querySelector('input[name="website"]');
             if (hp) hp.value = '';
+            const fd = new FormData(this);
             msg.style.display = 'none';
             btn.textContent = 'Submitting...';
             try {

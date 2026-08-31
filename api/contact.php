@@ -20,10 +20,11 @@ try {
     }
 
     // --- Honeypot (now present in multiEnquiryModal as hidden website field) ---
+    // Silently reject bots with fake success (browsers sometimes autofill this field for real users)
     $honeypot = trim($_POST['website'] ?? '');
     if ($honeypot !== '') {
-        http_response_code(400);
-        die(json_encode(['success' => false, 'message' => 'Invalid request', 'data' => null, 'errors' => null]));
+        error_log('[contact.php] Honeypot triggered from IP ' . ($_SERVER['REMOTE_ADDR'] ?? '') . ' — UA: ' . ($_SERVER['HTTP_USER_AGENT'] ?? ''));
+        die(json_encode(['success' => true, 'message' => 'Thank you! Your enquiry has been submitted.', 'data' => null, 'errors' => null]));
     }
 
     // --- Spam timing check: form must be open at least 2s (bots submit instantly) ---
