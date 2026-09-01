@@ -115,7 +115,19 @@ class EmailService {
         }
     }
 
-    public function notifyAdminNewContact(array $contact): bool {
+    private function getInterestLabel(string $interest): string
+    {
+        $map = [
+            'managed' => 'Managed Office',
+            'furnished' => 'Furnished Office',
+            'unfurnished' => 'Unfurnished Office',
+            'commercial' => 'Furnished / Unfurnished Office',
+        ];
+        return $map[$interest] ?? ucfirst($interest);
+    }
+
+    public function notifyAdminNewContact(array $contact): bool
+    {
         // Sanitize name for subject to avoid header injection
         $safeName = preg_replace('/[\r\n]+/', ' ', (string)($contact['name'] ?? 'Unknown'));
         $safeName = mb_substr(trim($safeName), 0, 80);
@@ -157,7 +169,7 @@ class EmailService {
             'name' => $contact['name'] ?? 'N/A',
             'phone' => $contact['phone'] ?? 'N/A',
             'email' => $contact['email'] ?? 'N/A',
-            'interest' => $contact['interest'] ?? 'N/A',
+            'interest' => $this->getInterestLabel($contact['interest'] ?? 'N/A'),
             'company' => $contact['company'] ?? 'N/A',
             'seats' => $contact['seats'] ?? 'N/A',
             'message' => $contact['message'] ?? 'N/A',

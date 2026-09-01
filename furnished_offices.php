@@ -1993,13 +1993,13 @@ if (isset($conn) && $conn) {
                     carouselHtml = '<div class="card-carousel" id="' + carouselId + '" data-count="' + o.images_arr
                         .length + '" role="region" aria-label="Image carousel for ' + escHtml(o.title) + '">';
                     carouselHtml += '<div class="carousel-slide"><img src="' + escHtml(o.images_arr[lastIdx]) +
-                        '" alt="' + escHtml(o.title) + '" loading="lazy" onerror="imgErrorToPlaceholder(this)"></div>';
+                        '" alt="' + escHtml(o.title) + '" loading="lazy" decoding="async" fetchpriority="low" onerror="imgErrorToPlaceholder(this)"></div>';
                     o.images_arr.forEach((url, imgIdx) => {
                         carouselHtml += '<div class="carousel-slide"><img src="' + escHtml(url) +
-                            '" alt="' + escHtml(o.title) + '" loading="lazy" onerror="imgErrorToPlaceholder(this)"></div>';
+                            '" alt="' + escHtml(o.title) + '" loading="lazy" decoding="async" fetchpriority="low" onerror="imgErrorToPlaceholder(this)"></div>';
                     });
                     carouselHtml += '<div class="carousel-slide"><img src="' + escHtml(o.images_arr[0]) +
-                        '" alt="' + escHtml(o.title) + '" loading="lazy" onerror="imgErrorToPlaceholder(this)"></div>';
+                        '" alt="' + escHtml(o.title) + '" loading="lazy" decoding="async" fetchpriority="low" onerror="imgErrorToPlaceholder(this)"></div>';
                     carouselHtml += '</div>';
 
                     if (o.images_arr.length > 1) {
@@ -2144,13 +2144,13 @@ if (isset($conn) && $conn) {
                     carouselHtml =
                         `<div class="card-carousel" id="${carouselId}" data-count="${o.images_arr.length}" role="region" aria-label="Image carousel for ${escHtml(o.title)}">`;
                     carouselHtml +=
-                        `<div class="carousel-slide"><img src="${escHtml(o.images_arr[lastIdx])}" alt="${escHtml(o.title)}" loading="lazy" onerror="imgErrorToPlaceholder(this)"></div>`;
+                        `<div class="carousel-slide"><img src="${escHtml(o.images_arr[lastIdx])}" alt="${escHtml(o.title)}" loading="lazy" decoding="async" fetchpriority="low" onerror="imgErrorToPlaceholder(this)"></div>`;
                     o.images_arr.forEach((url, idx) => {
                         carouselHtml +=
-                            `<div class="carousel-slide"><img src="${escHtml(url)}" alt="${escHtml(o.title)}" loading="lazy" onerror="imgErrorToPlaceholder(this)"></div>`;
+                            `<div class="carousel-slide"><img src="${escHtml(url)}" alt="${escHtml(o.title)}" loading="lazy" decoding="async" fetchpriority="low" onerror="imgErrorToPlaceholder(this)"></div>`;
                     });
                     carouselHtml +=
-                        `<div class="carousel-slide"><img src="${escHtml(o.images_arr[0])}" alt="${escHtml(o.title)}" loading="lazy" onerror="imgErrorToPlaceholder(this)"></div>`;
+                        `<div class="carousel-slide"><img src="${escHtml(o.images_arr[0])}" alt="${escHtml(o.title)}" loading="lazy" decoding="async" fetchpriority="low" onerror="imgErrorToPlaceholder(this)"></div>`;
                     carouselHtml += '</div>';
 
                     if (o.images_arr.length > 1) {

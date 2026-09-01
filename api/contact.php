@@ -244,12 +244,6 @@ try {
                 $workspacesSummary = implode("\n", $lines);
                 $source = !empty($source) ? $source : 'multi_select_enquiry';
                 $listingCode = 'MULTI (' . count($selectedOffices) . ')';
-                $userMessage = $message !== '' ? "\n\nAdditional message:\n" . $message : '';
-                $combined = $workspacesSummary . $userMessage;
-                if (mb_strlen($combined) > 10000) {
-                    $combined = mb_substr($combined, 0, 9980) . "\n[truncated]";
-                }
-                $message = $combined;
 
                 $distinctTypes = array_unique(array_column($selectedOffices, 'listing_type'));
                 if (count($distinctTypes) > 1) {
