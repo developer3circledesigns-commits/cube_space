@@ -1617,10 +1617,21 @@ if (isset($conn) && $conn) {
         }
 
         function imgErrorToPlaceholder(img) {
-            const parent = img.parentElement;
-            if (parent) {
-                parent.innerHTML = '<div class="placeholder-img"><i class="fa-solid fa-building"></i></div>';
+            if (img.dataset.retry) {
+                const parent = img.parentElement;
+                if (parent) parent.innerHTML = '<div class="placeholder-img"><i class="fa-solid fa-building"></i></div>';
+                return;
             }
+            // Retry once with clean URL (strip .php) for Hostinger 301 compatibility
+            const src = img.getAttribute('src') || '';
+            if (src.includes('/serve_image.php')) {
+                img.dataset.retry = '1';
+                img.src = src.replace('/serve_image.php', '/serve_image');
+                return;
+            }
+            img.dataset.retry = '1';
+            const parent = img.parentElement;
+            if (parent) parent.innerHTML = '<div class="placeholder-img"><i class="fa-solid fa-building"></i></div>';
         }
 
         // ============================================================
@@ -1945,18 +1956,22 @@ if (isset($conn) && $conn) {
             });
         }
 
-        // Init carousels on load and resize
+        // Init carousels on load and resize - wait for image load, guard width
         function initCarousels(container) {
             const els = (container || document).querySelectorAll('.card-carousel');
             els.forEach(el => {
-                if (parseInt(el.dataset.count) > 1) {
-                    el.scrollLeft = el.clientWidth || 0;
-                    // Update dots after a tick
-                    setTimeout(() => {
-                        updateCarouselDots(el, 1);
-                    }, 50);
+                const count = parseInt(el.dataset.count) || 0;
+                if (count > 1) {
+                    const firstImg = el.querySelector('img');
+                    const doInit = () => {
+                        const w = el.clientWidth;
+                        if (w === 0) { setTimeout(doInit, 100); return; }
+                        el.scrollLeft = w;
+                        setTimeout(() => updateCarouselDots(el, 1), 80);
+                    };
+                    if (firstImg && !firstImg.complete) firstImg.addEventListener('load', doInit, {once:true});
+                    doInit();
                 }
-                // Attach scroll listener for dot updates
                 el.removeEventListener('scroll', carouselScrollHandler);
                 el.addEventListener('scroll', carouselScrollHandler);
             });
@@ -1992,12 +2007,17 @@ if (isset($conn) && $conn) {
                     const lastIdx = o.images_arr.length - 1;
                     carouselHtml = '<div class="card-carousel" id="' + carouselId + '" data-count="' + o.images_arr
                         .length + '" role="region" aria-label="Image carousel for ' + escHtml(o.title) + '">';
-                    carouselHtml += '<div class="carousel-slide"><img src="' + escHtml(o.images_arr[lastIdx]) +
-                        '" alt="' + escHtml(o.title) + '" loading="lazy" decoding="async" fetchpriority="low" onerror="imgErrorToPlaceholder(this)"></div>';
+                    carouselHtml += '<div class="carousel-slide"><img src="' + escHtml(o.images_arr[lastIdx]) + '" alt="' + escHtml(o.title) + '" loading="lazy" decoding="async" fetchpriority="low" onerror="imgErrorToPlaceholder(this)" data-lazy="true"></div>';
+                    let firstReal = true;
                     o.images_arr.forEach((url, imgIdx) => {
+                        const isFirstReal = firstReal; firstReal=false;
                         carouselHtml += '<div class="carousel-slide"><img src="' + escHtml(url) +
-                            '" alt="' + escHtml(o.title) + '" loading="lazy" decoding="async" fetchpriority="low" onerror="imgErrorToPlaceholder(this)"></div>';
+                            '" alt="' + escHtml(o.title) + '" ' + (isFirstReal ? 'loading="eager" decoding="sync" fetchpriority="high"' : 'loading="lazy" decoding="async" fetchpriority="low"') + ' onerror="imgErrorToPlaceholder(this)"></div>';
                     });
+                    // dummy to keep old structure commented
+                    // OLD_LOOP_REMOVED
+                        '" alt="' + escHtml(o.title) + '" loading="lazy" decoding="async" fetchpriority="low" onerror="imgErrorToPlaceholder(this)"></div>';
+
                     carouselHtml += '<div class="carousel-slide"><img src="' + escHtml(o.images_arr[0]) +
                         '" alt="' + escHtml(o.title) + '" loading="lazy" decoding="async" fetchpriority="low" onerror="imgErrorToPlaceholder(this)"></div>';
                     carouselHtml += '</div>';

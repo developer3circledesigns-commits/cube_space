@@ -29,8 +29,10 @@ if (!$rateLimiter->check($clientIp)) {
 }
 
 function decode_existing_listing_images($imagesJson) {
-    $images = json_decode($imagesJson ?? '[]', true);
-    if (!is_array($images)) {
+    if ($imagesJson === null || $imagesJson === '') return [];
+    $images = json_decode($imagesJson, true);
+    if (json_last_error() !== JSON_ERROR_NONE || !is_array($images)) {
+        error_log('[decode_images] json_error '.json_last_error_msg().' raw='.substr((string)$imagesJson,0,200));
         return [];
     }
     return array_values(array_filter($images, function($image) {

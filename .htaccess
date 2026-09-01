@@ -22,6 +22,8 @@ RewriteRule ^(.*)/$ /$1 [L,R=301]
 # Force clean URLs (strip .php extension via external redirect — skip POST to avoid data loss)
 RewriteCond %{REQUEST_METHOD} !POST [NC]
 RewriteCond %{THE_REQUEST} \.php[\s?/] [NC]
+RewriteCond %{REQUEST_URI} !^/serve_image [NC]
+RewriteCond %{REQUEST_URI} !^/api/ [NC]
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^(.+)\.php$ /$1 [L,R=301]
 
@@ -75,12 +77,12 @@ Options -Indexes -MultiViews
     <FilesMatch "\.(css|js|mjs|jpg|jpeg|png|gif|webp|svg|ico|woff|woff2|ttf|otf|eot)$">
         Header set Cache-Control "public, max-age=31536000, immutable"
     </FilesMatch>
-
+    
     # HTML, PHP: no-cache
     <FilesMatch "\.(html|php)$">
         Header set Cache-Control "no-cache, must-revalidate"
     </FilesMatch>
-</IfModule>
+    </IfModule>
 
 # === PERFORMANCE: Enable Compression ===
 <IfModule mod_deflate.c>
