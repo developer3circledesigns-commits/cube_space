@@ -58,7 +58,11 @@ if ($mode === 'add' || $mode === 'edit'):
         if (!is_string($img) || trim($img) === '') return false;
         if (parse_url($img, PHP_URL_HOST) || parse_url($img, PHP_URL_SCHEME)) return true;
         $path = parse_url($img, PHP_URL_PATH);
-        return $path && file_exists(__DIR__ . '/..' . $path);
+        if (!$path) return false;
+        if (str_contains($path, 'serve_image.php')) return true;
+        // Uploads with DB-backed id (e.g. /uploads/listings/managed_1_123.jpg) — keep even if file missing (DB fallback)
+        if (str_starts_with($path, '/uploads/listings/') && preg_match('/_\d+\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i', $path)) return true;
+        return file_exists(__DIR__ . '/..' . $path);
     }));
     $cities = mysqli_query($conn, "SELECT city FROM (SELECT city COLLATE utf8mb4_unicode_ci AS city FROM listing_cities UNION SELECT DISTINCT city COLLATE utf8mb4_unicode_ci AS city FROM $table WHERE city != '') AS c ORDER BY city");
     if (!$cities) $cities = false;

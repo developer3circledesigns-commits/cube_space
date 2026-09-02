@@ -14,6 +14,7 @@ cubespace_require_project('lib/cors.php');
 cubespace_require_project('lib/cache.php');
 cubespace_require_project('lib/ratelimit.php');
 cubespace_require_project('lib/geohash.php');
+cubespace_require_project('lib/image_helper.php');
 
 set_cors_headers('GET, OPTIONS');
 header('Content-Type: application/json');
@@ -38,6 +39,14 @@ function decode_existing_listing_images($imagesJson) {
     return array_values(array_filter($images, function($image) {
         return is_string($image) && trim($image) !== '';
     }));
+}
+
+function resolve_images_for_row($imagesJson, $listingType, $listingId, $conn) {
+    if (function_exists('cubespace_resolve_display_images')) {
+        $resolved = cubespace_resolve_display_images($conn, $listingType, (int)$listingId, $imagesJson ?? '[]');
+        if (!empty($resolved)) return $resolved;
+    }
+    return decode_existing_listing_images($imagesJson);
 }
 
 class TrieNode {
@@ -331,7 +340,7 @@ if ($action === 'list') {
     $offices = [];
     while ($row = mysqli_fetch_assoc($result)) {
         $row['amenities_arr'] = json_decode($row['amenities'] ?? '[]', true);
-        $row['images_arr'] = decode_existing_listing_images($row['images'] ?? '[]');
+        $row['images_arr'] = resolve_images_for_row($row['images'] ?? '[]', $row['listing_type_db'] ?? 'furnished', $row['id'] ?? 0, $conn);
         $row['first_image'] = $row['images_arr'][0] ?? null;
         unset($row['amenities']);
         unset($row['images']);
@@ -529,7 +538,7 @@ if ($action === 'list') {
                 $a = sin($dlat/2) * sin($dlat/2) + cos(deg2rad($centerLat)) * cos(deg2rad((float)$r['latitude'])) * sin($dlng/2) * sin($dlng/2);
                 $c = 2 * atan2(sqrt($a), sqrt(1-$a));
                 $r['distance_km'] = round(6371 * $c, 1);
-                $r['images_arr'] = decode_existing_listing_images($r['images'] ?? '[]');
+                $r['images_arr'] = resolve_images_for_row($r['images'] ?? '[]', $r['listing_type_db'] ?? 'furnished', $r['id'] ?? 0, $conn);
                 $r['first_image'] = $r['images_arr'][0] ?? null;
                 unset($r['amenities']); unset($r['images']);
                 $nearest[] = $r;

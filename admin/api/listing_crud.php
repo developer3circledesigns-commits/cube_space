@@ -17,6 +17,7 @@ admin_require_lib('validator.php');
 admin_require_lib('cache.php');
 admin_require_lib('events.php');
 cubespace_require_project('src/autoload.php');
+cubespace_require_project('lib/image_helper.php');
 
 $jwtPayload = require_jwt_auth();
 secure_session_start();
@@ -78,7 +79,14 @@ function store_uploaded_images($conn, $listingType, $listingId, $files, $allowed
         if (!$s) throw new Exception('DB prepare failed for listing_images: ' . mysqli_error($conn));
         mysqli_stmt_bind_param($s, 'sissi', $listingType, $listingId, $data, $mime, $order);
         mysqli_stmt_execute($s);
-        $urls[] = '/serve_image.php?id=' . mysqli_insert_id($conn);
+        $imageId = (int)mysqli_insert_id($conn);
+        // Write to uploads folder (primary) and keep DB as fallback
+        $webPath = cubespace_write_image_file($data, $mime, $listingType, $listingId, $imageId);
+        if ($webPath && file_exists(cubespace_filesystem_path_from_web($webPath))) {
+            $urls[] = $webPath;
+        } else {
+            $urls[] = '/serve_image.php?id=' . $imageId;
+        }
         $order++;
     }
     return $urls;
@@ -86,6 +94,19 @@ function store_uploaded_images($conn, $listingType, $listingId, $files, $allowed
 
 function delete_listing_images($conn, $listingType, $listingId) {
     ensure_listing_images_table($conn);
+    // Delete associated files first
+    $stmtFiles = mysqli_prepare($conn, "SELECT id FROM listing_images WHERE listing_type = ? AND listing_id = ?");
+    if ($stmtFiles) {
+        mysqli_stmt_bind_param($stmtFiles, 'si', $listingType, $listingId);
+        mysqli_stmt_execute($stmtFiles);
+        $res = mysqli_stmt_get_result($stmtFiles);
+        if ($res) {
+            while ($r = mysqli_fetch_assoc($res)) {
+                cubespace_delete_files_for_image_id($listingType, $listingId, (int)$r['id']);
+            }
+        }
+        mysqli_stmt_close($stmtFiles);
+    }
     $s = mysqli_prepare($conn, "DELETE FROM listing_images WHERE listing_type = ? AND listing_id = ?");
     if (!$s) return;
     mysqli_stmt_bind_param($s, 'si', $listingType, $listingId);
@@ -228,6 +249,7 @@ if ($action === 'create' || $action === 'update') {
         $path = parse_url($image, PHP_URL_PATH);
         if (!$path) return false;
         if (str_contains($path, 'serve_image.php')) return true;
+        if (str_starts_with($path, '/uploads/listings/') && preg_match('/_\d+\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i', $path)) return true;
         $filePath = __DIR__ . '/../..' . $path;
         return file_exists($filePath);
     }));
@@ -332,6 +354,8 @@ if ($action === 'create' || $action === 'update') {
             }
 
             $allImages = array_merge($existingImages, $uploaded);
+            // Materialize any DB-backed images to uploads folder (uploads first, DB fallback)
+            $allImages = cubespace_materialize_images_array($conn, $listingType, $newId, $allImages);
             if (!empty($allImages)) {
                 $upd = mysqli_prepare($conn, "UPDATE $table SET images = ? WHERE id = ?");
                 $allJson = json_encode($allImages);
@@ -367,19 +391,36 @@ if ($action === 'create' || $action === 'update') {
             mysqli_stmt_execute($oldStmt);
             $oldRow = mysqli_fetch_assoc(mysqli_stmt_get_result($oldStmt));
             $oldImages = json_decode($oldRow['images'] ?? '[]', true);
+            if (!is_array($oldImages)) $oldImages = [];
             $removedImages = array_diff($oldImages, $existingImages);
             foreach ($removedImages as $rimg) {
-                $dbId = parse_db_image_id($rimg);
+                $dbId = cubespace_parse_db_image_id($rimg);
                 if ($dbId) {
                     $dStmt = mysqli_prepare($conn, "DELETE FROM listing_images WHERE id = ?");
                     if ($dStmt) {
                         mysqli_stmt_bind_param($dStmt, 'i', $dbId);
                         mysqli_stmt_execute($dStmt);
                     }
+                    cubespace_delete_files_for_image_id($listingType, $id, $dbId);
+                } else {
+                    // File-path image removed — delete file if it matches our pattern
+                    if (is_string($rimg) && str_starts_with($rimg, '/uploads/listings/')) {
+                        cubespace_delete_image_file_by_webpath($rimg);
+                        $fid = cubespace_extract_db_id_from_upload_path($rimg);
+                        if ($fid > 0) {
+                            $dStmt = mysqli_prepare($conn, "DELETE FROM listing_images WHERE id = ?");
+                            if ($dStmt) {
+                                mysqli_stmt_bind_param($dStmt, 'i', $fid);
+                                mysqli_stmt_execute($dStmt);
+                            }
+                        }
+                    }
                 }
             }
 
             $allImages = array_merge($existingImages, $uploaded);
+            // Ensure all existing DB images are also materialized to uploads folder (idempotent)
+            $allImages = cubespace_materialize_images_array($conn, $listingType, $id, $allImages);
             $imagesJson = !empty($allImages) ? json_encode($allImages) : null;
 
             if ($isFurnished) {
@@ -558,6 +599,15 @@ if ($action === 'delete') {
         die(json_encode(['error' => 'Listing not found']));
     }
 
+    // Delete any file-path images stored in JSON (cover legacy /uploads files)
+    $imgs = json_decode($row['images'] ?? '[]', true);
+    if (is_array($imgs)) {
+        foreach ($imgs as $img) {
+            if (is_string($img) && str_starts_with($img, '/uploads/listings/')) {
+                cubespace_delete_image_file_by_webpath($img);
+            }
+        }
+    }
     delete_listing_images($conn, $listingType, $id);
 
     $stmt = mysqli_prepare($conn, "DELETE FROM $table WHERE id = ?");

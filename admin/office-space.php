@@ -43,7 +43,10 @@ if ($mode === 'add' || $mode === 'edit'):
         if (!is_string($img) || trim($img) === '') return false;
         if (parse_url($img, PHP_URL_HOST) || parse_url($img, PHP_URL_SCHEME)) return true;
         $path = parse_url($img, PHP_URL_PATH);
-        return $path && file_exists(__DIR__ . '/..' . $path);
+        if (!$path) return false;
+        if (str_contains($path, 'serve_image.php')) return true;
+        if (str_starts_with($path, '/uploads/listings/') && preg_match('/_\d+\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i', $path)) return true;
+        return file_exists(__DIR__ . '/..' . $path);
     }));
     $cities = mysqli_query($conn, "SELECT city FROM (SELECT city COLLATE utf8mb4_unicode_ci AS city FROM listing_cities UNION SELECT DISTINCT city COLLATE utf8mb4_unicode_ci AS city FROM furnished_offices WHERE city != '' UNION SELECT DISTINCT city COLLATE utf8mb4_unicode_ci AS city FROM unfurnished_offices WHERE city != '') AS c ORDER BY city");
     if (!$cities) $cities = false;

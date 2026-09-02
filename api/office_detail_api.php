@@ -3,6 +3,7 @@ require_once __DIR__ . '/db_config.php';
 cubespace_require_project('lib/cors.php');
 cubespace_require_project('lib/cache.php');
 cubespace_require_project('lib/ratelimit.php');
+cubespace_require_project('lib/image_helper.php');
 
 set_cors_headers('GET, OPTIONS');
 header('Content-Type: application/json');
@@ -100,27 +101,30 @@ foreach (['amenities', 'images', 'feature_highlights'] as $field) {
     }
 }
 
-// Filter out empty and non-existent images
+// Resolve images: prioritize uploads folder, fallback to DB (serve_image)
 if (is_array($office['images'] ?? null)) {
-    $projectRoot = realpath(__DIR__ . '/..');
-    $office['images'] = array_values(array_filter($office['images'], function($image) use ($projectRoot) {
-        if (!is_string($image) || trim($image) === '') {
-            return false;
-        }
-        $host = parse_url($image, PHP_URL_HOST);
-        $scheme = parse_url($image, PHP_URL_SCHEME);
-        if ($host || $scheme) {
-            return true;
-        }
-        $path = parse_url($image, PHP_URL_PATH);
-        if (!$path) {
-            return false;
-        }
-        if ($path[0] !== '/') {
-            return file_exists($projectRoot . '/' . $path);
-        }
-        return file_exists($projectRoot . $path);
-    }));
+    // Re-encode original images JSON to use resolver (covers serve_image -> uploads migration)
+    $origJson = json_encode($office['images']);
+    $resolved = cubespace_resolve_display_images($conn, $listingTypeDb ?: 'managed', (int)$office['id'], $origJson);
+    if (!empty($resolved)) {
+        $office['images'] = $resolved;
+    } else {
+        // Fallback to legacy existence check if resolver returns empty but original had data
+        $projectRoot = realpath(__DIR__ . '/..');
+        $filtered = array_values(array_filter($office['images'], function($image) use ($projectRoot) {
+            if (!is_string($image) || trim($image) === '') return false;
+            $host = parse_url($image, PHP_URL_HOST);
+            $scheme = parse_url($image, PHP_URL_SCHEME);
+            if ($host || $scheme) return true;
+            $path = parse_url($image, PHP_URL_PATH);
+            if (!$path) return false;
+            if (str_contains($path, 'serve_image.php')) return true;
+            if (str_starts_with($path, '/uploads/listings/') && preg_match('/_\d+\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i', $path)) return true;
+            if ($path[0] !== '/') return file_exists($projectRoot . '/' . $path);
+            return file_exists($projectRoot . $path);
+        }));
+        $office['images'] = !empty($filtered) ? $filtered : $office['images'];
+    }
 }
 
 // ============================================================

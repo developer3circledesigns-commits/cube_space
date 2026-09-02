@@ -6,3 +6,5 @@ vendor/
 .DS_Store
 Thumbs.db
 /logs/
+/uploads/*
+!/uploads/.htaccess

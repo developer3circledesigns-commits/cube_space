@@ -277,7 +277,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
     <meta charset="UTF-8">
     <?php include __DIR__ . '/includes/head-meta.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <script>function imgErrorToPlaceholder(img){if(!img)return;img.style.display='none';var p=img.parentElement;if(!p)return;if(p.querySelector('.placeholder-img'))return;var fallback=document.createElement('div');fallback.className='placeholder-img';fallback.innerHTML='<i class=\"fa-solid fa-building\"></i>';p.appendChild(fallback);}</script>
+    <script>function imgErrorToPlaceholder(img){if(!img)return;var src=img.getAttribute('src')||'';if(src.includes('/uploads/listings/')&&!img.dataset.fallbackAttempt){var m=src.match(/_(\d+)\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i);if(m){img.dataset.fallbackAttempt='1';img.style.display='';img.src='/serve_image.php?id='+m[1];return;}}if(src.includes('/serve_image.php')&&!img.dataset.retry){img.dataset.retry='1';img.src=src.replace('/serve_image.php','/serve_image');return;}img.style.display='none';var p=img.parentElement;if(!p)return;if(p.querySelector('.placeholder-img'))return;var fallback=document.createElement('div');fallback.className='placeholder-img';fallback.innerHTML='<i class=\"fa-solid fa-building\"></i>';p.appendChild(fallback);}</script>
     <title><?php echo e($pageTitle); ?></title>
     <meta name="description" content="View details for <?php echo e($officeName); ?> - <?php echo e($officeType); ?> in <?php echo e($officeCity); ?>. Check amenities, pricing, and availability.">
     <link rel="icon" href="favicon.ico" sizes="any">

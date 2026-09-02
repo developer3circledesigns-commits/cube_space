@@ -1617,13 +1617,30 @@ if (isset($conn) && $conn) {
         }
 
         function imgErrorToPlaceholder(img) {
+            const src = img.getAttribute('src') || '';
+            // Uploads-first fallback: if file in /uploads/listings/ fails, try DB (serve_image) via extracted id
+            if (src.includes('/uploads/listings/')) {
+                if (!img.dataset.fallbackAttempt) {
+                    const m = src.match(/_(\d+)\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i);
+                    if (m) {
+                        img.dataset.fallbackAttempt = '1';
+                        // Fallback to DB image
+                        const fallback = '/serve_image.php?id=' + m[1];
+                        // Use apiUrl if available to respect base path
+                        try { img.src = (typeof apiUrl === 'function' ? apiUrl(fallback) : fallback); } catch(e) { img.src = fallback; }
+                        return;
+                    }
+                }
+                const parent = img.parentElement;
+                if (parent) parent.innerHTML = '<div class="placeholder-img"><i class="fa-solid fa-building"></i></div>';
+                return;
+            }
             if (img.dataset.retry) {
                 const parent = img.parentElement;
                 if (parent) parent.innerHTML = '<div class="placeholder-img"><i class="fa-solid fa-building"></i></div>';
                 return;
             }
             // Retry once with clean URL (strip .php) for Hostinger 301 compatibility
-            const src = img.getAttribute('src') || '';
             if (src.includes('/serve_image.php')) {
                 img.dataset.retry = '1';
                 img.src = src.replace('/serve_image.php', '/serve_image');
