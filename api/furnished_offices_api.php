@@ -20,6 +20,13 @@ set_cors_headers('GET, OPTIONS');
 header('Content-Type: application/json');
 header('Cache-Control: no-cache, must-revalidate');
 header('Expires: 0');
+if (isset($conn) && $conn) {
+    $r = @mysqli_query($conn, "SHOW COLUMNS FROM `furnished_offices` LIKE 'cam'");
+    if ($r && mysqli_num_rows($r) === 0) { @mysqli_query($conn, "ALTER TABLE `furnished_offices` ADD COLUMN `cam` TEXT DEFAULT NULL AFTER `price`"); }
+    else if ($r && mysqli_num_rows($r) > 0) { $c=mysqli_fetch_assoc($r); if(strtolower($c['Type']??'')!=='text' && strtolower($c['Type']??'')!=='longtext'){ @mysqli_query($conn, "ALTER TABLE `furnished_offices` MODIFY COLUMN `cam` TEXT DEFAULT NULL"); } }
+    $r2 = @mysqli_query($conn, "SHOW COLUMNS FROM `furnished_offices` LIKE 'cam'");
+    $camSelectF = ($r2 && mysqli_num_rows($r2) > 0) ? "`cam`" : "NULL as `cam`";
+} else { $camSelectF = "NULL as `cam`"; }
 
 $rateLimiter = new RateLimiter(30, 60, 'fgo_api_');
 $clientIp = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
@@ -193,7 +200,7 @@ if ($action === 'list') {
     $sort = trim($_GET['sort'] ?? 'newest');
     $featured = $_GET['featured'] ?? '';
 
-    $cacheKey = 'list_furnished_v4_' . JsonCache::getGlobalVersion() . '_' . md5(implode('|', [$page, $limit, $search, $listing_type, $city, $area, $minPrice, $maxPrice, $minSeats, $maxSeats, $sort, $featured]));
+    $cacheKey = 'list_furnished_v5_' . JsonCache::getGlobalVersion() . '_' . md5(implode('|', [$page, $limit, $search, $listing_type, $city, $area, $minPrice, $maxPrice, $minSeats, $maxSeats, $sort, $featured]));
     $cached = $cache->get($cacheKey);
     if ($cached) { echo json_encode($cached); exit; }
 
@@ -279,7 +286,7 @@ if ($action === 'list') {
         default: $orderBy = 'featured DESC, created_at DESC';
     }
 
-    $sql = "SELECT id, title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code
+    $sql = "SELECT id, title, slug, description, city, area, address, latitude, longitude, price, $camSelectF, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code
             FROM furnished_offices
             WHERE $whereClause
             ORDER BY $orderBy
@@ -372,7 +379,7 @@ if ($action === 'list') {
             $centerLng = $lngSum / $coordCount;
 
             $placeholders = implode(',', array_fill(0, count($excludeIds), '?'));
-            $nearSql = "SELECT id, title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code
+            $nearSql = "SELECT id, title, slug, description, city, area, address, latitude, longitude, price, $camSelectF, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code
                         FROM furnished_offices
                         WHERE status='active' AND latitude IS NOT NULL AND id NOT IN ($placeholders)
                         ORDER BY (POW(latitude - ?, 2) + POW(longitude - ?, 2))
@@ -462,7 +469,7 @@ if ($action === 'map') {
     }
 
     $whereClause = implode(' AND ', $where);
-    $sql = "SELECT id, title, slug, city, area, address, latitude, longitude, price, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured
+    $sql = "SELECT id, title, slug, city, area, address, latitude, longitude, price, $camSelectF, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured
             FROM furnished_offices WHERE $whereClause ORDER BY featured DESC, created_at DESC LIMIT ?";
 
     $allParams = array_merge($params, [$limit]);

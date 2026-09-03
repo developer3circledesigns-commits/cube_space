@@ -136,6 +136,7 @@ if ($action === 'create' || $action === 'update') {
     $area = trim($_POST['area'] ?? '');
     $address = trim($_POST['address'] ?? '');
     $price = isset($_POST['price']) && $_POST['price'] !== '' ? trim($_POST['price']) : null;
+    $cam = isset($_POST['cam']) && $_POST['cam'] !== '' ? trim($_POST['cam']) : null;
     
     // Validate latitude and longitude if provided
     $latitude = isset($_POST['latitude']) && $_POST['latitude'] !== '' ? (float)$_POST['latitude'] : null;
@@ -277,6 +278,20 @@ if ($action === 'create' || $action === 'update') {
         $listingCode = $_POST['listing_code'] ?? null;
     }
 
+    // Ensure CAM column exists for furnished/unfurnished tables (auto-migrate, no 255 limit -> TEXT)
+    if (in_array($table, ['furnished_offices','unfurnished_offices'], true)) {
+        $res = @mysqli_query($conn, "SHOW COLUMNS FROM `$table` LIKE 'cam'");
+        if ($res && mysqli_num_rows($res) === 0) {
+            @mysqli_query($conn, "ALTER TABLE `$table` ADD COLUMN `cam` TEXT DEFAULT NULL AFTER `price`");
+        } else if ($res && mysqli_num_rows($res) > 0) {
+            $col = mysqli_fetch_assoc($res);
+            $type = strtolower($col['Type'] ?? '');
+            if ($type !== 'text' && $type !== 'longtext') {
+                @mysqli_query($conn, "ALTER TABLE `$table` MODIFY COLUMN `cam` TEXT DEFAULT NULL");
+            }
+        }
+    }
+
     if ($action === 'create') {
         mysqli_begin_transaction($conn);
         try {
@@ -288,16 +303,16 @@ if ($action === 'create' || $action === 'update') {
                 $inventoryType = trim($_POST['inventory_type'] ?? '');
                 $remarks = trim($_POST['remarks'] ?? '');
                 $stmt = mysqli_prepare($conn,
-                    "INSERT INTO $table (title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, total_area_sqft, available_sqft, min_inventory, inventory_type, remarks, amenities, images, status, featured, feature_highlights, seo_text, office_space_type, listing_type, listing_code)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    "INSERT INTO $table (title, slug, description, city, area, address, latitude, longitude, price, cam, price_label, total_seats, total_area_sqft, available_sqft, min_inventory, inventory_type, remarks, amenities, images, status, featured, feature_highlights, seo_text, office_space_type, listing_type, listing_code)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 );
                 if (!$stmt) {
                     throw new Exception('Column mismatch in furnished_offices table: ' . mysqli_error($conn));
                 }
-                mysqli_stmt_bind_param($stmt, 'ssssssddsssssssssssssssss',
+                mysqli_stmt_bind_param($stmt, 'ssssssddssssssssssssssssss',
                     $title, $slug, $description, $city, $area, $address,
                     $latitude, $longitude,
-                    $price, $priceLabel, $totalSeats, $totalAreaSqft,
+                    $price, $cam, $priceLabel, $totalSeats, $totalAreaSqft,
                     $availableSqft, $minInventory, $inventoryType,
                     $remarks,
                     $amenitiesJson, $initImagesJson,
@@ -366,7 +381,7 @@ if ($action === 'create' || $action === 'update') {
             log_activity($conn, 'create', $table, $newId, ['title' => $title, 'type' => $listingType]);
             publish_event('listing_created', $listingType, $newId, $title);
             try {
-                $listingDetail = "Title: $title\nCode: $listingCode\nType: $listingType\nCity: $city\nArea: $area\nAddress: $address\nPrice: $price ($priceLabel)\nSeats: $totalSeats\nSqft: $totalAreaSqft\nStatus: $status\nFeatured: " . ($featured ? 'Yes' : 'No') . "\nSpace Type: $officeSpaceType\nRemarks: $remarks";
+                $listingDetail = "Title: $title\nCode: $listingCode\nType: $listingType\nCity: $city\nArea: $area\nAddress: $address\nPrice: $price ($priceLabel)\nCAM: $cam\nSeats: $totalSeats\nSqft: $totalAreaSqft\nStatus: $status\nFeatured: " . ($featured ? 'Yes' : 'No') . "\nSpace Type: $officeSpaceType\nRemarks: $remarks";
                 (new \CubeSpace\EmailService())->notifyAdminAction('create', "$listingType listing #$newId", $listingDetail);
             } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
             JsonCache::incrementGlobalVersion();
@@ -429,15 +444,15 @@ if ($action === 'create' || $action === 'update') {
                 $inventoryType = trim($_POST['inventory_type'] ?? '');
                 $remarks = trim($_POST['remarks'] ?? '');
                 $stmt = mysqli_prepare($conn,
-                    "UPDATE $table SET title=?, slug=?, description=?, city=?, area=?, address=?, latitude=?, longitude=?, price=?, price_label=?, total_seats=?, total_area_sqft=?, available_sqft=?, min_inventory=?, inventory_type=?, remarks=?, amenities=?, images=?, status=?, featured=?, feature_highlights=?, seo_text=?, office_space_type=?, listing_type=?, updated_at=NOW() WHERE id=?"
+                    "UPDATE $table SET title=?, slug=?, description=?, city=?, area=?, address=?, latitude=?, longitude=?, price=?, cam=?, price_label=?, total_seats=?, total_area_sqft=?, available_sqft=?, min_inventory=?, inventory_type=?, remarks=?, amenities=?, images=?, status=?, featured=?, feature_highlights=?, seo_text=?, office_space_type=?, listing_type=?, updated_at=NOW() WHERE id=?"
                 );
                 if (!$stmt) {
                     throw new Exception('Update prepare failed for ' . $table . ': ' . mysqli_error($conn));
                 }
-                mysqli_stmt_bind_param($stmt, 'ssssssddsssisssssssssssii',
+                mysqli_stmt_bind_param($stmt, 'ssssssddssssisssssssssssii',
                     $title, $slug, $description, $city, $area, $address,
                     $latitude, $longitude,
-                    $price, $priceLabel, $totalSeats, $totalAreaSqft,
+                    $price, $cam, $priceLabel, $totalSeats, $totalAreaSqft,
                     $availableSqft, $minInventory, $inventoryType,
                     $remarks,
                     $amenitiesJson, $imagesJson,
@@ -487,7 +502,7 @@ if ($action === 'create' || $action === 'update') {
             log_activity($conn, 'update', $table, $id, ['title' => $title, 'type' => $listingType]);
             publish_event('listing_updated', $listingType, $id, $title);
             try {
-                $listingDetail = "Title: $title\nCode: $listingCode\nType: $listingType\nCity: $city\nArea: $area\nAddress: $address\nPrice: $price ($priceLabel)\nSeats: $totalSeats\nSqft: $totalAreaSqft\nStatus: $status\nFeatured: " . ($featured ? 'Yes' : 'No') . "\nSpace Type: $officeSpaceType\nRemarks: $remarks";
+                $listingDetail = "Title: $title\nCode: $listingCode\nType: $listingType\nCity: $city\nArea: $area\nAddress: $address\nPrice: $price ($priceLabel)\nCAM: $cam\nSeats: $totalSeats\nSqft: $totalAreaSqft\nStatus: $status\nFeatured: " . ($featured ? 'Yes' : 'No') . "\nSpace Type: $officeSpaceType\nRemarks: $remarks";
                 (new \CubeSpace\EmailService())->notifyAdminAction('update', "$listingType listing #$id", $listingDetail);
             } catch (\Throwable $e) { error_log('Email notify: ' . $e->getMessage()); }
             JsonCache::incrementGlobalVersion();
@@ -562,12 +577,12 @@ if ($action === 'export') {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . $listingType . '_offices_export_' . date('Y-m-d') . '.csv"');
     $out = fopen('php://output', 'w');
-    fputcsv($out, ['ID','Code','Title','Slug','City','Area','Address','Price','Price Label','Seats','Sq.ft','Space Type','Status','Featured','Latitude','Longitude','Furnishing','Listing Type','Created','Updated']);
+    fputcsv($out, ['ID','Code','Title','Slug','City','Area','Address','Price','CAM','Price Label','Seats','Sq.ft','Space Type','Status','Featured','Latitude','Longitude','Furnishing','Listing Type','Created','Updated']);
     while ($row = mysqli_fetch_assoc($result)) {
         fputcsv($out, [
             $row['id'], $row['listing_code'], $row['title'], $row['slug'],
             $row['city'], $row['area'], $row['address'],
-            $row['price'], $row['price_label'], $row['total_seats'],
+            $row['price'], $row['cam'] ?? '', $row['price_label'], $row['total_seats'],
             $row['total_area_sqft'], $row['office_space_type'], $row['status'],
             $row['featured'], $row['latitude'], $row['longitude'],
             $row['listing_type_db'] ?? $row['listing_type'],

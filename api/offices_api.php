@@ -21,6 +21,35 @@ header('Content-Type: application/json');
 header('Cache-Control: no-cache, must-revalidate');
 header('Expires: 0');
 
+// Auto-migrate: ensure CAM column exists (no 255 limit -> TEXT, MySQL 5.7 compatible)
+if (isset($conn) && $conn) {
+    $ensureCam = function($table) use ($conn) {
+        $res = @mysqli_query($conn, "SHOW COLUMNS FROM `$table` LIKE 'cam'");
+        if ($res && mysqli_num_rows($res) === 0) {
+            @mysqli_query($conn, "ALTER TABLE `$table` ADD COLUMN `cam` TEXT DEFAULT NULL AFTER `price`");
+        } else if ($res && mysqli_num_rows($res) > 0) {
+            $col = mysqli_fetch_assoc($res);
+            $type = strtolower($col['Type'] ?? '');
+            if ($type !== 'text' && $type !== 'longtext') {
+                @mysqli_query($conn, "ALTER TABLE `$table` MODIFY COLUMN `cam` TEXT DEFAULT NULL");
+            }
+        }
+    };
+    $ensureCam('furnished_offices');
+    $ensureCam('unfurnished_offices');
+    // Determine cam select expressions (fallback to NULL if alter failed)
+    $hasCamF = false; $hasCamU = false;
+    $rF = @mysqli_query($conn, "SHOW COLUMNS FROM `furnished_offices` LIKE 'cam'");
+    if ($rF && mysqli_num_rows($rF) > 0) $hasCamF = true;
+    $rU = @mysqli_query($conn, "SHOW COLUMNS FROM `unfurnished_offices` LIKE 'cam'");
+    if ($rU && mysqli_num_rows($rU) > 0) $hasCamU = true;
+    $camSelectF = $hasCamF ? '`cam`' : "NULL as `cam`";
+    $camSelectU = $hasCamU ? '`cam`' : "NULL as `cam`";
+} else {
+    $camSelectF = "NULL as `cam`";
+    $camSelectU = "NULL as `cam`";
+}
+
 $rateLimiter = new RateLimiter(30, 60, 'mo_api_');
 $clientIp = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 if (!$rateLimiter->check($clientIp)) {
@@ -191,7 +220,7 @@ if ($action === 'list') {
     $sort = trim($_GET['sort'] ?? 'newest');
     $featured = $_GET['featured'] ?? '';
 
-    $cacheKey = 'list_all_v2_' . JsonCache::getGlobalVersion() . '_' . md5(implode('|', [$page, $limit, $search, $city, $area, $minPrice, $maxPrice, $minSeats, $maxSeats, $minSqft, $maxSqft, $sqftRanges, $sort, $featured]));
+    $cacheKey = 'list_all_v3_' . JsonCache::getGlobalVersion() . '_' . md5(implode('|', [$page, $limit, $search, $city, $area, $minPrice, $maxPrice, $minSeats, $maxSeats, $minSqft, $maxSqft, $sqftRanges, $sort, $featured]));
     $cached = $cache->get($cacheKey);
     if ($cached) { echo json_encode($cached); exit; }
 
@@ -314,13 +343,13 @@ if ($action === 'list') {
         default: $orderBy = 'featured DESC, created_at DESC';
     }
 
-    $baseSql = "SELECT id, title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code, listing_type_db
+    $baseSql = "SELECT id, title, slug, description, city, area, address, latitude, longitude, price, cam, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code, listing_type_db
                  FROM (
-                     SELECT id, title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code, 'furnished' as listing_type_db
+                     SELECT id, title, slug, description, city, area, address, latitude, longitude, price, $camSelectF, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code, 'furnished' as listing_type_db
                      FROM furnished_offices
                      WHERE $whereClause
                      UNION ALL
-                     SELECT id, title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code, 'unfurnished' as listing_type_db
+                     SELECT id, title, slug, description, city, area, address, latitude, longitude, price, $camSelectU, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code, 'unfurnished' as listing_type_db
                      FROM unfurnished_offices
                      WHERE $whereClause
                  ) combined
@@ -506,13 +535,13 @@ if ($action === 'list') {
             $centerLat = $latSum / $coordCount;
             $centerLng = $lngSum / $coordCount;
 
-            $nearSql = "SELECT id, title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code, listing_type_db
+            $nearSql = "SELECT id, title, slug, description, city, area, address, latitude, longitude, price, cam, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code, listing_type_db
                          FROM (
-                             SELECT id, title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code, 'furnished' as listing_type_db
+                             SELECT id, title, slug, description, city, area, address, latitude, longitude, price, $camSelectF, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code, 'furnished' as listing_type_db
                              FROM furnished_offices
                              WHERE status='active' AND latitude IS NOT NULL
                              UNION ALL
-                             SELECT id, title, slug, description, city, area, address, latitude, longitude, price, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code, 'unfurnished' as listing_type_db
+                             SELECT id, title, slug, description, city, area, address, latitude, longitude, price, $camSelectU, price_label, total_seats, available_sqft, min_inventory, inventory_type, total_area_sqft, office_space_type, amenities, images, featured, created_at, listing_code, 'unfurnished' as listing_type_db
                              FROM unfurnished_offices
                              WHERE status='active' AND latitude IS NOT NULL
                          ) combined

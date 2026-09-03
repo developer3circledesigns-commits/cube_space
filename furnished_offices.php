@@ -589,11 +589,62 @@ if (isset($conn) && $conn) {
         }
         .card-actions .btn:hover{background:var(--primary-dark);}
 
-        .card-price{display:flex;flex-direction:column;}
-        .card-price .price-label{font-size:.55rem;color:#9ca3af;text-transform:uppercase;letter-spacing:.3px;}
-        .card-price .amount{font-size:1rem;font-weight:700;color:var(--primary);line-height:1.2;}
-        .card-price .period{font-size:.65rem;color:#6b7280;font-weight:400;}
-        .card-price .contact-price{font-weight:600;color:#6b7280;font-size:.8rem;}
+        .card-price{display:flex;flex-direction:column;flex:1 1 0;min-width:0;overflow-wrap:anywhere;word-break:break-word;align-items:flex-start;text-align:left;gap:2px;box-sizing:border-box;}
+        .card-price .price-label{font-size:clamp(0.5rem, 1.6vw, 0.55rem);color:#9ca3af;text-transform:uppercase;letter-spacing:.3px;white-space:normal;overflow-wrap:anywhere;display:block;width:100%;line-height:1.2;}
+        .card-price .amount{font-size:clamp(0.82rem, 2.6vw, 1rem);font-weight:700;color:var(--primary);line-height:1.25;overflow-wrap:anywhere;word-break:break-word;display:block;max-width:100%;width:100%;}
+        .card-price .period{font-size:clamp(0.52rem, 1.7vw, 0.65rem);color:#6b7280;font-weight:400;overflow-wrap:anywhere;display:block;margin-top:2px;line-height:1.25;white-space:normal;width:100%;}
+        .card-price .contact-price{font-weight:600;color:#6b7280;font-size:clamp(0.75rem, 2vw, 0.8rem);overflow-wrap:anywhere;display:block;width:100%;}
+        .price-row{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:nowrap;gap:8px 12px;width:100%;text-align:left;align-content:center;box-sizing:border-box;}
+        .price-row .card-price{flex:1 1 0;min-width:0;max-width:100%;}
+        .price-row .card-actions{flex:0 0 auto;min-width:0;max-width:42%;display:flex;align-items:flex-end;justify-content:flex-end;margin-left:auto;box-sizing:border-box;}
+        .price-row .card-actions .btn{flex:0 0 auto;min-width:0;max-width:100%;white-space:nowrap;box-sizing:border-box;overflow:hidden;text-overflow:ellipsis;padding:7px 12px;}
+        @media (max-width: 991px){
+            .price-row{gap:8px 10px;align-items:flex-end;}
+            .card-price .amount{font-size:clamp(0.78rem, 2.2vw, 0.92rem);}
+            .price-row .card-actions .btn{padding:6px 10px;font-size:0.75rem;}
+        }
+        @media (max-width: 767px){
+            .price-row{gap:6px 8px;align-items:flex-end;justify-content:space-between;flex-wrap:nowrap;}
+            .price-row .card-price{flex:1 1 0;min-width:0;max-width:100%;}
+            .price-row .card-actions{flex:0 0 auto;min-width:0;max-width:38%;margin-left:auto;justify-content:flex-end;}
+            .price-row .card-actions .btn{flex:0 0 auto;width:auto;min-width:0;justify-content:center;display:inline-flex;align-items:center;white-space:nowrap;padding:6px 10px;font-size:0.72rem;}
+            .card-body{text-align:left !important;}
+            .property-address{justify-content:flex-start !important;}
+            .stats-row{justify-content:flex-start !important;}
+            .card-price .price-label{font-size:0.5rem;}
+            .card-price .amount{font-size:clamp(0.72rem, 2.8vw, 0.85rem);}
+            .card-price .period{font-size:0.52rem;}
+        }
+        @media (max-width: 575px){
+            .price-row{gap:6px 8px;flex-wrap:nowrap;}
+            .price-row .card-price{min-width:0;}
+            .price-row .card-actions .btn{padding:6px 8px;font-size:0.68rem;}
+            .card-price .amount{font-size:clamp(0.7rem, 3.2vw, 0.82rem);}
+        }
+        @media (max-width: 480px){
+            .price-row{gap:6px;flex-wrap:nowrap;align-items:flex-end;justify-content:space-between;}
+            .price-row .card-price{min-width:0;max-width:100%;}
+            .price-row .card-actions{min-width:0;max-width:36%;margin-left:auto;}
+            .price-row .card-actions .btn{padding:6px 8px;font-size:0.68rem;min-width:0;}
+            .card-price .amount{font-size:clamp(0.68rem, 3.6vw, 0.78rem);}
+            .card-price .period{font-size:0.5rem;}
+            .card-price .price-label{font-size:0.48rem;}
+        }
+        @media (max-width: 360px){
+            .price-row{gap:4px 6px;}
+            .price-row .card-price .amount{font-size:0.68rem;}
+            .price-row .card-price .period{font-size:0.48rem;}
+            .price-row .card-actions{max-width:34%;}
+            .price-row .card-actions .btn{font-size:0.64rem;padding:5px 7px;letter-spacing:-0.2px;}
+            .card-price .price-label{font-size:0.46rem;}
+        }
+        @media (max-width: 320px){
+            .price-row{gap:4px;}
+            .price-row .card-price .amount{font-size:0.64rem;}
+            .card-price .price-label{font-size:0.44rem;}
+            .price-row .card-price .period{font-size:0.46rem;}
+            .price-row .card-actions .btn{font-size:0.6rem;padding:5px 6px;}
+        }
 
         /* ========== CAROUSEL CONTROLS ========== */
 
@@ -2079,12 +2130,16 @@ if (isset($conn) && $conn) {
                     statsHtml += `<span class="stat-item inv-badge inv-ready"><i class="fa-solid fa-circle-check"></i> <span class="stat-value">${escHtml(o.inventory_type)}</span></span>`;
                 }
 
-                const period = o.office_space_type === 'lease' ? 'per sq ft / month' : 'per sq ft / month';
+                const period = o.office_space_type === 'lease' ? 'Per sq ft / Month' : 'Per sq ft / Month';
                 const price = o.price != null && o.price !== '' ?
                     (isNaN(Number(o.price)) ?
-                        `<span class="amount" style="font-size:0.85rem;">${escHtml(o.price)} <span class="period">${period}</span></span>` :
-                        `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span> <span class="period">${period}</span>`) :
+                        `<span class="amount" style="font-size:0.85rem;">${escHtml(o.price)}</span><span class="period">${period}</span>` :
+                        `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span><span class="period">${period}</span>`) :
                     `<span class="contact-price">Contact for Price</span>`;
+                const camPeriod = 'Per sq ft / Month';
+                const camval = o.cam != null ? String(o.cam).trim() : '';
+                const cam = camval !== '' ? (isNaN(Number(camval)) ? `<span class="amount" style="font-size:0.85rem;">${escHtml(camval)}</span><span class="period">${camPeriod}</span>` : `<span class="amount">₹${numberFormat(Math.round(Number(camval)))}</span><span class="period">${camPeriod}</span>`) : '';
+                const camBlock = cam ? `<div class="card-price"><span class="price-label" style="font-weight:bold; color:#212529;">CAM</span>${cam}</div>` : '';
 
                 const descId = 'desc-' + o.id;
                 const descHtml = o.description ? `
@@ -2105,7 +2160,7 @@ if (isset($conn) && $conn) {
                                         ${descHtml}
                                         ${statsHtml ? '<div class="stats-row">' + statsHtml + '</div>' : ''}
                                         <div class="mt-auto">
-                                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                            <div class="price-row">
                                                 <div class="card-price">
                                                     <span class="price-label" style="font-weight:bold; color:#212529;">
     Quoted Rent
@@ -2113,6 +2168,7 @@ if (isset($conn) && $conn) {
 </span>
                                                     ${price}
                                                 </div>
+                                                ${camBlock}
                                                 <div class="card-actions">
                                                     <span class="btn btn-get-price" role="button" tabindex="0" data-office-id="${o.id}" data-listing-code="${escHtml(o.listing_code)}" onclick="event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')" onkeydown="if(event.key==='Enter'){event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')}">Get Best Price</span>
                                                 </div>
@@ -2228,12 +2284,16 @@ if (isset($conn) && $conn) {
                     statsHtml += `<span class="stat-item inv-badge inv-ready"><i class="fa-solid fa-circle-check"></i> <span class="stat-value">${escHtml(o.inventory_type)}</span></span>`;
                 }
 
-                const period = o.office_space_type === 'lease' ? 'per sq ft / month' : 'per sq ft / month';
+                const period = o.office_space_type === 'lease' ? 'Per sq ft / Month' : 'Per sq ft / Month';
                 const price = o.price != null && o.price !== '' ?
                     (isNaN(Number(o.price)) ?
-                        `<span class="amount" style="font-size:0.85rem;">${escHtml(o.price)} <span class="period">${period}</span></span>` :
-                        `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span> <span class="period">${period}</span>`) :
+                        `<span class="amount" style="font-size:0.85rem;">${escHtml(o.price)}</span><span class="period">${period}</span>` :
+                        `<span class="amount">₹${numberFormat(Math.round(Number(o.price)))}</span><span class="period">${period}</span>`) :
                     `<span class="contact-price">Contact for Price</span>`;
+                const camPeriodN = 'Per sq ft / Month';
+                const camvalN = o.cam != null ? String(o.cam).trim() : '';
+                const camN = camvalN !== '' ? (isNaN(Number(camvalN)) ? `<span class="amount" style="font-size:0.85rem;">${escHtml(camvalN)}</span><span class="period">${camPeriodN}</span>` : `<span class="amount">₹${numberFormat(Math.round(Number(camvalN)))}</span><span class="period">${camPeriodN}</span>`) : '';
+                const camBlockN = camN ? `<div class="card-price"><span class="price-label" style="font-weight:bold; color:#212529;">CAM</span>${camN}</div>` : '';
 
                 const descId = 'ndesc-' + o.id;
                 const descHtml = o.description ? `
@@ -2256,11 +2316,12 @@ if (isset($conn) && $conn) {
                                                 ${descHtml}
                                                 ${statsHtml ? '<div class="stats-row">' + statsHtml + '</div>' : ''}
                                                 <div class="mt-auto">
-                                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                                    <div class="price-row">
                                                         <div class="card-price">
                                                             <span class="price-label">Quoted Rent</span>
                                                             ${price}
                                                         </div>
+                                                        ${camBlockN}
                                                         <div class="card-actions">
                                                             <span class="btn btn-get-price" role="button" tabindex="0" data-office-id="${o.id}" data-listing-code="${escHtml(o.listing_code)}" onclick="event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')" onkeydown="if(event.key==='Enter'){event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')}">Get Best Price</span>
                                                         </div>

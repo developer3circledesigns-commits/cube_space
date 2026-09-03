@@ -28,7 +28,7 @@ $editTable = get_listing_table($editType) ?: 'furnished_offices';
 $searchQuery = trim($_GET['search'] ?? '');
 
 if ($mode === 'add' || $mode === 'edit'):
-    $listing = ['title'=>'', 'listing_type'=>'', 'description'=>'', 'city'=>'', 'area'=>'', 'address'=>'', 'price'=>'', 'price_label'=>'', 'total_seats'=>'', 'total_area_sqft'=>'', 'available_sqft'=>'', 'min_inventory'=>'', 'inventory_type'=>'', 'amenities'=>'[]', 'images'=>'[]', 'status'=>'active', 'featured'=>0, 'office_space_type'=>'rent', 'feature_highlights'=>'[]', 'seo_text'=>'', 'remarks'=>'', 'latitude'=>null, 'longitude'=>null, 'listing_code'=>'', 'slug'=>''];
+    $listing = ['title'=>'', 'listing_type'=>'', 'description'=>'', 'city'=>'', 'area'=>'', 'address'=>'', 'price'=>'', 'cam'=>'', 'price_label'=>'', 'total_seats'=>'', 'total_area_sqft'=>'', 'available_sqft'=>'', 'min_inventory'=>'', 'inventory_type'=>'', 'amenities'=>'[]', 'images'=>'[]', 'status'=>'active', 'featured'=>0, 'office_space_type'=>'rent', 'feature_highlights'=>'[]', 'seo_text'=>'', 'remarks'=>'', 'latitude'=>null, 'longitude'=>null, 'listing_code'=>'', 'slug'=>''];
     if ($mode === 'edit' && $editId && $editTable) {
         $stmt = mysqli_prepare($conn, "SELECT * FROM $editTable WHERE id=?");
         mysqli_stmt_bind_param($stmt, 'i', $editId);
@@ -191,12 +191,19 @@ if ($mode === 'add' || $mode === 'edit'):
                 <?php endif; ?>
             </div>
 
-            <div class="col-md-6 position-relative">
+            <div class="col-12 col-sm-6 col-md-3 position-relative">
                 <label for="price" class="form-label small fw-semibold">Quoted Rent</label>
                 <input type="text" name="price" id="price" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['price']??'') ?>" placeholder="Enter quoted rent">
+                <small class="form-text text-muted" style="font-size:0.7rem;">Per sq ft / Month</small>
             </div>
 
-            <div class="col-md-3 position-relative">
+            <div class="col-12 col-sm-6 col-md-3 position-relative">
+                <label for="cam" class="form-label small fw-semibold">CAM</label>
+                <input type="text" name="cam" id="cam" class="form-control form-control-sm" value="<?= htmlspecialchars($listing['cam']??'') ?>" placeholder="Enter CAM (alphanumeric)">
+                <small class="form-text text-muted" style="font-size:0.7rem;">Per sq ft / Month</small>
+            </div>
+
+            <div class="col-12 col-sm-6 col-md-3 position-relative">
                 <label for="status" class="form-label small fw-semibold">Status</label>
                 <select name="status" id="status" class="form-select form-select-sm">
                     <option value="active" <?= ($listing['status']??'active')==='active'?'selected':'' ?>>Active</option>
