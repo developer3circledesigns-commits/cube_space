@@ -255,11 +255,26 @@ try {
         }
     }
 
-    // Office ID resolution for single office enquiries
+    // Sanitize listing_code early - needed for precise interest derivation by code prefix
+    $listingCodeVal = !empty($listingCode) ? mb_substr($listingCode, 0, 100) : null;
+    $codeDerived = null;
+    if (!$isMulti && $listingCodeVal !== null && $listingCodeVal !== '') {
+        $lcUpperEarly = strtoupper(trim($listingCodeVal));
+        if ($lcUpperEarly !== '' && $lcUpperEarly !== 'MULTI' && !str_starts_with($lcUpperEarly, 'MULTI')) {
+            if (str_starts_with($lcUpperEarly, 'FO')) $codeDerived = 'furnished';
+            elseif (str_starts_with($lcUpperEarly, 'UO')) $codeDerived = 'unfurnished';
+            elseif (str_starts_with($lcUpperEarly, 'MO')) $codeDerived = 'managed';
+        }
+    }
+
+    // Office ID resolution for single office enquiries + precise interest derivation (fixes furnished showing as Managed)
+    // Previous UNION LIMIT 1 was ambiguous when same numeric id exists in multiple tables; now we disambiguate via listing_code
     $officeIdVal = null;
+    $derivedInterestFromOffice = null;
+    $preciseDerived = null;
     if (!$isMulti && $officeIdRaw !== '' && is_numeric($officeIdRaw) && (int)$officeIdRaw > 0) {
         $candidateId = (int)$officeIdRaw;
-        // Verify against all active office tables
+        // Verify existence
         $checkStmt = @mysqli_prepare($conn, "SELECT id FROM managed_offices WHERE id = ? UNION SELECT id FROM furnished_offices WHERE id = ? UNION SELECT id FROM unfurnished_offices WHERE id = ? UNION SELECT id FROM office_spaces WHERE id = ?");
         if ($checkStmt) {
             mysqli_stmt_bind_param($checkStmt, 'iiii', $candidateId, $candidateId, $candidateId, $candidateId);
@@ -270,10 +285,69 @@ try {
             }
             mysqli_stmt_close($checkStmt);
         }
+        // Precise derivation using id + listing_code (eliminates cross-table id collision)
+        if ($officeIdVal !== null && $listingCodeVal !== null && $listingCodeVal !== '' && $codeDerived !== null) {
+            $preciseStmt = @mysqli_prepare($conn, "SELECT 'managed' as tp FROM managed_offices WHERE id=? AND listing_code=? UNION SELECT 'furnished' FROM furnished_offices WHERE id=? AND listing_code=? UNION SELECT 'unfurnished' FROM unfurnished_offices WHERE id=? AND listing_code=? LIMIT 1");
+            if ($preciseStmt) {
+                mysqli_stmt_bind_param($preciseStmt, 'isisis', $officeIdVal, $listingCodeVal, $officeIdVal, $listingCodeVal, $officeIdVal, $listingCodeVal);
+                mysqli_stmt_execute($preciseStmt);
+                $pr = mysqli_stmt_get_result($preciseStmt);
+                $prRow = $pr ? mysqli_fetch_assoc($pr) : null;
+                if ($prRow && !empty($prRow['tp'])) {
+                    $preciseDerived = $prRow['tp'];
+                }
+                mysqli_stmt_close($preciseStmt);
+            }
+        }
+        // Fallback: derive by id alone only if precise not found (handles missing/old listing_code)
+        if ($preciseDerived === null && $officeIdVal !== null) {
+            $typeStmt = @mysqli_prepare($conn, "SELECT 'managed' as tp FROM managed_offices WHERE id=? UNION SELECT 'furnished' FROM furnished_offices WHERE id=? UNION SELECT 'unfurnished' FROM unfurnished_offices WHERE id=? UNION SELECT 'furnished' FROM office_spaces WHERE id=?");
+            if ($typeStmt) {
+                mysqli_stmt_bind_param($typeStmt, 'iiii', $officeIdVal, $officeIdVal, $officeIdVal, $officeIdVal);
+                mysqli_stmt_execute($typeStmt);
+                $tr = mysqli_stmt_get_result($typeStmt);
+                $allRows = $tr ? mysqli_fetch_all($tr, MYSQLI_ASSOC) : [];
+                mysqli_stmt_close($typeStmt);
+                if (count($allRows) === 1 && !empty($allRows[0]['tp'])) {
+                    $derivedInterestFromOffice = $allRows[0]['tp'];
+                } elseif (count($allRows) > 1) {
+                    // Ambiguous id exists in multiple tables - trust code prefix over ambiguous id
+                    if ($codeDerived !== null) {
+                        $derivedInterestFromOffice = $codeDerived;
+                    } else {
+                        // No code to disambiguate, keep null to avoid wrong guess; will rely on frontend interest
+                        $derivedInterestFromOffice = null;
+                    }
+                } elseif (count($allRows) === 1) {
+                    $derivedInterestFromOffice = $allRows[0]['tp'] ?? null;
+                }
+            }
+        }
+        if ($preciseDerived !== null) {
+            $derivedInterestFromOffice = $preciseDerived;
+        } elseif ($derivedInterestFromOffice === null && $codeDerived !== null) {
+            // Precise failed but code prefix is strong signal - use it
+            $derivedInterestFromOffice = $codeDerived;
+        }
+    } else if (!$isMulti && $codeDerived !== null) {
+        // No office_id provided but listing_code present (id missing or deleted) - trust code prefix
+        $derivedInterestFromOffice = $codeDerived;
     }
 
-    // Sanitize lengths for database columns
-    $listingCodeVal = !empty($listingCode) ? mb_substr($listingCode, 0, 100) : null;
+    // Single-enquiry interest correction: authoritative source is precise DB match > code prefix > unambiguous id
+    if (!$isMulti && $derivedInterestFromOffice !== null) {
+        $rawWasEmpty = ($rawInterest === '');
+        // Only override when we have high-confidence derived value (precise or code-backed)
+        // Never override a valid explicit user choice on office-less general enquiries, but for office-linked single enquiries the DB/code is authoritative
+        if ($preciseDerived !== null || $codeDerived !== null || $rawWasEmpty || $interest === 'commercial' || $interest !== $derivedInterestFromOffice) {
+            // If derived came from ambiguous id alone without code support and frontend sent a valid specific interest that conflicts, prefer frontend + code over ambiguous id
+            // The above already handles ambiguous case by setting derived = codeDerived, so safe to override
+            // Additional guard: don't override 'unfurnished' correctly sent as 'unfurnished' when derived is also 'unfurnished' - no change needed
+            if ($interest !== $derivedInterestFromOffice || $rawWasEmpty || $preciseDerived !== null || $codeDerived !== null) {
+                $interest = $derivedInterestFromOffice;
+            }
+        }
+    }
     $sourceVal      = !empty($source) ? mb_substr($source, 0, 255) : 'website';
     $companyVal     = !empty($company) ? mb_substr($company, 0, 160) : null;
     $seatsVal       = !empty($seats) ? mb_substr($seats, 0, 50) : null;

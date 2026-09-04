@@ -1516,6 +1516,8 @@ if (isset($conn) && $conn) {
                 <div class="modal-body">
                     <p class="text-muted small">Our workspace expert will call you back shortly.</p>
                     <form id="callbackForm" onsubmit="handleCallbackForm(event)">
+                        <input type="hidden" name="interest" value="furnished">
+                        <input type="hidden" name="source" value="callback_furnished">
                         <div class="mb-3">
                             <label for="cbName" class="form-label fw-semibold small">Full Name *</label>
                             <input type="text" class="form-control" id="cbName" name="name" required data-rules="required|max:120" placeholder="Enter your name">
@@ -1565,6 +1567,7 @@ if (isset($conn) && $conn) {
                             <form id="getPriceForm" onsubmit="handleGetPriceForm(event)">
                                 <input type="hidden" name="office_id" id="gpOfficeId" value="">
                                 <input type="hidden" name="listing_code" id="gpListingCode" value="">
+                                <input type="hidden" name="interest" value="furnished">
                                 <input type="hidden" name="source" value="listing_card">
                                 <div class="mb-3">
                                     <label for="gpWorkspaceName" class="form-label fw-semibold small">Workspace Name</label>
@@ -2170,7 +2173,7 @@ if (isset($conn) && $conn) {
                                                 </div>
                                                 ${camBlock}
                                                 <div class="card-actions">
-                                                    <span class="btn btn-get-price" role="button" tabindex="0" data-office-id="${o.id}" data-listing-code="${escHtml(o.listing_code)}" onclick="event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')" onkeydown="if(event.key==='Enter'){event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')}">Get Best Price</span>
+                                                    <span class="btn btn-get-price" role="button" tabindex="0" data-office-id="${o.id}" data-listing-code="${escHtml(o.listing_code)}" onclick="event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}', '${escHtml(o.listing_type_db || 'furnished')}')" onkeydown="if(event.key==='Enter'){event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}', '${escHtml(o.listing_type_db || 'furnished')}')}">Get Best Price</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -2323,7 +2326,7 @@ if (isset($conn) && $conn) {
                                                         </div>
                                                         ${camBlockN}
                                                         <div class="card-actions">
-                                                            <span class="btn btn-get-price" role="button" tabindex="0" data-office-id="${o.id}" data-listing-code="${escHtml(o.listing_code)}" onclick="event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')" onkeydown="if(event.key==='Enter'){event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}')}">Get Best Price</span>
+                                                            <span class="btn btn-get-price" role="button" tabindex="0" data-office-id="${o.id}" data-listing-code="${escHtml(o.listing_code)}" onclick="event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}', '${escHtml(o.listing_type_db || 'furnished')}')" onkeydown="if(event.key==='Enter'){event.stopPropagation();openGetPriceModal(${o.id}, '${escHtml(o.listing_code)}', '${escHtml(o.title)}', '${escHtml(o.listing_type_db || 'furnished')}')}">Get Best Price</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -2458,10 +2461,24 @@ if (isset($conn) && $conn) {
         const getPriceModalEl = document.getElementById('getPriceModal');
         const getPriceModal = getPriceModalEl ? new bootstrap.Modal(getPriceModalEl) : null;
 
-        function openGetPriceModal(officeId, listingCode, workspaceName) {
+        function openGetPriceModal(officeId, listingCode, workspaceName, listingType) {
             document.getElementById('gpOfficeId').value = officeId;
             document.getElementById('gpListingCode').value = listingCode || '';
             document.getElementById('gpWorkspaceName').value = workspaceName ? (listingCode ? workspaceName + ' - ' + listingCode : workspaceName) : '';
+            var interestEl = document.querySelector('#getPriceForm input[name="interest"]');
+            if (interestEl) {
+                var t = (listingType || 'furnished').toString().trim().toLowerCase();
+                if (t === 'managed_offices') t = 'managed';
+                else if (t === 'furnished_offices') t = 'furnished';
+                else if (t === 'unfurnished_offices') t = 'unfurnished';
+                if (['managed','furnished','unfurnished','commercial'].indexOf(t) !== -1) interestEl.value = t;
+                else if (listingCode) {
+                    var lc = listingCode.toString().trim().toUpperCase();
+                    if (lc.indexOf('FO') === 0) interestEl.value = 'furnished';
+                    else if (lc.indexOf('UO') === 0) interestEl.value = 'unfurnished';
+                    else if (lc.indexOf('MO') === 0) interestEl.value = 'managed';
+                }
+            }
             if (getPriceModal) getPriceModal.show();
         }
 

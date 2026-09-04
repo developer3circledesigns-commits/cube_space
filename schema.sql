@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS `managed_offices` (
   `latitude` decimal(10, 7),
   `longitude` decimal(10, 7),
   `price` varchar(255),
+  `cam` TEXT DEFAULT NULL,
   `price_label` varchar(100),
   `total_seats` int,
   `total_area_sqft` int,

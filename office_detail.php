@@ -1087,6 +1087,19 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
             $inventoryType = !empty($office['inventory_type']) ? $office['inventory_type'] : '';
             $minInventory = !empty($office['min_inventory']) ? $office['min_inventory'] : '';
             $isManaged = $listingTypeDb === 'managed';
+            // CAM handling - works for all listing types (managed/furnished/unfurnished). Alphanumeric allowed.
+            $camRaw = isset($office['cam']) ? trim((string)$office['cam']) : '';
+            $camDisplayHtml = '';
+            $camHasValue = $camRaw !== '';
+            if ($camHasValue) {
+                // Strip common formatting chars for numeric check (₹ , spaces)
+                $camNumericCheck = str_replace([',', '₹', ' '], '', $camRaw);
+                if (is_numeric($camNumericCheck) && $camNumericCheck !== '') {
+                    $camDisplayHtml = '₹' . format_number((int)round((float)$camNumericCheck)) . ' <span style="font-size:13px;font-weight:400;color:#64748b;">Per sq ft / Month</span>';
+                } else {
+                    $camDisplayHtml = htmlspecialchars($camRaw) . ' <span style="font-size:13px;font-weight:400;color:#64748b;">Per sq ft / Month</span>';
+                }
+            }
             ?>
             <div class="section" id="center-details">
                 <div class="section-title"><i class="fa-solid fa-circle-info"></i> Center Details</div>
@@ -1121,6 +1134,15 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                             <div class="cd-value">₹<?php echo format_number($officePrice); ?> <span style="font-size:13px;font-weight:400;color:#64748b;"><?php echo $rentPeriod; ?></span></div>
                         </div>
                     </div>
+                    <?php if ($camHasValue): ?>
+                    <div class="cd-item">
+                        <div class="cd-icon"><i class="fa-solid fa-coins"></i></div>
+                        <div>
+                            <div class="cd-label">CAM</div>
+                            <div class="cd-value"><?php echo $camDisplayHtml; ?></div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                     <?php else: ?>
                     <div class="cd-item">
                         <div class="cd-icon"><i class="fa-solid fa-building"></i></div>
@@ -1154,6 +1176,15 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                             <div class="cd-value">₹<?php echo format_number($officePrice); ?> <span style="font-size:13px;font-weight:400;color:#64748b;">per sq ft / month</span></div>
                         </div>
                     </div>
+                    <?php if ($camHasValue): ?>
+                    <div class="cd-item">
+                        <div class="cd-icon"><i class="fa-solid fa-coins"></i></div>
+                        <div>
+                            <div class="cd-label">CAM</div>
+                            <div class="cd-value"><?php echo $camDisplayHtml; ?></div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -1377,6 +1408,7 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
                         <form id="getPriceForm" onsubmit="handleGetPriceForm(event)">
                             <input type="hidden" name="office_id" id="gpOfficeId" value="">
                             <input type="hidden" name="listing_code" id="gpListingCode" value="">
+                            <input type="hidden" name="interest" id="gpInterest" value="<?php echo htmlspecialchars($listingTypeDb ?: 'managed'); ?>">
                             <input type="hidden" name="source" value="detail_page">
                             <div class="mb-3">
                                 <label for="gpWorkspaceName" class="form-label fw-semibold small">Workspace Name</label>
@@ -1422,10 +1454,19 @@ $pageTitle = $officeName ? $officeName . ' | CubeSpace' : 'Workspace Details | C
     const getPriceModalEl = document.getElementById('getPriceModal');
     const getPriceModal = getPriceModalEl ? new bootstrap.Modal(getPriceModalEl) : null;
 
-    function openGetPriceModal(officeId, listingCode, workspaceName) {
+    function openGetPriceModal(officeId, listingCode, workspaceName, listingType) {
         document.getElementById('gpOfficeId').value = officeId;
         document.getElementById('gpListingCode').value = listingCode || '';
         document.getElementById('gpWorkspaceName').value = workspaceName ? (listingCode ? workspaceName + ' - ' + listingCode : workspaceName) : '';
+        var interestEl = document.getElementById('gpInterest');
+        if (interestEl) {
+            var t = (listingType || '<?php echo htmlspecialchars($listingTypeDb ?: 'managed'); ?>').toString().trim().toLowerCase();
+            if (t === 'managed_offices') t = 'managed';
+            else if (t === 'furnished_offices') t = 'furnished';
+            else if (t === 'unfurnished_offices') t = 'unfurnished';
+            if (['managed','furnished','unfurnished','commercial'].indexOf(t) === -1) t = '<?php echo htmlspecialchars($listingTypeDb ?: 'managed'); ?>';
+            interestEl.value = t;
+        }
         if (getPriceModal) getPriceModal.show();
     }
 
