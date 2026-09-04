@@ -2136,6 +2136,7 @@ if (isset($conn) && $conn) {
                 });
             });
             html += '</div>';
+            container.innerHTML = html;
 
             initCarousels(container);
             MultiSelectEnquiry.afterRender(container);
