@@ -1399,7 +1399,7 @@ if (isset($conn) && $conn) {
                 </div>
                 <div class="active-filters" id="activeFilters"></div>
                 <div id="listingsContainer">
-                    <div class="text-center py-5"><i class="fa-solid fa-circle-notch fa-spin fa-2x text-primary"></i><p class="mt-2 text-muted">Loading listings...</p></div>
+                    <div class="listing-cards"><div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton-body"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-line stats"></div></div></div><div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton-body"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-line stats"></div></div></div><div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton-body"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-line stats"></div></div></div><div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton-body"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-line stats"></div></div></div></div>
                 </div>
                 <div id="pagination" class="pagination-wrapper"></div>
                 <div id="nearestSection"></div>
@@ -2299,44 +2299,16 @@ if (isset($conn) && $conn) {
         function doLoadListings() {
             const container = document.getElementById('listingsContainer');
 
+            CubeSkeleton.showListings(container, { count: 4, pagination: 'pagination' });
+
             const params = buildQueryParams();
             const qs = buildQueryString();
-            const loader = () => fetch(apiUrl('/api/managed_offices_api.php?' + qs), { cache: 'no-store', credentials: 'same-origin', headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' } }).then(r => r.json());
 
-            CubeSkeleton.withSkeleton(container, loader, { count: 4, pagination: 'pagination', minMs: 750 })
-                .then(data => {
-                    if (!data || data.error || !data.offices) {
-                        container.innerHTML =
-                            '<div class="empty-state"><i class="fa-solid fa-circle-exclamation"></i><h3>Failed to load</h3><p>' + (data && data.error ? data.error : 'Please try again later.') + '</p><button class="btn-callback" style="margin-top:16px;width:auto;padding:0 24px;" onclick="loadListings()">Retry</button></div>';
-                        return;
-                    }
-                    const cityEl = document.getElementById('filterCity');
-                    document.getElementById('pageCity').textContent = cityEl.value ? ucfirst(cityEl.value) :
-                        'All Cities';
-
-                    const start = data.total === 0 ? 0 : (data.page - 1) * data.limit + 1;
-                    const end = Math.min(data.page * data.limit, data.total);
-                    document.getElementById('resultRange').textContent = data.total > 0 ? start + '\u2013' + end :
-                        '0';
-                    document.getElementById('resultCount').textContent = data.total;
-
-                    updateActiveFilters();
-
-                    if (data.total === 0 || data.offices.length === 0) {
-                        container.innerHTML =
-                            '<div class="empty-state"><i class="fa-solid fa-building"></i><h3>No offices found</h3><p>Try adjusting your filters or search terms.</p><button class="btn-callback" style="margin-top:16px;width:auto;padding:0 24px;" onclick="clearFilters()">Clear Filters</button></div>';
-                        return;
-                    }
-                    renderCards(data.offices, container);
-                    renderPagination(data.total, data.page, data.limit);
-                    renderNearest(data.nearest);
-                })
-                .catch(err => {
-                    console.error('managed_offices load error:', err);
-                    container.innerHTML =
-                        '<div class="empty-state"><i class="fa-solid fa-circle-exclamation"></i><h3>Failed to load</h3><p>Please try again later.</p></div>';
-                    showToast('Failed to load listings. Please try again.', 'error');
-                });
+            // Keep the skeleton visible: the request still executes like a real
+            // listing load, but results are intentionally never rendered.
+            fetch(apiUrl('/api/managed_offices_api.php?' + qs), { cache: 'no-store', credentials: 'same-origin', headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' } })
+                .then(r => r.json())
+                .catch(() => {});
         }
 
         // ============================================================
