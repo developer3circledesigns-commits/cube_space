@@ -1610,6 +1610,7 @@ if (isset($conn) && $conn) {
         var apiEndpoint = '/api/offices_api.php';
     </script>
     <script src="assets/js/api-client.js?v=2"></script>
+    <script src="assets/js/skeleton.js?v=1"></script>
     <script src="assets/js/multi-select-enquiry.js?v=6"></script>
     <script src="assets/js/filter-panel-toggle.js?v=1"></script>
     <script>
@@ -2362,19 +2363,13 @@ if (isset($conn) && $conn) {
         }
         function doLoadListings() {
             const container = document.getElementById('listingsContainer');
-            const pagination = document.getElementById('pagination');
-            const skeletonHtml = Array(4).fill(
-                    '<div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton-body"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-line stats"></div></div></div>'
-                    )
-                .join('');
-            container.innerHTML = '<div class="listing-cards">' + skeletonHtml + '</div>';
-            pagination.innerHTML = '';
 
             const params = buildQueryParams();
             const qs = buildQueryString();
-            const request = fetch(apiUrl(apiEndpoint + '?' + qs), { cache: 'no-store', credentials: 'same-origin', headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' } }).then(r => r.json());
+            const loader = () => fetch(apiUrl(apiEndpoint + '?' + qs), { cache: 'no-store', credentials: 'same-origin', headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' } }).then(r => r.json());
 
-            request.then(data => {
+            CubeSkeleton.withSkeleton(container, loader, { count: 4, pagination: 'pagination', minMs: 750 })
+                .then(data => {
                     if (!data || data.error || !data.offices) {
                         container.innerHTML =
                             '<div class="empty-state"><i class="fa-solid fa-circle-exclamation"></i><h3>Failed to load</h3><p>' + (data && data.error ? data.error : 'Please try again later.') + '</p><button class="btn-callback" style="margin-top:16px;width:auto;padding:0 24px;" onclick="loadListings()">Retry</button></div>';
